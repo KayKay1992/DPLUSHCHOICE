@@ -1,0 +1,17 @@
+
+1. Created the main project folder and organized it into Backend, Frontend, Admin, and BackgroundServices directories for clear separation of concerns.
+
+2. Initialized npm in the Backend folder to manage dependencies and scripts.
+
+3. Installed essential backend packages:
+	- Express: for building the RESTful server and handling API routes.
+	- Mongoose: for interacting with MongoDB and defining data models.
+	- Nodemon: for automatic server restarts during development.
+
+4. Developed the server in app.js/index.js using Express, setting up middleware, routes, and basic error handling.
+
+5. Established a connection to a MongoDB database using Mongoose, including configuration for connection strings and handling connection events (success/error).
+
+6. Used Nodemon to run the server, enabling live-reloading for efficient development.
+
+This backend setup provides a scalable foundation for building the perfume, beauty, and jewelry ecommerce platform, supporting product management, user authentication, and order processing.
