@@ -1,14 +1,11 @@
 
-Generate Token and store in cookies:
+Created controllers for login, register, and logout:
+- Implemented login controller to authenticate users and issue tokens.
+- Built register controller to handle new user sign-up and password encryption.
+- Developed logout controller to clear authentication tokens and end user sessions.
 
-1. Used the jsonwebtoken library to generate a JWT token after successful user authentication.
-2. Created the token with user-specific payload and a secret key, setting an expiration time for security.
-3. Utilized the cookie-parser middleware to store the generated token in an HTTP-only cookie, which is sent to the client and protected from JavaScript access.
-4. On subsequent requests, the server reads the token from the cookie to verify user identity and authorize access to protected routes.
+Created auth route:
+- Defined routes for login, register, and logout, linking them to their respective controllers.
 
-This approach secures user sessions and enables stateless authentication in the application.
-
-Files changed and what was done:
-- Backend/utils/generatetoken.js: Created a utility function to generate JWT tokens using user data and a secret key. Exported this function for use in authentication routes.
-- Backend/app.js: Imported and used cookie-parser middleware to handle cookies. Integrated the generatetoken utility in authentication flow to issue tokens after login.
-
+Registered auth route in app.js:
+- Imported the auth route and added it to the Express app to handle authentication requests.
