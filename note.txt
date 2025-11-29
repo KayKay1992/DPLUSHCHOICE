@@ -1,0 +1,10 @@
+
+Password encryption and comparison implementation:
+
+1. Integrated the bcryptjs library to handle password hashing and comparison securely.
+
+2. In the user model, a Mongoose pre-save hook was set up. Before saving a user, this hook checks if the password field has been modified. If so, it generates a salt and hashes the password using bcrypt, replacing the plain password with its hashed version. This ensures passwords are never stored in plain text in the database.
+
+3. Added a custom method matchPassword to the user model. When a user attempts to log in, this method takes the entered password, hashes it, and compares it to the stored hashed password using bcrypt's compare function. This verifies the user's credentials securely.
+
+This approach protects user passwords from exposure and ensures authentication is handled safely in the application.
