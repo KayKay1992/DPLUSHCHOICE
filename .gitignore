@@ -1,8 +1,11 @@
 # Node.js dependencies
-node_modules/
 
-# Ignore node_modules in Backend folder
-Backend/node_modules
+# Ignore node_modules in root and Backend
+node_modules/
+Backend/node_modules/
+
+# Ignore environment files in Backend
+Backend/.env
 
 Backend/.env
 
