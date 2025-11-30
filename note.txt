@@ -1,11 +1,13 @@
 
-Created controllers for login, register, and logout:
-- Implemented login controller to authenticate users and issue tokens.
-- Built register controller to handle new user sign-up and password encryption.
-- Developed logout controller to clear authentication tokens and end user sessions.
+Created product controller functionality:
 
-Created auth route:
-- Defined routes for login, register, and logout, linking them to their respective controllers.
+Created product routes:
 
-Registered auth route in app.js:
-- Imported the auth route and added it to the Express app to handle authentication requests.
+Registered product route in app.js:
+
+Further explanation of each product controller:
+ - createProduct: Handles adding a new product to the database, validating input and saving product details.
+ - getProducts: Retrieves all products from the database, supporting listing and searching.
+ - getProductById: Fetches a single product by its ID for detailed viewing.
+ - updateProduct: Updates an existing product's information based on provided data and product ID.
+ - deleteProduct: Removes a product from the database using its ID.
