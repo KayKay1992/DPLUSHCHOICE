@@ -112,6 +112,7 @@ export const ratingProduct = asyncHandler(async (req, res) => {
     );
     res.status(200).json({
       message: "Rating added successfully",
+      postedBy,
     });
   } else {
     res.status(400);
