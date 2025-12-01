@@ -1,10 +1,6 @@
-Implemented order controller functionality:
- - createOrder: Handles creating a new order from request data and saving it to the database.
- - updateOrder: Updates an existing order's details using its ID and request data.
- - deleteOrder: Deletes an order from the database by its ID and returns confirmation.
- - getUserOrders: Retrieves all orders for a specific user, sorted by creation date.
- - getAllOrders: Fetches all orders in the database, sorted by creation date.
+Implemented AI description generator feature:
+- Created ai.model.js to define a schema for storing AI-generated product descriptions.
+- Developed ai.controller.js to handle requests, receive title and image, call the AI API, and return a generated description.
+- Set up ai.route.js with a POST endpoint for admins to submit a title and image, using multer for image upload.
+- Registered the AI route in app.js to make the description generation endpoint available at /api/v1/ai/description.
 
-Registered order controller route:
- - Defined RESTful routes for order operations and linked them to the corresponding controller functions.
- - Imported and registered the order route in app.js to handle order-related API requests.
