@@ -1,25 +1,10 @@
-Created banner controller functionality:
 
+Implemented user controller functionality:
+- updateUser: Updates user details, including hashing the password if changed, and saves the updated user to the database.
+- deleteUser: Deletes a user from the database using their ID and returns a confirmation message.
+- getUserById: Retrieves a single user by ID, excluding the password field from the response.
+- getAllUsers: Fetches all users from the database, excluding their passwords, and returns the list.
 
-Detailed explanation of banner.controller.js:
-- createBanner: Receives banner data from the request, creates a new Banner document, saves it to the database, and responds with success or error.
-- deleteBanner: Finds a banner by its ID from the request parameters, deletes it from the database, and returns a confirmation or error message.
-- getAllBanners: Retrieves all banner documents from the database and returns them in the response, or an error if none are found.
-- getRandomBanner: Fetches all banners, selects one at random, and returns it in the response, or an error if none are found.
-
-- Developed banner controller to manage banner operations such as creating, retrieving, updating, and deleting banners.
-- Each controller function handles validation, interacts with the database, and returns appropriate responses for banner actions.
-
-Created banner routes:
-- Defined RESTful routes for banner operations (e.g., POST /banners, GET /banners, GET /banners/:id, PUT /banners/:id, DELETE /banners/:id).
-- Linked each route to its corresponding controller function to process requests and responses.
-
-Registered banner route in app.js:
-- Imported the banner route module and registered it with the Express app to handle all banner-related API requests.
-- Ensured the route is accessible and properly integrated with middleware for authentication and error handling if required.
-
-Detailed explanation of banner.controller.js:
-- createBanner: Receives banner data from the request, creates a new Banner document, saves it to the database, and responds with success or error.
-- deleteBanner: Finds a banner by its ID from the request parameters, deletes it from the database, and returns a confirmation or error message.
-- getAllBanners: Retrieves all banner documents from the database and returns them in the response, or an error if none are found.
-- getRandomBanner: Fetches all banners, selects one at random, and returns it in the response, or an error if none are found.
+Registered user controller route:
+- Defined RESTful routes for user operations and linked them to the corresponding controller functions.
+- Imported and registered the user route in app.js to handle user-related API requests.

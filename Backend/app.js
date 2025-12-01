@@ -6,6 +6,7 @@ import { notFound, errorHandler } from './middleware/errorHandler.middleware.js'
 import authRoutes from './routes/auth.route.js';
 import productRoutes from './routes/product.route.js';
 import bannerRoutes from './routes/banner.route.js';
+import userRoutes from './routes/user.route.js';
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use(cookieParser());
 app.use('/api/V1/auth', authRoutes);
 app.use('/api/V1/products', productRoutes);
 app.use('/api/V1/banners', bannerRoutes);
+app.use('/api/v1/users', userRoutes);
 
 // Error Handling Middleware
 app.use(notFound);
