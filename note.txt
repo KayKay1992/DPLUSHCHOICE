@@ -1,6 +1,4 @@
-Implemented AI description generator feature:
-- Created ai.model.js to define a schema for storing AI-generated product descriptions.
-- Developed ai.controller.js to handle requests, receive title and image, call the AI API, and return a generated description.
-- Set up ai.route.js with a POST endpoint for admins to submit a title and image, using multer for image upload.
-- Registered the AI route in app.js to make the description generation endpoint available at /api/v1/ai/description.
-
+Implemented protect middleware in all main routes:
+- Imported the protect middleware from auth.middleware.js into each route file.
+- Applied protect to critical endpoints in product, banner, user, order, auth, and AI routes to ensure only authenticated users can access these operations.
+- This secures all sensitive API endpoints and enforces authentication across the backend.

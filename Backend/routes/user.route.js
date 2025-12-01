@@ -5,19 +5,19 @@ import {
   updateUser,
   deleteUser,
 } from "../controller/user.controller.js";
+import protect from "../middleware/auth.middleware.js";
 const router = express.Router();
 
 //GET ALL USERS ROUTE
-router.get("/", getAllUsers);
+router.get("/", protect, getAllUsers);
 
 //GET USER BY ID ROUTE
-router.get("/find/:userId", getUserById);
+router.get("/find/:userId", protect, getUserById);
 
 //UPDATE USER ROUTE
-router.put("/:userId", updateUser);
+router.put("/:userId", protect, updateUser);
 
 //DELETE USER ROUTE
-router.delete("/:id", deleteUser);
+router.delete("/:id", protect, deleteUser);
 
 export default router;
-

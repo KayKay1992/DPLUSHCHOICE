@@ -7,25 +7,26 @@ import {
   getAllProducts,
   ratingProduct,
 } from "../controller/product.controller.js";
+import protect from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
 //CREATE PRODUCT ROUTE
-router.post("/", createProduct);
+router.post("/", protect, createProduct);
 
 //UPDATE PRODUCT ROUTE
-router.put("/:id", updateProduct);
+router.put("/:id", protect, updateProduct);
 
 //DELETE PRODUCT ROUTE
-router.delete("/:id", deleteProduct);
+router.delete("/:id", protect, deleteProduct);
 
 //GET PRODUCT BY ID ROUTE
-router.get("/find/:id", getProductById);
+router.get("/find/:id", protect, getProductById);
 
 //GET ALL PRODUCTS ROUTE
 router.get("/", getAllProducts);
 
 //RATING PRODUCT ROUTE
-router.put("/rating/:productId", ratingProduct);
+router.put("/rating/:productId", protect, ratingProduct);
 
 export default router;
