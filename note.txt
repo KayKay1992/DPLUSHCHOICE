@@ -1,10 +1,10 @@
+Implemented order controller functionality:
+ - createOrder: Handles creating a new order from request data and saving it to the database.
+ - updateOrder: Updates an existing order's details using its ID and request data.
+ - deleteOrder: Deletes an order from the database by its ID and returns confirmation.
+ - getUserOrders: Retrieves all orders for a specific user, sorted by creation date.
+ - getAllOrders: Fetches all orders in the database, sorted by creation date.
 
-Implemented user controller functionality:
-- updateUser: Updates user details, including hashing the password if changed, and saves the updated user to the database.
-- deleteUser: Deletes a user from the database using their ID and returns a confirmation message.
-- getUserById: Retrieves a single user by ID, excluding the password field from the response.
-- getAllUsers: Fetches all users from the database, excluding their passwords, and returns the list.
-
-Registered user controller route:
-- Defined RESTful routes for user operations and linked them to the corresponding controller functions.
-- Imported and registered the user route in app.js to handle user-related API requests.
+Registered order controller route:
+ - Defined RESTful routes for order operations and linked them to the corresponding controller functions.
+ - Imported and registered the order route in app.js to handle order-related API requests.
