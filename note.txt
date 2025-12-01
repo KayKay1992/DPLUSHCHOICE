@@ -1,4 +1,36 @@
-Implemented protect middleware in all main routes:
-- Imported the protect middleware from auth.middleware.js into each route file.
-- Applied protect to critical endpoints in product, banner, user, order, auth, and AI routes to ensure only authenticated users can access these operations.
-- This secures all sensitive API endpoints and enforces authentication across the backend.
+Introduction to Background services.
+Scheduling Task using node crone.
+
+Background Services Setup:
+- Installed express for server setup, dotenv for environment variable management, mongoose for MongoDB connection, and node-cron for scheduling background tasks.
+- Initialized the app in index.js by importing required packages, configuring dotenv, and creating an Express app instance.
+- Set up index.js to schedule background tasks using node-cron and start the server on the specified port from .env.
+- Connected to MongoDB in db.js using mongoose, with connection details loaded from environment variables and automatic retry on failure.
+
+Detailed Background Services Setup:
+
+1. Installed Packages:
+- express: Sets up the server and handles HTTP requests.
+- dotenv: Loads environment variables from a .env file for configuration (e.g., PORT, DB connection string).
+- mongoose: Connects to MongoDB and manages database operations.
+- node-cron: Schedules and runs background tasks at specified intervals.
+
+2. App Initialization (index.js):
+- Imported required packages and configured dotenv to access environment variables.
+- Created an Express app instance to serve as the entry point for background services.
+- Defined the PORT using process.env.PORT from the .env file.
+
+3. Scheduling Background Tasks (index.js):
+- Used node-cron to schedule a task that runs every second ("* * * * * *").
+- The scheduled function logs a message and is the placeholder for any background logic (e.g., sending emails, cleaning up data, syncing with external APIs).
+- The services function encapsulates the scheduling logic and is called during initialization.
+
+4. MongoDB Connection (db.js):
+- Used mongoose to connect to the MongoDB database using the DB connection string from environment variables.
+- The connectDB function attempts to connect and logs a success message; on failure, it logs the error and retries after 5 seconds.
+- The connection is established when the Express app starts listening on the specified port.
+
+5. .env File:
+- Stores sensitive configuration such as PORT and DB connection string, keeping them out of source code for security and flexibility.
+
+This setup allows you to run scheduled background services in Node.js, with robust database connectivity and environment-based configuration, ready for scalable automation tasks.
