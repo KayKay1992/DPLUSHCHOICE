@@ -1,18 +1,25 @@
-Creating Reusable send mail functionality
+Implimentation of all template files:
 
-Detailed explanation of sendMail.js:
-- Implemented a reusable email sending function using nodemailer and dotenv for environment variables.
-- Configured nodemailer to use Gmail's SMTP server, with authentication details (email and password) loaded from .env.
-- The createTransporter function sets up the transporter with the provided configuration.
-- The sendMail function verifies the transporter and sends an email using the given message options, logging success or error.
+1. deliveredorder.ejs:
+- This template is used to notify customers when their order has been delivered. It features a prominent header with your brand logo and a purple-magenta gradient background for strong brand identity.
+- The body includes a personalized greeting, delivery details, and a summary of the ordered products (with images, titles, quantities, and prices).
+- The footer contains copyright information and brand name, reinforcing professionalism.
 
-Process for setting up email and password in .env:
-- In your .env file, you set EMAIL and PASSWORD for authentication with Gmail's SMTP server.
-- To get the password, you must generate an "App Password" from your Google Account (not your regular email password).
-- Steps:
-  1. Go to your Google Account settings.
-  2. Enable 2-Step Verification if not already enabled.
-  3. Navigate to Security > App Passwords.
-  4. Generate a new app password for "Mail" and "Windows Computer" (or your platform).
-  5. Copy the generated password and set it as PASSWORD in your .env file.
-- This app password allows your Node.js app to send emails securely without exposing your main account password.
+2. pendingorder.ejs:
+- This template informs customers about their pending orders. It uses the same brand colors and logo for consistency.
+- The body provides a personalized message, order status, and a list of products in the order, each with an image, title, and price.
+- The footer maintains brand presence and copyright.
+
+3. promotion.ejs:
+- This template is designed for product promotions and marketing campaigns. It uses the brand gradient and logo in the header.
+- The body introduces featured products, each displayed with an image, name, description, and a 'Shop Now' button for easy access.
+- The layout is visually appealing, with product cards and clear calls to action, ideal for driving engagement.
+- The footer keeps the brand visible and professional.
+
+4. welcome.ejs:
+- This template welcomes new users to your platform. The header displays your logo and brand colors.
+- The body contains a warm greeting, a brief introduction to your brand, and encouragement to explore products and offers.
+- It also provides contact information for support and a friendly closing message.
+- The footer includes copyright and brand name, ensuring a consistent look across all communications.
+
+All templates use your logo at /assets/logo.jpg and a purple-magenta gradient background to reinforce your brand identity and create a visually appealing, professional experience for your users.
