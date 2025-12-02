@@ -13,12 +13,10 @@ const PORT = process.env.PORT;
 //if you want to learn how to schedule tasks i recommenend crontab guru
 const services = () => {
     cron.schedule("* * * * * *", () => {
-        console.log("Background service running every second");
         // Add your background task logic here
     });
 };
 services();
-
 app.listen(PORT, () => {
     console.log("Background Services is running on port", PORT);
     connectDB();
