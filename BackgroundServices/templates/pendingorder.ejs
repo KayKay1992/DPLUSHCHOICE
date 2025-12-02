@@ -102,43 +102,83 @@
     <div class="email-wrapper">
       <div class="email-header">
         <img
-          src="/assets/logo.jpg"
-          height="200px"
-          width="200px"
+          src="cid:logo"
+          height="120"
+          width="120"
           alt="D' Plush Choice Logo"
+          style="
+            display: block;
+            margin: 0 auto;
+            border-radius: 50%;
+            box-shadow: 0 4px 16px rgba(168, 0, 255, 0.15);
+            background: #fff;
+          "
         />
+        <h1 style="color: #a800ff; margin-top: 10px">
+          Pending Order Notification
+        </h1>
       </div>
-      <div class="email-body">
-        <h1>Pending Order Notification</h1>
-        <p>Hello <%= name %>,</p>
-        <p>
-          Thank You for placing an order. Your is being processed and will be
-          shipped very soon. Please find the details below:
+      <div
+        class="email-body"
+        style="
+          border-radius: 16px;
+          box-shadow: 0 2px 12px rgba(255, 0, 200, 0.08);
+          margin-top: -30px;
+        "
+      >
+        <p style="font-size: 18px; color: #a800ff; font-weight: 600">
+          Hello <%= name %>,
+        </p>
+        <p style="color: #222; font-size: 16px">
+          Thank you for placing an order! Your order is being processed and will
+          be shipped very soon. Please find the details below:
         </p>
 
         <div class="product-list">
           <% products.forEach(product => { %>
-          <div class="product-item">
+          <div
+            class="product-item"
+            style="
+              background: #fff;
+              border-radius: 8px;
+              box-shadow: 0 1px 6px rgba(168, 0, 255, 0.07);
+              padding: 10px;
+            "
+          >
             <img
               src="<%= product.img %>"
               alt="<%= product.title %>"
               class="product-img"
+              style="
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(255, 0, 200, 0.1);
+              "
             />
             <div class="product-details">
-              <p class="product-title"><%= product.title %></p>
-              <p class="product-price">Price: $<%= product.price %></p>
+              <p class="product-title" style="color: #a800ff">
+                <%= product.title %>
+              </p>
+              <p class="product-price" style="color: #ff00c8">
+                Price: $<%= product.price %>
+              </p>
             </div>
           </div>
           <% }) %>
         </div>
-        <p>
+        <p style="color: #222; font-size: 16px">
           If you have any questions or need assistance, feel free to
-          <a href="">contact us</a>.
+          <a
+            href="mailto:support@dplushchoice.com"
+            style="color: #ff00c8; text-decoration: underline"
+            >contact us</a
+          >.
         </p>
-        <p>Thank you for shopping with Beauty Bliss!</p>
+        <p style="font-size: 17px; color: #a800ff; font-weight: 600">
+          Thank you for shopping with D' Plush Choice!
+        </p>
       </div>
       <div class="email-footer">
-        <p>&copy;2024 Beauty Bliss. All rights reserved.</p>
+        <p>&copy;2025 D' Plush Choice. All rights reserved.</p>
       </div>
     </div>
   </body>

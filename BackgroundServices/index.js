@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cron from "node-cron";
 import connectDB from "./utils/db.js";
 import sendWelcomeEmail from "./EmailServices/sendWelcomeEmail.js";
+import sendPendingOrderEmail from "./EmailServices/sendPendingOrderEmail.js";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ const services = () => {
     // Add your background task logic here
     //send welcome email service
     sendWelcomeEmail();
+    sendPendingOrderEmail();
   });
 };
 services();
