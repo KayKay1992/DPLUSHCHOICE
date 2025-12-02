@@ -98,31 +98,59 @@
     <div class="email-wrapper">
       <div class="email-header">
         <img
-          src="/assets/logo.jpg"
-          height="200px"
-          width="200px"
+          src="cid:logo"
+          height="120"
+          width="120"
           alt="D' Plush Choice Logo"
+          style="
+            display: block;
+            margin: 0 auto;
+            border-radius: 50%;
+            box-shadow: 0 4px 16px rgba(168, 0, 255, 0.15);
+            background: #fff;
+          "
         />
+        <h1 style="color: #a800ff; margin-top: 10px">
+          Welcome to D' Plush Choice!
+        </h1>
       </div>
-      <div class="email-body">
-        <p>Hello <%= name %>,</p>
-        <p>
-          We are thrilled to welcome you to Beauty Bliss, your new go-to
-          destination for all things beauty. We're here to help you discover
-          products that match your style and elevate your beauty routine.
+      <div
+        class="email-body"
+        style="
+          border-radius: 16px;
+          box-shadow: 0 2px 12px rgba(255, 0, 200, 0.08);
+          margin-top: -30px;
+        "
+      >
+        <p style="font-size: 18px; color: #a800ff; font-weight: 600">
+          Hello <%= name %>,
         </p>
-        <p>
-          Stay tuned for exclusive offers, beauty tips, and the latest trends
-          directly in your inbox.
+        <p style="color: #222; font-size: 16px">
+          We are
+          <span style="color: #ff00c8; font-weight: 600">thrilled</span> to
+          welcome you to <b>D' Plush Choice</b>, your new go-to destination for
+          all things beauty. We're here to help you discover products that match
+          your style and elevate your beauty routine.
         </p>
-        <p>
+        <p style="color: #222; font-size: 16px">
+          Stay tuned for
+          <span style="color: #a800ff; font-weight: 600">exclusive offers</span
+          >, beauty tips, and the latest trends directly in your inbox.
+        </p>
+        <p style="color: #222; font-size: 16px">
           If you have any questions or need assistance, feel free to
-          <a href="">contact us</a>.
+          <a
+            href="mailto:support@dplushchoice.com"
+            style="color: #ff00c8; text-decoration: underline"
+            >contact us</a
+          >.
         </p>
-        <p>Thank you for joining us. Let's make beauty blissful!</p>
+        <p style="font-size: 17px; color: #a800ff; font-weight: 600">
+          Thank you for joining us. Let's make beauty blissful!
+        </p>
       </div>
       <div class="email-footer">
-        <p>&copy;2024 Beauty Bliss. All rights reserved.</p>
+        <p>&copy;2025 D' Plush Choice. All rights reserved.</p>
       </div>
     </div>
   </body>

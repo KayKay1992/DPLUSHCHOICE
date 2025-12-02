@@ -1,25 +1,48 @@
-Implimentation of all template files:
+Creating welcome email service
 
-1. deliveredorder.ejs:
-- This template is used to notify customers when their order has been delivered. It features a prominent header with your brand logo and a purple-magenta gradient background for strong brand identity.
-- The body includes a personalized greeting, delivery details, and a summary of the ordered products (with images, titles, quantities, and prices).
-- The footer contains copyright information and brand name, reinforcing professionalism.
+---
 
-2. pendingorder.ejs:
-- This template informs customers about their pending orders. It uses the same brand colors and logo for consistency.
-- The body provides a personalized message, order status, and a list of products in the order, each with an image, title, and price.
-- The footer maintains brand presence and copyright.
+Welcome Email Service Implementation (D' Plush Choice)
 
-3. promotion.ejs:
-- This template is designed for product promotions and marketing campaigns. It uses the brand gradient and logo in the header.
-- The body introduces featured products, each displayed with an image, name, description, and a 'Shop Now' button for easy access.
-- The layout is visually appealing, with product cards and clear calls to action, ideal for driving engagement.
-- The footer keeps the brand visible and professional.
+1. **Purpose:**
+	- Automatically sends a branded welcome email to new users when their status is `0` (not yet welcomed) in the database.
+	- The email includes a personalized greeting, brand colors, and the company logo.
 
-4. welcome.ejs:
-- This template welcomes new users to your platform. The header displays your logo and brand colors.
-- The body contains a warm greeting, a brief introduction to your brand, and encouragement to explore products and offers.
-- It also provides contact information for support and a friendly closing message.
-- The footer includes copyright and brand name, ensuring a consistent look across all communications.
+2. **Core Files:**
+	- `EmailServices/sendWelcomeEmail.js`: Main logic for fetching users and sending emails.
+	- `helpers/sendMail.js`: Handles Nodemailer configuration and sending.
+	- `templates/welcome.ejs`: EJS template for the email body, styled with gradients and logo.
+	- `assets/logo.jpg`: Logo image attached inline in the email.
 
-All templates use your logo at /assets/logo.jpg and a purple-magenta gradient background to reinforce your brand identity and create a visually appealing, professional experience for your users.
+3. **How It Works:**
+	- The service queries the database for users with `status: 0` (new users).
+	- For each user, it renders the `welcome.ejs` template using EJS, passing the user's name for personalization.
+	- The email is constructed with:
+	  - `from`: Company email address (from `.env`)
+	  - `to`: User's email address
+	  - `subject`: "Welcome to D' Plush Choice"
+	  - `html`: Rendered EJS template
+	  - `attachments`: Logo image (`logo.jpg`) attached as an inline image with `cid:logo`
+	- The logo is referenced in the template as `<img src="cid:logo" ... />`.
+	- The email is sent using Nodemailer via Gmail SMTP, with credentials loaded from `.env`.
+	- After sending, the user's status is updated to `1` to prevent duplicate emails.
+
+4. **Key Features:**
+	- **Branding:** Uses a purple-magenta gradient, custom fonts, and a circular logo for a modern look.
+	- **Personalization:** Greets the user by name and provides a friendly, welcoming message.
+	- **Inline Logo:** Ensures the logo displays in most email clients by attaching it as an inline image.
+	- **Error Handling:** Logs errors if email sending fails, so issues can be tracked.
+
+5. **Technical Details:**
+	- The logo attachment uses an absolute path: `path.resolve(__dirname, "../assets/logo.jpg")` for reliability.
+	- The EJS template is rendered asynchronously for each user.
+	- The service can be triggered manually or via a scheduled background job (e.g., with node-cron).
+
+6. **Best Practices:**
+	- Store sensitive credentials in `.env` and never commit them to source control.
+	- Use Gmail App Passwords for secure SMTP authentication.
+	- Test emails in multiple clients to ensure branding and images display correctly.
+
+---
+
+This implementation provides a professional, automated welcome experience for new users, reinforcing brand identity and engagement from the start.
