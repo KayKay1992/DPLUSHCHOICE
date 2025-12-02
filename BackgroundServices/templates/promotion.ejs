@@ -108,14 +108,31 @@
     <div class="email-wrapper">
       <div class="email-header">
         <img
-          src="/assets/logo.jpg"
-          height="200px"
-          width="200px"
+          src="cid:logo"
+          height="120"
+          width="120"
           alt="D' Plush Choice Logo"
+          style="
+            display: block;
+            margin: 0 auto;
+            border-radius: 50%;
+            box-shadow: 0 4px 16px rgba(168, 0, 255, 0.15);
+            background: #fff;
+          "
         />
+        <h1 style="color: #a800ff; margin-top: 10px">
+          Featured Product Promotions
+        </h1>
       </div>
-      <div class="email-body">
-        <p>
+      <div
+        class="email-body"
+        style="
+          border-radius: 16px;
+          box-shadow: 0 2px 12px rgba(255, 0, 200, 0.08);
+          margin-top: -30px;
+        "
+      >
+        <p style="font-size: 18px; color: #a800ff; font-weight: 600">
           We are thrilled to introduce some of our featured beauty products just
           for you. These products are carefully selected to enhance your beauty
           routine and provide you with the best results.
@@ -123,22 +140,53 @@
 
         <div class="product-list">
           <% products.forEach(function(product) { %>
-          <div class="product-item">
-            <img src="<%= product.img %>" alt="<%= product.name %>" />
-            <h3><%= product.name %></h3>
-            <p><%= product.description %></p>
-            <a href="<%= product.link %>">Shop Now</a>
+          <div
+            class="product-item"
+            style="
+              background: #fff;
+              border-radius: 8px;
+              box-shadow: 0 1px 6px rgba(168, 0, 255, 0.07);
+              padding: 10px;
+            "
+          >
+            <img
+              src="<%= product.img %>"
+              alt="<%= product.name %>"
+              style="
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(255, 0, 200, 0.1);
+                margin-bottom: 10px;
+              "
+            />
+            <h3 style="color: #a800ff; margin-bottom: 10px">
+              <%= product.name %>
+            </h3>
+            <p style="color: #222; margin-bottom: 20px">
+              <%= product.description %>
+            </p>
+            <a
+              href="<%= product.link %>"
+              style="
+                background-color: #ff00c8;
+                color: #fff;
+                padding: 10px 20px;
+                border-radius: 5px;
+                text-decoration: none;
+                font-weight: 600;
+              "
+              >Shop Now</a
+            >
           </div>
           <% }) %>
         </div>
 
-        <p>
+        <p style="font-size: 17px; color: #a800ff; font-weight: 600">
           Stay tuned for more exclusive offers and beauty tips. Thank you for
-          being a part of Beauty Bliss!
+          being a part of D' Plush Choice!
         </p>
       </div>
       <div class="email-footer">
-        <p>&copy;2024 Beauty Bliss. All rights reserved.</p>
+        <p>&copy;2025 D' Plush Choice. All rights reserved.</p>
       </div>
     </div>
   </body>

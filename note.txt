@@ -1,42 +1,42 @@
 
-Creating Delivered Order Email Service
+Creating Promotion Email Service
 
 ---
 
-Delivered Order Email Service Implementation (D' Plush Choice)
+Promotion Email Service Implementation (D' Plush Choice)
 
 1. **Purpose:**
-	- Automatically sends a branded delivered order notification email to users when their order status is `2` (delivered).
-	- The email includes a personalized greeting, pickup location, order summary, and the company logo.
+	- Automatically sends a branded product promotion email to all users, featuring top products and the company logo.
+	- The email includes a personalized greeting, product cards, and a call-to-action to shop.
 
 2. **Core Files:**
-	- `EmailServices/sendDeliveredOrderEmail.js`: Main logic for fetching delivered orders and sending emails.
+	- `EmailServices/sendPromotionEmail.js`: Main logic for fetching users/products and sending emails.
 	- `helpers/sendMail.js`: Handles Nodemailer configuration and sending.
-	- `templates/deliveveredorder.ejs`: EJS template for the email body, styled with gradients and logo.
+	- `templates/promotion.ejs`: EJS template for the email body, styled with gradients and logo.
 	- `assets/logo.jpg`: Logo image attached inline in the email.
 
 3. **How It Works:**
-	- The service queries the database for orders with `status: 2` (delivered).
-	- For each order, it renders the `deliveveredorder.ejs` template using EJS, passing the user's name and product list for personalization.
+	- The service fetches all users from the database.
+	- It samples 5 products from the product collection to feature in the email.
+	- For each user, it renders the `promotion.ejs` template using EJS, passing the user's name and product list for personalization.
 	- The email is constructed with:
 	  - `from`: Company email address (from `.env`)
 	  - `to`: User's email address
-	  - `subject`: "Your Order Has Been Delivered!"
+	  - `subject`: "Top Products Just for You!"
 	  - `html`: Rendered EJS template
 	  - `attachments`: Logo image (`logo.jpg`) attached as an inline image with `cid:logo`
 	- The logo is referenced in the template as `<img src="cid:logo" ... />`.
 	- The email is sent using Nodemailer via Gmail SMTP, with credentials loaded from `.env`.
-	- After sending, the order's status is updated to `3` to prevent duplicate notifications.
 
 4. **Key Features:**
 	- **Branding:** Uses a purple-magenta gradient, custom fonts, and a circular logo for a modern look.
-	- **Personalization:** Greets the user by name, provides pickup location, and lists all products in the delivered order, with images and prices.
+	- **Personalization:** Greets the user by name and lists featured products with images, descriptions, and shop links.
 	- **Inline Logo:** Ensures the logo displays in most email clients by attaching it as an inline image.
 	- **Error Handling:** Logs errors if email sending fails, so issues can be tracked.
 
 5. **Technical Details:**
 	- The logo attachment uses an absolute path: `path.resolve(__dirname, "../assets/logo.jpg")` for reliability.
-	- The EJS template is rendered asynchronously for each delivered order.
+	- The EJS template is rendered asynchronously for each user.
 	- The service can be triggered manually or via a scheduled background job (e.g., with node-cron).
 
 6. **Best Practices:**
@@ -46,5 +46,4 @@ Delivered Order Email Service Implementation (D' Plush Choice)
 
 ---
 
-This implementation provides a professional, automated notification experience for users, reinforcing brand identity and keeping customers informed about their delivered orders.
-
+This implementation provides a professional, automated promotion experience for users, reinforcing brand identity and driving engagement with featured products.
