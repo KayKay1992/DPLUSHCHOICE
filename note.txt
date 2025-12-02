@@ -1,40 +1,42 @@
-Creating Pending order email service
+
+Creating Delivered Order Email Service
 
 ---
 
-Pending Order Email Service Implementation (D' Plush Choice)
+Delivered Order Email Service Implementation (D' Plush Choice)
 
 1. **Purpose:**
-	- Automatically sends a branded pending order notification email to users after they place an order.
-	- The email includes order details, a personalized greeting, and the company logo.
+	- Automatically sends a branded delivered order notification email to users when their order status is `2` (delivered).
+	- The email includes a personalized greeting, pickup location, order summary, and the company logo.
 
 2. **Core Files:**
-	- `EmailServices/sendPendingOrderEmail.js`: Main logic for fetching order data and sending emails (file name may vary).
+	- `EmailServices/sendDeliveredOrderEmail.js`: Main logic for fetching delivered orders and sending emails.
 	- `helpers/sendMail.js`: Handles Nodemailer configuration and sending.
-	- `templates/pendingorder.ejs`: EJS template for the email body, styled with gradients and logo.
+	- `templates/deliveveredorder.ejs`: EJS template for the email body, styled with gradients and logo.
 	- `assets/logo.jpg`: Logo image attached inline in the email.
 
 3. **How It Works:**
-	- The service queries the database for the user's pending orders and their details (products, prices, etc.).
-	- For each order, it renders the `pendingorder.ejs` template using EJS, passing the user's name and product list for personalization.
+	- The service queries the database for orders with `status: 2` (delivered).
+	- For each order, it renders the `deliveveredorder.ejs` template using EJS, passing the user's name and product list for personalization.
 	- The email is constructed with:
 	  - `from`: Company email address (from `.env`)
 	  - `to`: User's email address
-	  - `subject`: "Pending Order Notification"
+	  - `subject`: "Your Order Has Been Delivered!"
 	  - `html`: Rendered EJS template
 	  - `attachments`: Logo image (`logo.jpg`) attached as an inline image with `cid:logo`
 	- The logo is referenced in the template as `<img src="cid:logo" ... />`.
 	- The email is sent using Nodemailer via Gmail SMTP, with credentials loaded from `.env`.
+	- After sending, the order's status is updated to `3` to prevent duplicate notifications.
 
 4. **Key Features:**
 	- **Branding:** Uses a purple-magenta gradient, custom fonts, and a circular logo for a modern look.
-	- **Personalization:** Greets the user by name and lists all products in the pending order, with images and prices.
+	- **Personalization:** Greets the user by name, provides pickup location, and lists all products in the delivered order, with images and prices.
 	- **Inline Logo:** Ensures the logo displays in most email clients by attaching it as an inline image.
 	- **Error Handling:** Logs errors if email sending fails, so issues can be tracked.
 
 5. **Technical Details:**
 	- The logo attachment uses an absolute path: `path.resolve(__dirname, "../assets/logo.jpg")` for reliability.
-	- The EJS template is rendered asynchronously for each order.
+	- The EJS template is rendered asynchronously for each delivered order.
 	- The service can be triggered manually or via a scheduled background job (e.g., with node-cron).
 
 6. **Best Practices:**
@@ -44,4 +46,5 @@ Pending Order Email Service Implementation (D' Plush Choice)
 
 ---
 
-This implementation provides a professional, automated notification experience for users, reinforcing brand identity and keeping customers informed about their orders.
+This implementation provides a professional, automated notification experience for users, reinforcing brand identity and keeping customers informed about their delivered orders.
+

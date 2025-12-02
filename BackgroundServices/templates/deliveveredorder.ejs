@@ -91,46 +91,93 @@
     <div class="email-wrapper">
       <div class="email-header">
         <img
-          src="/assets/logo.jpg"
-          height="200px"
-          width="200px"
+          src="cid:logo"
+          height="120"
+          width="120"
           alt="D' Plush Choice Logo"
+          style="
+            display: block;
+            margin: 0 auto;
+            border-radius: 50%;
+            box-shadow: 0 4px 16px rgba(168, 0, 255, 0.15);
+            background: #fff;
+          "
         />
+        <h1 style="color: #a800ff; margin-top: 10px">
+          Your Order Has Been Delivered
+        </h1>
       </div>
-      <div class="email-body">
-        <h1>Your Order Has Been Delivered</h1>
-        <p>Hello <%= name %>,</p>
-        <p>
-          Great news! Your Beauty Bliss order has been delivered and is ready
-          for pick up at the following location:
+      <div
+        class="email-body"
+        style="
+          border-radius: 16px;
+          box-shadow: 0 2px 12px rgba(255, 0, 200, 0.08);
+          margin-top: -30px;
+        "
+      >
+        <p style="font-size: 18px; color: #a800ff; font-weight: 600">
+          Hello <%= name %>,
         </p>
-        <p><strong>Pickup Station:</strong> Kansas, 1234 DownTown, USA</p>
-        <div class="divider"></div>
-        <h2>Order Summary</h2>
+        <p style="color: #222; font-size: 16px">
+          Great news! Your order has been delivered and is ready for pick up at
+          the following location:
+        </p>
+        <p style="color: #ff00c8; font-size: 16px">
+          <strong>Pickup Station:</strong> Kansas, 1234 DownTown, USA
+        </p>
+        <div
+          class="divider"
+          style="border-top: 1px solid #ccc; margin: 20px 0"
+        ></div>
+        <h2 style="color: #a800ff">Order Summary</h2>
         <div class="product-list">
           <% products.forEach(function(product) { %>
-          <div class="product-item">
+          <div
+            class="product-item"
+            style="
+              background: #fff;
+              border-radius: 8px;
+              box-shadow: 0 1px 6px rgba(168, 0, 255, 0.07);
+              padding: 10px;
+            "
+          >
             <img
               class="product-img"
               src="<%= product.img %>"
               alt="<%= product.title %>"
+              style="
+                border-radius: 8px;
+                box-shadow: 0 2px 8px rgba(255, 0, 200, 0.1);
+              "
             />
             <div class="product-details">
-              <p><strong>Product:</strong> <%= product.title %></p>
-              <p><strong>Quantity:</strong> <%= product.quantity %></p>
-              <p><strong>Price:</strong> $<%= product.price %></p>
+              <p style="color: #a800ff">
+                <strong>Product:</strong> <%= product.title %>
+              </p>
+              <p style="color: #ff00c8">
+                <strong>Quantity:</strong> <%= product.quantity %>
+              </p>
+              <p style="color: #222">
+                <strong>Price:</strong> $<%= product.price %>
+              </p>
             </div>
           </div>
           <% }); %>
         </div>
-        <p>
+        <p style="color: #222; font-size: 16px">
           If you have any questions or need further assistance, feel free to
-          <a href="">contact us</a>.
+          <a
+            href="mailto:support@dplushchoice.com"
+            style="color: #ff00c8; text-decoration: underline"
+            >contact us</a
+          >.
         </p>
-        <p>Thank you for shopping with us!</p>
+        <p style="font-size: 17px; color: #a800ff; font-weight: 600">
+          Thank you for shopping with D' Plush Choice!
+        </p>
       </div>
       <div class="email-footer">
-        <p>&copy;2024 Beauty Bliss. All rights reserved.</p>
+        <p>&copy;2025 D' Plush Choice. All rights reserved.</p>
       </div>
     </div>
   </body>

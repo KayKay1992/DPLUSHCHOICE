@@ -4,6 +4,7 @@ import cron from "node-cron";
 import connectDB from "./utils/db.js";
 import sendWelcomeEmail from "./EmailServices/sendWelcomeEmail.js";
 import sendPendingOrderEmail from "./EmailServices/sendPendingOrderEmail.js";
+import sendDeliveredOrderEmail from "./EmailServices/sendDeliveredOrderEmail.js";
 
 dotenv.config();
 
@@ -19,6 +20,7 @@ const services = () => {
     //send welcome email service
     sendWelcomeEmail();
     sendPendingOrderEmail();
+    sendDeliveredOrderEmail();
   });
 };
 services();
