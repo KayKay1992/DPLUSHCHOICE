@@ -1,50 +1,49 @@
-
-React + Vite + Tailwind CSS Setup (D' Plush Choice)
+Creating Multipage React Application Using React Router DOM
 
 Step-by-step process:
 
-1. **Create React Vite Project:**
-	- Ran: `npm create vite@latest frontend -- --template react`
-	- Chose the `react` template to scaffold a modern React app in the `frontend` folder.
+1. **Install React Router DOM:**
+	- Ran: `npm install react-router-dom`
+	- This added the official routing library for React to the project.
 
-2. **Navigate to Project Folder:**
-	- Used: `cd frontend`
+2. **Set Up Router in App:**
+	- Imported `BrowserRouter`, `Routes`, and `Route` from `react-router-dom` in `src/App.jsx` (or `main.jsx`).
+	- Wrapped the main app component with `<BrowserRouter>` to enable routing.
 
-3. **Install Project Dependencies:**
-	- Ran: `npm install` to install all dependencies from `package.json`.
+3. **Create Page Components:**
+	- Created separate React components for each page (e.g., `Home.jsx`, `About.jsx`, `Contact.jsx`, etc.) in the `src/pages` directory.
 
-4. **Install Tailwind CSS and Related Packages:**
-	- Ran: `npm install -D tailwindcss postcss autoprefixer`
-	- Optionally installed: `npm install @tailwindcss/vite` for Vite integration.
-
-5. **Initialize Tailwind CSS Config:**
-	- Ran: `npx tailwindcss init -p` to create `tailwind.config.js` and `postcss.config.js`.
-
-6. **Configure Tailwind in Project:**
-	- Edited `tailwind.config.js` to set content paths (e.g., `./src/**/*.{js,jsx,ts,tsx}`).
-	- Added Tailwind directives to `src/index.css`:
-	  ```css
-	  @tailwind base;
-	  @tailwind components;
-	  @tailwind utilities;
+4. **Define Routes:**
+	- Used the `<Routes>` and `<Route>` components to map URLs to page components.
+	- Example:
+	  ```jsx
+	  <Routes>
+		 <Route path="/" element={<Home />} />
+		 <Route path="/about" element={<About />} />
+		 <Route path="/contact" element={<Contact />} />
+	  </Routes>
 	  ```
 
-7. **Clean Up Boilerplate:**
-	- Removed default Vite/React template code from `App.jsx`, `index.css`, and other files.
-	- Deleted unused assets and example components.
-	- Customized the app structure and styles for D' Plush Choice branding.
+5. **Add Navigation:**
+	- Used `<Link>` or `<NavLink>` from `react-router-dom` to create navigation links between pages.
+	- Example:
+	  ```jsx
+	  <nav>
+		 <Link to="/">Home</Link>
+		 <Link to="/about">About</Link>
+		 <Link to="/contact">Contact</Link>
+	  </nav>
+	  ```
 
-8. **Run Development Server:**
-	- Used: `npm run dev` to start the Vite development server at `http://localhost:5173/`.
+6. **Test Multipage Navigation:**
+	- Ran the development server with `npm run dev`.
+	- Navigated between pages using the links and confirmed the URL and content updated without a full page reload.
 
-9. **Set Up Branding and Favicon:**
-	- Added a custom SVG icon to `public/dplushchoice-icon.svg`.
-	- Updated `index.html` to use the new icon.
-
-10. **Verify Setup:**
-	 - Confirmed Tailwind CSS is working by using utility classes in components.
-	 - Ensured the app is clean, fast, and ready for custom development.
+7. **Optional Enhancements:**
+	- Used nested routes for layouts or subpages.
+	- Added 404 Not Found route for unmatched URLs.
+	- Used route parameters for dynamic pages (e.g., `/product/:id`).
 
 ---
 
-This process results in a modern, fast, and fully branded React app using Vite and Tailwind CSS, ready for further development.
+This process enables a true multipage experience in a single-page React app, using React Router DOM for fast, client-side navigation.
