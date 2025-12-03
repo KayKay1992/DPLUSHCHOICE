@@ -1,28 +1,33 @@
-import { FaSearch, FaUser } from 'react-icons/fa';
-import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
-import Badge from '@mui/material/Badge';
+import { FaSearch, FaUser } from "react-icons/fa";
+import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
+import Badge from "@mui/material/Badge";
+import { useState } from "react";
+import SideMenu from "./SideMenu";
 
 const Navbar = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Navbar Row */}
         <div className="flex items-center justify-between h-20">
-
-          {/* Logo + Brand Name */}
-          <div className="flex items-center space-x-3">
-            <img
-              src="/logo.jpg"
-              alt="D' Plush Choice Logo"
-              className="h-12 w-12 rounded-full object-cover ring-2 ring-pink-100 shadow-md"
-            />
-            <span className="text-xl sm:text-2xl font-bold text-pink-600 tracking-tight">
-              D' Plush Choice
-            </span>
+          {/* Hamburger + Logo + Brand Name */}
+          <div className="flex items-center">
+            <div className="flex items-center space-x-3">
+              <img
+                src="/logo.jpg"
+                alt="D' Plush Choice Logo"
+                className="h-12 w-12 rounded-full object-cover ring-2 ring-pink-100 shadow-md"
+              />
+              <span className="text-xl sm:text-2xl font-bold text-pink-600 tracking-tight">
+                D' Plush Choice
+              </span>
+            </div>
           </div>
 
           {/* Desktop Search Bar */}
-          <div className="hidden md:flex flex-1 max-w-xl mx-8">
+          <div className="hidden md:flex flex-1 max-w-md mx-8">
             <div className="relative">
               <input
                 type="text"
@@ -35,7 +40,6 @@ const Navbar = () => {
 
           {/* Cart + Login (Always Visible) */}
           <div className="flex items-center space-x-4">
-
             {/* Cart */}
             <Badge badgeContent={4} color="secondary" overlap="circular">
               <div className="p-3 rounded-full hover:bg-pink-50 transition cursor-pointer group">
@@ -51,9 +55,9 @@ const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Full-Width Search (Only on small screens) */}
-        <div className="md:hidden px-2 pb-4 -mt-2">
-          <div className="relative">
+        {/* Mobile Search with Menu Icon (Only on small screens) */}
+        <div className="md:hidden px-2 pb-4 -mt-2 flex items-center">
+          <div className="relative flex-1">
             <input
               type="text"
               placeholder="What are you looking for?"
@@ -61,8 +65,29 @@ const Navbar = () => {
             />
             <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-500 text-xl" />
           </div>
+          <button
+            onClick={() => setIsMenuOpen(true)}
+            className="ml-3 p-3 text-pink-600 hover:text-pink-700 transition rounded-full hover:bg-pink-50"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
+            </svg>
+          </button>
         </div>
       </div>
+
+      {/* Side Menu */}
+      <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
     </nav>
   );
 };

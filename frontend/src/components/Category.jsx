@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 const categories = [
   { name: "Perfumes", image: "/perfume.jpg" },
@@ -19,6 +19,22 @@ const categories = [
 ];
 
 const Category = () => {
+  const [showAll, setShowAll] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsSmallScreen(window.innerWidth < 1024);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const visibleCategories = showAll
+    ? categories
+    : categories.slice(0, isSmallScreen ? 4 : 5);
+
   return (
     <section className="py-16 px-4 bg-linear-to-b from-pink-50 via-purple-50 to-white">
       <div className="max-w-7xl mx-auto">
@@ -34,7 +50,7 @@ const Category = () => {
 
         {/* Category Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 md:gap-8">
-          {categories.map((cat, index) => (
+          {visibleCategories.map((cat, index) => (
             <div
               key={cat.name}
               className="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 cursor-pointer"
@@ -78,10 +94,13 @@ const Category = () => {
           ))}
         </div>
 
-        {/* Optional CTA at bottom */}
+        {/* View More/Show Less Button */}
         <div className="text-center mt-16">
-          <button className="px-10 py-4 bg-linear-to-r from-pink-600 to-purple-700 hover:from-pink-700 hover:to-purple-800 text-white font-bold text-lg rounded-full shadow-2xl hover:shadow-pink-500/50 transform hover:scale-105 transition-all duration-300">
-            View All Categories
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="px-10 py-4 bg-linear-to-r from-pink-600 to-purple-700 hover:from-pink-700 hover:to-purple-800 text-white font-bold text-lg rounded-full shadow-2xl hover:shadow-pink-500/50 transform hover:scale-105 transition-all duration-300"
+          >
+            {showAll ? "Show Less Categories" : "View More Categories"}
           </button>
         </div>
       </div>

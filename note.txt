@@ -1,47 +1,46 @@
 
-Creating Category Component
+Updated Category.jsx Features:
+- Responsive display: Shows first 5 categories on big screens (≥1024px), first 4 on small screens.
+- "View More Categories" button expands to show all categories when clicked; toggles to "Show Less Categories" to collapse back.
+- Uses React state (showAll) and window resize listener for dynamic behavior.
+- Maintains all animations and hover effects for visible categories.
 
-Category.jsx Implementation Details
+SideMenu.jsx Implementation Details
 -----------------------------------
 
 1. Component Structure:
-   - Category.jsx is a functional React component that displays a grid of product categories for the e-commerce site.
-   - It imports React and defines a categories array with objects containing name and image path for each category.
-   - The component returns a section element with a background gradient and max-width container for layout.
+   - SideMenu.jsx is a functional React component designed for small screens (mobile/tablet) to display categories in a slide-in menu.
+   - It imports React and defines the same categories array as Category.jsx for consistency.
+   - The component takes props: isOpen (boolean to show/hide), onClose (function to close the menu).
 
-2. Background and Heading:
-   - The section has a subtle background gradient from pink-50 to white for a luxurious feel.
-   - A centered heading "Shop by Category" uses a gradient text effect (pink to purple) for visual appeal.
-   - A subtitle "Discover luxury in every detail" adds context.
+2. Overlay and Positioning:
+   - Uses fixed positioning with full screen blurred overlay (bg-black/60 backdrop-blur-sm) that closes the menu on click.
+   - The menu slides in from the left with transform translate-x-0/-translate-x-full and smooth transition.
+   - Hidden on large screens (lg:hidden) since it's for small screens.
 
-3. Category Grid:
-   - Uses CSS Grid with responsive columns: 2 on mobile, 3 on small screens, 4 on medium, 5 on large.
-   - Each category is a card with hover effects: shadow increase, translate up, and scale.
-   - Staggered fade-in animation using Framer Motion (initial opacity 0, y:50, animate to opacity 1, y:0).
+3. Menu Design:
+   - Gradient background from white via pink-50 to purple-50 with rounded right corners (rounded-r-3xl).
+   - Glassmorphism effect with backdrop-blur-sm and semi-transparent elements.
+   - Logo and gradient text header for branding.
 
-4. Card Design:
-   - Each card has an image container with aspect ratio, using img tag for the category image.
-   - Luxury gradient overlay from black/90 to transparent for text readability.
-   - Sparkling border effect on hover with ring and offset.
-   - Category name at bottom with drop shadow, and a "Explore Collection" text that appears on hover.
-   - Subtle shine effect at the top that slides in on hover.
+4. Categories Display:
+   - Each category in a glassmorphism card (bg-white/70 backdrop-blur-sm) with hover scale, shadow, and color transitions.
+   - Larger images (w-14 h-14) with overlay effect on hover.
+   - Arrow icon for navigation feel.
+   - Staggered animation delay for fade-in effect.
 
-5. Hover Effects and Animations:
-   - Image scales up on hover for zoom effect.
-   - Card translates up and shadow increases for depth.
-   - Border ring appears with pink color.
-   - Text slides up and subtitle fades in.
-   - Shine effect animates in.
+5. Call-to-Action:
+   - Gradient button at the bottom with hover effects and scale transform.
 
-6. Call-to-Action Button:
-   - At the bottom, a gradient button "View All Categories" with hover scale and shadow effects.
+6. Integration:
+   - To use: Import SideMenu in your Navbar or Home component.
+   - Add state for isOpen (useState), and a hamburger button to toggle it.
+   - Example: <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
+   - Ensure the hamburger menu is visible on small screens in Navbar.jsx.
+   - Updated Navbar.jsx to include hamburger button and SideMenu component.
 
-7. Responsiveness and Accessibility:
-   - Grid adapts to screen sizes for optimal viewing.
-   - Alt text on images for accessibility.
-   - Smooth transitions for all interactive elements.
+7. Responsiveness:
+   - Only shows on screens smaller than lg (1024px).
+   - Smooth animations and transitions for better UX.
 
-8. Export:
-   - The component is exported as default for easy import into pages like Home.jsx.
-
-This implementation creates a modern, interactive category showcase that enhances user engagement and reflects the luxury brand aesthetic.
+This modern side menu features glassmorphism, gradients, and interactive hover effects, providing a luxurious and engaging mobile experience.
