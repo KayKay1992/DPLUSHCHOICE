@@ -1,49 +1,50 @@
 
-Creating Promotion Email Service
+React + Vite + Tailwind CSS Setup (D' Plush Choice)
+
+Step-by-step process:
+
+1. **Create React Vite Project:**
+	- Ran: `npm create vite@latest frontend -- --template react`
+	- Chose the `react` template to scaffold a modern React app in the `frontend` folder.
+
+2. **Navigate to Project Folder:**
+	- Used: `cd frontend`
+
+3. **Install Project Dependencies:**
+	- Ran: `npm install` to install all dependencies from `package.json`.
+
+4. **Install Tailwind CSS and Related Packages:**
+	- Ran: `npm install -D tailwindcss postcss autoprefixer`
+	- Optionally installed: `npm install @tailwindcss/vite` for Vite integration.
+
+5. **Initialize Tailwind CSS Config:**
+	- Ran: `npx tailwindcss init -p` to create `tailwind.config.js` and `postcss.config.js`.
+
+6. **Configure Tailwind in Project:**
+	- Edited `tailwind.config.js` to set content paths (e.g., `./src/**/*.{js,jsx,ts,tsx}`).
+	- Added Tailwind directives to `src/index.css`:
+	  ```css
+	  @tailwind base;
+	  @tailwind components;
+	  @tailwind utilities;
+	  ```
+
+7. **Clean Up Boilerplate:**
+	- Removed default Vite/React template code from `App.jsx`, `index.css`, and other files.
+	- Deleted unused assets and example components.
+	- Customized the app structure and styles for D' Plush Choice branding.
+
+8. **Run Development Server:**
+	- Used: `npm run dev` to start the Vite development server at `http://localhost:5173/`.
+
+9. **Set Up Branding and Favicon:**
+	- Added a custom SVG icon to `public/dplushchoice-icon.svg`.
+	- Updated `index.html` to use the new icon.
+
+10. **Verify Setup:**
+	 - Confirmed Tailwind CSS is working by using utility classes in components.
+	 - Ensured the app is clean, fast, and ready for custom development.
 
 ---
 
-Promotion Email Service Implementation (D' Plush Choice)
-
-1. **Purpose:**
-	- Automatically sends a branded product promotion email to all users, featuring top products and the company logo.
-	- The email includes a personalized greeting, product cards, and a call-to-action to shop.
-
-2. **Core Files:**
-	- `EmailServices/sendPromotionEmail.js`: Main logic for fetching users/products and sending emails.
-	- `helpers/sendMail.js`: Handles Nodemailer configuration and sending.
-	- `templates/promotion.ejs`: EJS template for the email body, styled with gradients and logo.
-	- `assets/logo.jpg`: Logo image attached inline in the email.
-
-3. **How It Works:**
-	- The service fetches all users from the database.
-	- It samples 5 products from the product collection to feature in the email.
-	- For each user, it renders the `promotion.ejs` template using EJS, passing the user's name and product list for personalization.
-	- The email is constructed with:
-	  - `from`: Company email address (from `.env`)
-	  - `to`: User's email address
-	  - `subject`: "Top Products Just for You!"
-	  - `html`: Rendered EJS template
-	  - `attachments`: Logo image (`logo.jpg`) attached as an inline image with `cid:logo`
-	- The logo is referenced in the template as `<img src="cid:logo" ... />`.
-	- The email is sent using Nodemailer via Gmail SMTP, with credentials loaded from `.env`.
-
-4. **Key Features:**
-	- **Branding:** Uses a purple-magenta gradient, custom fonts, and a circular logo for a modern look.
-	- **Personalization:** Greets the user by name and lists featured products with images, descriptions, and shop links.
-	- **Inline Logo:** Ensures the logo displays in most email clients by attaching it as an inline image.
-	- **Error Handling:** Logs errors if email sending fails, so issues can be tracked.
-
-5. **Technical Details:**
-	- The logo attachment uses an absolute path: `path.resolve(__dirname, "../assets/logo.jpg")` for reliability.
-	- The EJS template is rendered asynchronously for each user.
-	- The service can be triggered manually or via a scheduled background job (e.g., with node-cron).
-
-6. **Best Practices:**
-	- Store sensitive credentials in `.env` and never commit them to source control.
-	- Use Gmail App Passwords for secure SMTP authentication.
-	- Test emails in multiple clients to ensure branding and images display correctly.
-
----
-
-This implementation provides a professional, automated promotion experience for users, reinforcing brand identity and driving engagement with featured products.
+This process results in a modern, fast, and fully branded React app using Vite and Tailwind CSS, ready for further development.
