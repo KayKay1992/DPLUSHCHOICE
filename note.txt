@@ -1,49 +1,32 @@
-Creating Multipage React Application Using React Router DOM
+Building Announcement component and adding TypeWriter
 
-Step-by-step process:
+Step-by-Step Guide:
 
-1. **Install React Router DOM:**
-	- Ran: `npm install react-router-dom`
-	- This added the official routing library for React to the project.
+1. **Create the Announcement Component**
+	- Navigate to `frontend/src/components/`.
+	- Create a new file named `Announcement.jsx`.
+	- Define a functional React component called `Announcement`.
+	- Add a container with Tailwind CSS classes for styling (e.g., background, padding, rounded corners, shadow, flex alignment).
 
-2. **Set Up Router in App:**
-	- Imported `BrowserRouter`, `Routes`, and `Route` from `react-router-dom` in `src/App.jsx` (or `main.jsx`).
-	- Wrapped the main app component with `<BrowserRouter>` to enable routing.
+2. **Install Typewriter Animation Package**
+	- Open a terminal in the `frontend` directory.
+	- Run: `npm install react-simple-typewriter`
+	- This installs the `react-simple-typewriter` package for animated text effects.
 
-3. **Create Page Components:**
-	- Created separate React components for each page (e.g., `Home.jsx`, `About.jsx`, `Contact.jsx`, etc.) in the `src/pages` directory.
+3. **Import and Use Typewriter in the Component**
+	- At the top of `Announcement.jsx`, import `{ Typewriter }` from `react-simple-typewriter`.
+	- Use the `<Typewriter />` component inside your announcement message to animate text (e.g., cycling through phrases).
 
-4. **Define Routes:**
-	- Used the `<Routes>` and `<Route>` components to map URLs to page components.
-	- Example:
-	  ```jsx
-	  <Routes>
-		 <Route path="/" element={<Home />} />
-		 <Route path="/about" element={<About />} />
-		 <Route path="/contact" element={<Contact />} />
-	  </Routes>
-	  ```
+4. **Enhance with Tailwind CSS**
+	- Apply Tailwind utility classes to style the announcement bar (e.g., gradients, icons, spacing, font styles).
+	- Optionally, add a modern icon (SVG or emoji) for visual appeal.
 
-5. **Add Navigation:**
-	- Used `<Link>` or `<NavLink>` from `react-router-dom` to create navigation links between pages.
-	- Example:
-	  ```jsx
-	  <nav>
-		 <Link to="/">Home</Link>
-		 <Link to="/about">About</Link>
-		 <Link to="/contact">Contact</Link>
-	  </nav>
-	  ```
+5. **Export and Use the Component**
+	- Export the `Announcement` component from `Announcement.jsx`.
+	- Import and render it in your main page (e.g., `App.jsx` or a relevant route/component).
 
-6. **Test Multipage Navigation:**
-	- Ran the development server with `npm run dev`.
-	- Navigated between pages using the links and confirmed the URL and content updated without a full page reload.
+6. **Test the Announcement**
+	- Start the development server: `npm run dev` (from the `frontend` directory).
+	- Verify the animated announcement bar appears and cycles through the desired messages.
 
-7. **Optional Enhancements:**
-	- Used nested routes for layouts or subpages.
-	- Added 404 Not Found route for unmatched URLs.
-	- Used route parameters for dynamic pages (e.g., `/product/:id`).
-
----
-
-This process enables a true multipage experience in a single-page React app, using React Router DOM for fast, client-side navigation.
+This process results in a modern, animated announcement bar using React, Tailwind CSS, and react-simple-typewriter.

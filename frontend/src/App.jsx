@@ -4,11 +4,13 @@ import { RouterProvider, createBrowserRouter, Outlet } from "react-router-dom";
 import MyAccount from "./pages/MyAccount";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import Announcement from "./components/Announcement";
 
 function App() {
   const Layout = () => {
     return (
       <>
+        <Announcement />
         <Navbar />
         <Outlet />
         <Footer />
