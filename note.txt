@@ -1,32 +1,33 @@
-Building Announcement component and adding TypeWriter
+Step-by-Step: Implementing the Navbar Component
 
-Step-by-Step Guide:
+1. **Create Navbar Component File**
+  - Created `Navbar.jsx` in `frontend/src/components/`.
 
-1. **Create the Announcement Component**
-	- Navigate to `frontend/src/components/`.
-	- Create a new file named `Announcement.jsx`.
-	- Define a functional React component called `Announcement`.
-	- Add a container with Tailwind CSS classes for styling (e.g., background, padding, rounded corners, shadow, flex alignment).
+2. **Import Required Packages**
+  - Imported React hooks (`useState`) for menu state.
+  - Imported icons from `react-icons/fa` for search, user, hamburger, and close icons.
+  - Imported MUI's `ShoppingBasketIcon` and `Badge` for the basket icon and badge.
 
-2. **Install Typewriter Animation Package**
-	- Open a terminal in the `frontend` directory.
-	- Run: `npm install react-simple-typewriter`
-	- This installs the `react-simple-typewriter` package for animated text effects.
+3. **Setup Responsive State**
+  - Used `useState` to manage mobile menu open/close state.
 
-3. **Import and Use Typewriter in the Component**
-	- At the top of `Announcement.jsx`, import `{ Typewriter }` from `react-simple-typewriter`.
-	- Use the `<Typewriter />` component inside your announcement message to animate text (e.g., cycling through phrases).
+4. **Build Navbar Layout**
+  - Used a flex container for horizontal layout.
+  - Placed logo and brand name on the left (brand name hidden on small screens).
+  - Added a hamburger menu button for mobile screens.
+  - On desktop, displayed search bar, basket icon, and login button.
+  - On mobile, only logo, search, and login are shown in the menu (basket and brand name hidden).
 
-4. **Enhance with Tailwind CSS**
-	- Apply Tailwind utility classes to style the announcement bar (e.g., gradients, icons, spacing, font styles).
-	- Optionally, add a modern icon (SVG or emoji) for visual appeal.
+5. **Style with Tailwind CSS**
+  - Applied a beautiful gradient background using Tailwind (`bg-gradient-to-r from-fuchsia-400 via-sky-300 to-emerald-300`).
+  - Used rounded corners, shadows, and opacity for a modern look.
+  - Added hover and transition effects for interactivity.
 
-5. **Export and Use the Component**
-	- Export the `Announcement` component from `Announcement.jsx`.
-	- Import and render it in your main page (e.g., `App.jsx` or a relevant route/component).
+6. **Implement Mobile Menu**
+  - Toggled mobile menu with hamburger/close icons.
+  - Mobile menu displays search and login only, stacked vertically.
 
-6. **Test the Announcement**
-	- Start the development server: `npm run dev` (from the `frontend` directory).
-	- Verify the animated announcement bar appears and cycles through the desired messages.
+7. **Export Component**
+  - Exported the Navbar as default for use in the app.
 
-This process results in a modern, animated announcement bar using React, Tailwind CSS, and react-simple-typewriter.
+This approach ensures the Navbar is visually appealing, fully responsive, and user-friendly on all devices.
