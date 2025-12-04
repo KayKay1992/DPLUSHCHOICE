@@ -57,11 +57,6 @@ const Category = () => {
               style={{
                 animationDelay: `${index * 100}ms`,
               }}
-              // Staggered fade-in animation
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
             >
               {/* Image Container */}
               <div className="aspect-w-1 aspect-h-1 relative h-64 md:h-72">
