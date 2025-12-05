@@ -5,6 +5,7 @@ import MyAccount from "./pages/MyAccount";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Announcement from "./components/Announcement";
+import ProductDetails from "./pages/ProductDetails";
 
 function App() {
   const Layout = () => {
@@ -34,6 +35,10 @@ function App() {
         {
           path: "/myaccount",
           element: <MyAccount />,
+        },
+        {
+          path: "/product/:productId",
+          element: <ProductDetails />,
         },
       ],
     },
