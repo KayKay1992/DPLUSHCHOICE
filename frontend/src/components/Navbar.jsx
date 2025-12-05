@@ -54,10 +54,12 @@ const Navbar = () => {
             </Link>
 
             {/* Login Button with Icon + Text */}
-            <button className="flex items-center space-x-2 bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold px-5 py-3 rounded-full transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-0.5">
-              <FaUser className="text-lg" />
-              <span className="text-sm sm:text-base">Login</span>
-            </button>
+            <Link to="/login">
+              <button className="flex items-center space-x-2 bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold px-5 py-3 rounded-full transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-0.5">
+                <FaUser className="text-lg" />
+                <span className="text-sm sm:text-base">Login</span>
+              </button>
+            </Link>
           </div>
         </div>
 

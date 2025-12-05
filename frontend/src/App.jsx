@@ -6,6 +6,8 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Announcement from "./components/Announcement";
 import ProductDetails from "./pages/ProductDetails";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 
 function App() {
   const Layout = () => {
@@ -39,6 +41,14 @@ function App() {
         {
           path: "/product/:productId",
           element: <ProductDetails />,
+        },
+        {
+          path: "/login",
+          element: <Login />,
+        },
+        {
+          path: "/register",
+          element: <Register />,
         },
       ],
     },
