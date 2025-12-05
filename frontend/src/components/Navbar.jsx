@@ -2,6 +2,7 @@ import { FaSearch, FaUser } from "react-icons/fa";
 import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import Badge from "@mui/material/Badge";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import SideMenu from "./SideMenu";
 
 const Navbar = () => {
@@ -14,7 +15,10 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-20">
           {/* Hamburger + Logo + Brand Name */}
           <div className="flex items-center">
-            <div className="flex items-center space-x-3">
+            <Link
+              to="/"
+              className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200"
+            >
               <img
                 src="/logo.jpg"
                 alt="D' Plush Choice Logo"
@@ -23,7 +27,7 @@ const Navbar = () => {
               <span className="text-xl sm:text-2xl font-bold text-pink-600 tracking-tight">
                 D' Plush Choice
               </span>
-            </div>
+            </Link>
           </div>
 
           {/* Desktop Search Bar */}
@@ -41,11 +45,13 @@ const Navbar = () => {
           {/* Cart + Login (Always Visible) */}
           <div className="flex items-center space-x-4">
             {/* Cart */}
-            <Badge badgeContent={4} color="secondary" overlap="circular">
-              <div className="p-3 rounded-full hover:bg-pink-50 transition cursor-pointer group">
-                <ShoppingBasketIcon className="text-2xl text-pink-600 group-hover:text-pink-700 transition" />
-              </div>
-            </Badge>
+            <Link to="/cart">
+              <Badge badgeContent={4} color="secondary" overlap="circular">
+                <div className="p-3 rounded-full hover:bg-pink-50 transition cursor-pointer group">
+                  <ShoppingBasketIcon className="text-2xl text-pink-600 group-hover:text-pink-700 transition" />
+                </div>
+              </Badge>
+            </Link>
 
             {/* Login Button with Icon + Text */}
             <button className="flex items-center space-x-2 bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold px-5 py-3 rounded-full transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-0.5">
