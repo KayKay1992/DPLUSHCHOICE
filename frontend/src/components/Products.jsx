@@ -17,11 +17,11 @@ const Products = () => {
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-          <Product />
-          <Product />
-          <Product />
-          <Product />
-          <Product />
+          <Product img='/lotion.jpg' />
+          <Product  img='/lotion1.jpg'/>
+          <Product img='/lotion2.jpg'/>
+          <Product img='/serum1.jpg'/>
+          <Product img='/lotion3.jpg'/>
         </div>
       </div>
     </section>

@@ -1,12 +1,12 @@
 import StarRating from "./StarRating";
 
-const Product = () => {
+const Product = ({img}) => {
   return (
     <div className="group relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 cursor-pointer border border-white/50 overflow-hidden">
       {/* Image Container */}
       <div className="relative h-80 w-full overflow-hidden rounded-t-3xl">
         <img
-          src="/serum1.jpg"
+          src={img}
           alt="Product 1"
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
