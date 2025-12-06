@@ -9,6 +9,7 @@ import ProductDetails from "./pages/ProductDetails";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProductList from "./pages/ProductList";
+import Order from "./pages/Order";
 
 function App() {
   const Layout = () => {
@@ -54,6 +55,10 @@ function App() {
         {
           path: "/products/:searchTerm",
           element: <ProductList />,
+        },
+        {
+          path: "/myorders",
+          element: <Order />,
         },
       ],
     },
