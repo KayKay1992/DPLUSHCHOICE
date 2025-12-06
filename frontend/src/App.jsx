@@ -8,6 +8,7 @@ import Announcement from "./components/Announcement";
 import ProductDetails from "./pages/ProductDetails";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ProductList from "./pages/ProductList";
 
 function App() {
   const Layout = () => {
@@ -49,6 +50,10 @@ function App() {
         {
           path: "/register",
           element: <Register />,
+        },
+        {
+          path: "/products/:searchTerm",
+          element: <ProductList />,
         },
       ],
     },
