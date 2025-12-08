@@ -1,162 +1,118 @@
-Based on your implementation in `Home.jsx` and `LineChart.jsx`, here's how you implemented the Recent Transactions table and the right-side graph in a clear and well-understood pattern:
+Setting up pages for admin dashboad
 
-## **Recent Transactions Table Implementation**
+## **Navigation and Page Links Implementation**
 
-### **1. Layout Structure**
-You used a responsive grid layout with `xl:col-span-2` for the table section (taking 2/3 of the width on extra-large screens) and `xl:col-span-1` for the right sidebar (taking 1/3):
+### **1. React Router Setup**
+You implemented client-side routing using React Router v6 with the following key components:
 
 ```jsx
-<div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-  {/* Left: Recent Transactions - spans 2 columns */}
-  <div className="xl:col-span-2 space-y-6">
-    {/* Table content */}
-  </div>
-
-  {/* Right: Revenue + Chart - spans 1 column */}
-  <div className="space-y-6">
-    {/* Chart and revenue cards */}
-  </div>
-</div>
+import { createBrowserRouter, RouterProvider, Outlet } from 'react-router-dom'
 ```
 
-### **2. Table Container Design**
-The table uses a glassmorphism design with:
-- Semi-transparent background: `bg-white/10 backdrop-blur-xl`
-- Rounded corners: `rounded-3xl`
-- Border: `border border-white/20`
-- Shadow: `shadow-2xl`
+- **createBrowserRouter**: Creates a browser-based router for handling URL changes
+- **RouterProvider**: Provides the router context to the entire application
+- **Outlet**: Renders the matched child route component
 
-### **3. Table Header**
-- Clear section title with gradient text: `"Latest Transactions"`
-- Professional table headers with proper spacing and typography
-- Used `text-gray-300 text-base` for readability
-
-### **4. Table Data Structure**
-You implemented the table data as an inline array of transaction objects:
+### **2. Layout Component Structure**
+You created a shared layout that includes the navigation menu and content area:
 
 ```jsx
-[
+const Layout = () => {
+  return (
+    <div className='flex'>
+      <div>
+        <Menu />
+      </div>
+      <div>
+        <Outlet />
+      </div>
+    </div>
+  )
+}
+```
+
+This layout ensures the menu is always visible while the main content changes based on the current route.
+
+### **3. Router Configuration**
+Your router is configured with nested routes under a root layout:
+
+```jsx
+const router = createBrowserRouter([
   {
-    id: "TXN8901",
-    name: "Chioma Okeke",
-    amount: "₦45,000",
-    status: "completed",
-    date: "2 hours ago",
-  },
-  // ... more transactions
-].map((tx) => (
-  // Table row rendering
-))
+    path: "/",
+    element: <Layout />,
+    children: [
+      { path: "/", element: <Home/> },
+      { path: "/users", element: <Users/> },
+      { path: "/products", element: <Products/> },
+      { path: "/orders", element: <Orders/> },
+      { path: "/banners", element: <Banners/> },
+    ]
+  }
+])
 ```
 
-### **5. Status Badges**
-Dynamic status indicators with color coding:
-- **Completed**: Green background (`bg-green-500/20 text-green-300`)
-- **Pending**: Yellow background (`bg-yellow-500/20 text-yellow-300`)
-- Added borders for better definition
-
-### **6. Typography Hierarchy**
-- **Transaction IDs**: Monospace font with pink accent (`font-mono text-pink-400`)
-- **Customer Names**: Medium weight, light gray (`text-gray-200 font-medium`)
-- **Amounts**: Semibold weight for emphasis (`font-semibold text-gray-200`)
-- **Dates**: Smaller text with medium weight (`text-gray-300 text-sm font-medium`)
-
-## **Right-Side Graph Implementation**
-
-### **1. Chart Container**
-Similar glassmorphism styling to the table:
-- Semi-transparent background with backdrop blur
-- Rounded corners and subtle borders
-- Proper padding and spacing
-
-### **2. Chart Component Structure**
-You created a separate `LineChart.jsx` component using MUI X-Charts:
+### **4. Menu Component Navigation**
+The Menu component uses React Router's Link component for navigation:
 
 ```jsx
-import { LineChart } from "@mui/x-charts/LineChart";
+import { Link } from "react-router-dom";
 ```
 
-### **3. Data Structure**
-Used a sample dataset representing unemployment rates (easily replaceable with sales data):
+**Menu Items Structure:**
+- **Dashboard Section**: Home, Profile
+- **Management Section**: Users, Products, Orders  
+- **Content Section**: Banners, Settings, Backups
+- **Analytics Section**: Analytics, All Logs
+
+Each menu item is defined with an icon, label, and path:
 
 ```jsx
-const usUnemploymentRate = [
-  { date: new Date(2020, 0, 1), rate: 3.5 },
-  { date: new Date(2020, 1, 1), rate: 6.2 },
-  // ... monthly data points
+const menuItems = [
+  { icon: FaHome, label: "Home", path: "/" },
+  { icon: FaUser, label: "Profile", path: "/profile" },
 ];
 ```
 
-### **4. Chart Configuration**
-- **X-Axis**: Time-based with custom date formatting
-- **Y-Axis**: Percentage values with proper formatting
-- **Series**: Single line with smooth curves (no data points shown)
-- **Grid**: Both vertical and horizontal grid lines for readability
+### **5. Link Component Implementation**
+Each menu item uses the Link component with hover effects:
 
-### **5. Formatting Functions**
-Custom formatters for better UX:
 ```jsx
-const dateAxisFormatter = (date) => {
-  return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
-};
-
-const percentageFormatter = (value) => {
-  return `${value}%`;
-};
+<Link
+  to={path}
+  className="flex items-center space-x-4 px-5 py-4 rounded-2xl cursor-pointer transition-all duration-300 hover:scale-105 hover:bg-white/10"
+>
+  <Icon className="text-xl text-gray-400 group-hover:text-pink-400 transition-colors" />
+  <span className="font-medium text-gray-300 group-hover:text-white">
+    {label}
+  </span>
+</Link>
 ```
 
-## **Key Design Patterns Used**
+### **6. Page Components**
+You created individual page components for each route:
 
-### **1. Glassmorphism Theme**
-- Consistent `backdrop-blur-xl` effects
-- Semi-transparent backgrounds (`bg-white/10`)
-- Subtle borders (`border-white/20`)
+- **Home.jsx**: Main dashboard with stats, transactions table, and chart
+- **Users.jsx**: User management page
+- **Products.jsx**: Product management page  
+- **Orders.jsx**: Order management page
+- **Banners.jsx**: Banner/content management page
 
-### **2. Responsive Design**
-- Mobile-first approach with `grid-cols-1` on small screens
-- `xl:grid-cols-3` for desktop layout
-- Proper spacing with `gap-6`
+### **7. Responsive Navigation**
+The menu implements both desktop and mobile navigation:
 
-### **3. Color Consistency**
-- Pink-to-purple gradients for branding
-- Gray scale for text hierarchy
-- Status-specific colors (green/yellow for completed/pending)
+- **Desktop**: Sticky sidebar that's always visible
+- **Mobile**: Hamburger menu with slide-in overlay
 
-### **4. Component Separation**
-- Chart logic isolated in `LineChart.jsx`
-- Data and presentation separated
-- Reusable component structure
+### **8. Navigation Features**
+- **Active State**: Visual feedback on hover with color transitions
+- **Smooth Animations**: Scale and background effects on interaction
+- **Icon Integration**: FontAwesome icons for each menu item
+- **Accessibility**: Proper semantic HTML with Link components
 
-### **5. Accessibility Considerations**
-- Proper contrast ratios with `text-gray-200` and `text-gray-300`
-- Clear visual hierarchy
-- Hover states for interactivity
+### **9. Route Organization**
+- **Nested Routing**: All routes are children of the root layout
+- **Clean URLs**: Standard web URLs without hash routing
+- **Component-Based**: Each route renders a specific React component
 
-This implementation creates a professional, modern admin dashboard with excellent readability and visual appeal, following current UI/UX best practices for data visualization and table design.
-
-## **Packages Installed**
-
-### **Styling and UI Framework**
-- **Tailwind CSS**: `npm install tailwindcss @tailwindcss/vite`
-  - Utility-first CSS framework for rapid UI development
-  - Integrated with Vite for fast builds and hot reloading
-  - Used for all styling including glassmorphism effects, gradients, and responsive design
-
-### **Chart and Data Visualization**
-- **MUI X-Charts**: `@mui/x-charts`
-  - React charting library for data visualization
-  - Used for the LineChart component in the dashboard
-  - Provides customizable line charts with time-based axes
-
-### **MUI Dependencies**
-- **Styled Engine SC**: `@mui/styled-engine-sc`
-  - Styled Components engine for MUI components
-  - Required for MUI X-Charts to work properly
-- **Styled Components**: `styled-components`
-  - CSS-in-JS library for component styling
-  - Dependency for MUI's styled engine
-
-### **Build Tool**
-- **Vite**: Already configured in the project
-  - Fast build tool and development server
-  - Integrated with Tailwind CSS for optimized CSS processing
+This implementation provides a professional, scalable navigation system that follows React Router best practices and maintains consistent styling with your glassmorphism theme.

@@ -3,6 +3,8 @@ import Menu from './components/Menu'
 import Users from './pages/Users'
 import Home from './pages/Home'
 import Products from './pages/Products'
+import Orders from './pages/Orders'
+import Banners from './pages/Banners'
 const App = () => {
   const Layout = () => {
     return (
@@ -34,7 +36,14 @@ const App = () => {
           path: "/products",
           element: <Products/>
         },
-      
+        {
+          path: "/orders",
+          element: <Orders/>
+        },
+        {
+          path: "/banners",
+          element: <Banners/>
+        },
       ]
     }
   ])
