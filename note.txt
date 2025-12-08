@@ -1,48 +1,11 @@
-## **Products Page Implementation**
+Users Page Explanation:
 
-### **🎨 Modern Design & Layout**
-- **Glassmorphism Theme**: Semi-transparent backgrounds with backdrop blur effects
-- **Responsive Grid**: 4-column stats cards that adapt to screen sizes
-- **Gradient Backgrounds**: Purple-to-slate gradient for the main container
-- **Professional Typography**: Gradient text effects for headings
+The Users page is a React component designed for managing user accounts in an admin dashboard. It features a modern, responsive design with a gradient background (slate to purple) and glassmorphism effects using Tailwind CSS.
 
-### **📊 Interactive Data Table**
-- **MUI DataGrid**: Advanced table component with sorting, pagination, and selection
-- **Custom Styling**: Dark theme with purple/magenta accents
-- **Centered Content**: All table cells and headers perfectly centered
-- **Color-Coded Columns**:
-  - 🔵 **ID**: Blue monospace text
-  - 🟣 **Product**: Purple titles with images
-  - 🔵 **Category**: Cyan labels
-  - 🟠 **Original Price**: Orange pricing
-  - 🟢 **Sale Price**: Green discounted prices
-  - 🏷️ **Stock**: Color-coded badges (green/yellow/red)
-  - 🎯 **Actions**: Blue edit, red delete buttons
+Key Components:
+- Header: Displays "Users" title with gradient text and a subtitle "Manage user accounts and permissions".
+- Stats Cards: Four cards showing metrics - Total Users, Active Users, Admins, and Inactive Users - each with icons and dynamic counts from the data array.
+- Data Table: Uses MUI X-DataGrid to display user information in columns: ID, User (username and email), Phone, Role (colored badges for Admin/Moderator/User), Status (green for Active, red for Inactive), and Actions (delete button with trash icon).
+- Styling: Custom sx props for DataGrid ensure high-contrast colors, centered text, hover effects, striped rows, and a custom scrollbar. All elements are responsive and use Tailwind classes for layout.
 
-### **📈 Statistics Dashboard**
-- **Total Products**: Shows count of all items
-- **Stock Levels**: Sum of all inventory
-- **Categories**: Number of unique product categories
-- **Revenue**: Total value of discounted prices
-- **Visual Icons**: Relevant emojis for each metric
-
-### **🔧 Technical Features**
-- **React Router**: Navigation to individual product edit pages
-- **Responsive Design**: Mobile-first approach with breakpoints
-- **Performance**: Efficient rendering with MUI's virtualized table
-- **Accessibility**: Proper focus states and keyboard navigation
-
-### **🎯 User Experience**
-- **Hover Effects**: Interactive feedback on rows and buttons
-- **Loading States**: Smooth transitions and animations
-- **Visual Hierarchy**: Clear information architecture
-- **Professional UI**: Modern admin dashboard aesthetics
-
-### **📦 Data Structure**
-- **Sample Products**: 7 diverse beauty/cosmetic items
-- **Rich Metadata**: Images, descriptions, pricing, categories
-- **Realistic Data**: Nigerian Naira currency, varied stock levels
-- **Scalable Format**: Easy to replace with real API data
-
-This implementation creates a comprehensive, modern product management interface with excellent usability, visual appeal, and technical performance.</content>
-<parameter name="filePath">c:\Users\HP\Desktop\dplushchoice\note.txt
+The page includes sample user data (8 users) and supports pagination, checkbox selection, and sorting. Icons from React Icons (FaTrash, FaUser, etc.) enhance the UI.
