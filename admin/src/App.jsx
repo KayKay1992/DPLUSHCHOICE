@@ -1,23 +1,23 @@
-import  {createBrowserRouter, RouterProvider, Outlet} from 'react-router-dom'
-import Menu from './components/Menu'
-import Users from './pages/Users'
-import Home from './pages/Home'
-import Products from './pages/Products'
-import Orders from './pages/Orders'
-import Banners from './pages/Banners'
+import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
+import Menu from "./components/Menu";
+import Users from "./pages/Users";
+import Home from "./pages/Home";
+import Products from "./pages/Products";
+import Orders from "./pages/Orders";
+import Banners from "./pages/Banners";
 const App = () => {
   const Layout = () => {
     return (
-      <div className='flex'>
-        <div>
+      <div className="flex min-h-screen">
+        <div className="shrink-0">
           <Menu />
         </div>
-        <div>
+        <div className="flex-1 overflow-auto">
           <Outlet />
         </div>
       </div>
-  )
-  }
+    );
+  };
 
   const router = createBrowserRouter([
     {
@@ -26,33 +26,33 @@ const App = () => {
       children: [
         {
           path: "/",
-          element: <Home/>
+          element: <Home />,
         },
         {
           path: "/users",
-          element: <Users/>
+          element: <Users />,
         },
         {
           path: "/products",
-          element: <Products/>
+          element: <Products />,
         },
         {
           path: "/orders",
-          element: <Orders/>
+          element: <Orders />,
         },
         {
           path: "/banners",
-          element: <Banners/>
+          element: <Banners />,
         },
-      ]
-    }
-  ])
-    
+      ],
+    },
+  ]);
+
   return (
-    <div >
+    <div>
       <RouterProvider router={router} />
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;
