@@ -1,11 +1,11 @@
-Users Page Explanation:
+Orders Page Implementation:
 
-The Users page is a React component designed for managing user accounts in an admin dashboard. It features a modern, responsive design with a gradient background (slate to purple) and glassmorphism effects using Tailwind CSS.
+The Orders page is a React component for managing customer orders in the admin dashboard. It features the same modern styling as other pages with glassmorphism effects and gradient backgrounds.
 
 Key Components:
-- Header: Displays "Users" title with gradient text and a subtitle "Manage user accounts and permissions".
-- Stats Cards: Four cards showing metrics - Total Users, Active Users, Admins, and Inactive Users - each with icons and dynamic counts from the data array.
-- Data Table: Uses MUI X-DataGrid to display user information in columns: ID, User (username and email), Phone, Role (colored badges for Admin/Moderator/User), Status (green for Active, red for Inactive), and Actions (delete button with trash icon).
-- Styling: Custom sx props for DataGrid ensure high-contrast colors, centered text, hover effects, striped rows, and a custom scrollbar. All elements are responsive and use Tailwind classes for layout.
+- Header: Gradient title 'Orders' with subtitle for order management.
+- Stats Cards: Four cards showing Total Orders, Delivered, Pending, and Processing counts with icons.
+- Data Table: MUI DataGrid displaying Order ID, Customer Name, Email, Status (with colored badges), and Actions (Mark as Delivered button for pending orders).
+- Styling: Extensive sx props for DataGrid with high-contrast colors, centered text, hover effects, and custom scrollbar.
 
-The page includes sample user data (8 users) and supports pagination, checkbox selection, and sorting. Icons from React Icons (FaTrash, FaUser, etc.) enhance the UI.
+The page includes sample order data and supports pagination and selection. The Actions column conditionally shows a green check button for pending orders.
