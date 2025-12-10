@@ -5,6 +5,8 @@ import Home from "./pages/Home";
 import Products from "./pages/Products";
 import Orders from "./pages/Orders";
 import Banners from "./pages/Banners";
+import NewProduct from "./pages/NewProduct";
+import Product from "./pages/Product";
 const App = () => {
   const Layout = () => {
     return (
@@ -44,6 +46,14 @@ const App = () => {
           path: "/banners",
           element: <Banners />,
         },
+        {
+          path: "/new-product",
+          element: <NewProduct/>,
+        },
+        {
+          path: "/product/:id",
+          element: <Product/>,
+        }
       ],
     },
   ]);

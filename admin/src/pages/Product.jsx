@@ -1,0 +1,244 @@
+import { FaUpload } from "react-icons/fa";
+import LineChart from "../components/LineChart";
+
+const Product = () => {
+  return (
+    <div className="min-h-screen bg-linear-to-tr from-indigo-900 via-purple-900/40 to-pink-900/30 text-white p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header Section */}
+        <div className="mb-8 sm:mb-12">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+            <div>
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-linear-to-r from-pink-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent leading-tight">
+                Product Details
+              </h1>
+              <p className="text-gray-200 mt-3 text-base sm:text-lg font-medium">
+                View and manage product information
+              </p>
+            </div>
+            <button className="bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105">
+              Create New
+            </button>
+          </div>
+        </div>
+
+        {/* Analytics Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Chart Card */}
+          <div className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl p-6 sm:p-8">
+            <h3 className="text-2xl font-bold bg-linear-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent mb-6">
+              Sales Analytics
+            </h3>
+            <div className="h-64">
+              <LineChart />
+            </div>
+          </div>
+
+          {/* Product Info Card */}
+          <div className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl p-6 sm:p-8">
+            <h3 className="text-2xl font-bold bg-linear-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent mb-6">
+              Product Overview
+            </h3>
+            <div className="flex items-center gap-6 mb-6">
+              <img
+                className="w-24 h-24 object-cover rounded-2xl shadow-lg"
+                src="https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400&h=400&fit=crop"
+                alt="product"
+              />
+              <div>
+                <h4 className="text-xl font-bold text-white mb-1">
+                  Hydrating Facial Cleanser
+                </h4>
+                <span className="inline-block px-3 py-1 bg-green-500/20 text-green-300 text-sm font-bold rounded-full border border-green-400/30">
+                  Active
+                </span>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center py-2 border-b border-white/10">
+                <span className="text-gray-300 font-medium">Product ID:</span>
+                <span className="text-white font-bold">1aqs345</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-white/10">
+                <span className="text-gray-300 font-medium">Total Sales:</span>
+                <span className="text-white font-bold">625 units</span>
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-gray-300 font-medium">Stock Level:</span>
+                <span className="text-white font-bold">150 units</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Edit Form Section */}
+        <div className="bg-white/10 backdrop-blur-xl rounded-3xl border border-white/20 shadow-2xl p-6 sm:p-8 lg:p-10">
+          <h3 className="text-2xl font-bold bg-linear-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent mb-8">
+            Edit Product Information
+          </h3>
+          <form className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column - Form Fields */}
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-200 mb-3">
+                  Product Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Hydrating Facial Cleanser"
+                  className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-200 mb-3">
+                  Product Description
+                </label>
+                <textarea
+                  placeholder="Describe your product"
+                  rows={5}
+                  className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-200 mb-3">
+                    Original Price
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Price before discount"
+                    className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-200 mb-3">
+                    Discounted Price
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Price after discount"
+                    className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-200 mb-3">
+                  Category
+                </label>
+                <select className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent">
+                  <option value="" disabled selected className="bg-slate-800">
+                    Select Category
+                  </option>
+                  <option value="perfumes" className="bg-slate-800">
+                    Perfumes
+                  </option>
+                  <option value="body-sprays" className="bg-slate-800">
+                    Body Sprays
+                  </option>
+                  <option value="diffusers" className="bg-slate-800">
+                    Diffusers
+                  </option>
+                  <option value="scented-candles" className="bg-slate-800">
+                    Scented Candles
+                  </option>
+                  <option value="necklace" className="bg-slate-800">
+                    Necklace
+                  </option>
+                  <option value="earrings" className="bg-slate-800">
+                    Earrings
+                  </option>
+                  <option value="rings" className="bg-slate-800">
+                    Rings
+                  </option>
+                  <option value="wristwatches" className="bg-slate-800">
+                    Wristwatches
+                  </option>
+                  <option value="anklets" className="bg-slate-800">
+                    Anklets
+                  </option>
+                  <option value="bracelets" className="bg-slate-800">
+                    Bracelets
+                  </option>
+                  <option value="bangles" className="bg-slate-800">
+                    Bangles
+                  </option>
+                  <option value="bags" className="bg-slate-800">
+                    Bags
+                  </option>
+                  <option value="clutch-purse" className="bg-slate-800">
+                    Clutch Purse
+                  </option>
+                  <option value="jewelry-set" className="bg-slate-800">
+                    Jewelry Set
+                  </option>
+                  <option value="other-accessories" className="bg-slate-800">
+                    Other Accessories
+                  </option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-200 mb-3">
+                    In Stock
+                  </label>
+                  <select className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent">
+                    <option value="true" className="bg-slate-800">
+                      Yes
+                    </option>
+                    <option value="false" className="bg-slate-800">
+                      No
+                    </option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-200 mb-3">
+                    Stock Quantity
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="Stock quantity"
+                    className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column - Image Upload */}
+            <div className="flex flex-col items-center justify-center space-y-6">
+              <div className="text-center">
+                <div className="w-48 h-48 bg-white/10 backdrop-blur-sm rounded-2xl border-2 border-dashed border-pink-400/50 flex items-center justify-center mb-4 overflow-hidden">
+                  <img
+                    className="w-full h-full object-cover"
+                    src="https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400&h=400&fit=crop"
+                    alt="product"
+                  />
+                </div>
+                <label className="inline-block cursor-pointer">
+                  <div className="bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105 inline-flex items-center space-x-2">
+                    <FaUpload className="text-sm" />
+                    <span>Upload New Image</span>
+                  </div>
+                  <input type="file" className="hidden" />
+                </label>
+              </div>
+
+              <div className="w-full max-w-xs">
+                <button className="w-full bg-linear-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105">
+                  Update Product
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Product;

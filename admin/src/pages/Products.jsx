@@ -194,8 +194,9 @@ const Products = () => {
                 Manage your product inventory and catalog
               </p>
             </div>
+            
 
-            <Link to="/products/new">
+            <Link to="/new-product">
               <button className="group relative overflow-hidden bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-2xl shadow-lg hover:shadow-pink-500/20 transition-all duration-300 hover:scale-105">
                 <div className="absolute inset-0 bg-linear-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="relative flex items-center space-x-2">
