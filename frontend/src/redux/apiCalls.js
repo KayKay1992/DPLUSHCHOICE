@@ -1,5 +1,5 @@
 import { userRequest } from "../requestMethods";
-import { loginStart } from "./userRedux";
+import { loginStart, loginSuccess, loginFailure } from "./userRedux";
 
 export const login = async (dispatch, user) => {
   dispatch(loginStart());
@@ -8,5 +8,6 @@ export const login = async (dispatch, user) => {
     dispatch(loginSuccess(res.data));
   } catch (error) {
     dispatch(loginFailure());
+    throw error; // Re-throw to let the component handle the error
   }
 };

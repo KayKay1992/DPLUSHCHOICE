@@ -1,6 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FaEye, FaEyeSlash, FaUser, FaLock } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
+import { useDispatch, useSelector } from "react-redux";
+import { login } from "../redux/apiCalls";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -8,6 +11,15 @@ const Login = () => {
     email: "",
     password: "",
   });
+  const { currentUser, isFetching, error } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (currentUser) {
+      navigate("/");
+    }
+  }, [currentUser, navigate]);
 
   const handleInputChange = (e) => {
     setFormData({
@@ -16,14 +28,38 @@ const Login = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login attempt:", formData);
+    try {
+      await login(dispatch, formData);
+      // Navigation will happen in useEffect when currentUser is set
+    } catch (error) {
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Login failed. Please try again.");
+      }
+    }
   };
 
   return (
     <div className="min-h-screen bg-linear-to-br from-pink-50 via-white to-purple-50 flex items-center justify-center py-8 px-4 sm:px-6 lg:px-8">
+      <ToastContainer
+        autoClose={5000}
+        position="top-right"
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       <div className="max-w-6xl w-full">
         <div className="bg-white/80 backdrop-blur-lg shadow-2xl rounded-3xl overflow-hidden border border-white/20">
           <div className="flex flex-col lg:flex-row">
@@ -151,8 +187,9 @@ const Login = () => {
                   <button
                     type="submit"
                     className="w-full bg-linear-to-r from-pink-500 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-pink-500/50"
+                    onClick={handleSubmit}
                   >
-                    Sign In
+                    {isFetching ? "Signing In..." : "Sign In"}
                   </button>
 
                   {/* Register Link */}

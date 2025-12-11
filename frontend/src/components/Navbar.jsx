@@ -1,12 +1,20 @@
-import { FaSearch, FaUser } from "react-icons/fa";
+import { FaSearch, FaUser, FaSignOutAlt } from "react-icons/fa";
 import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import Badge from "@mui/material/Badge";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../redux/userRedux";
 import SideMenu from "./SideMenu";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const dispatch = useDispatch();
+  const { currentUser } = useSelector((state) => state.user);
+
+  const handleLogout = () => {
+    dispatch(logout());
+  };
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">
@@ -42,7 +50,7 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Cart + Login (Always Visible) */}
+          {/* Cart + Auth Section */}
           <div className="flex items-center space-x-4">
             {/* Cart */}
             <Link to="/cart">
@@ -53,13 +61,33 @@ const Navbar = () => {
               </Badge>
             </Link>
 
-            {/* Login Button with Icon + Text */}
-            <Link to="/login">
-              <button className="flex items-center space-x-2 bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold px-5 py-3 rounded-full transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-0.5">
-                <FaUser className="text-lg" />
-                <span className="text-sm sm:text-base">Login</span>
-              </button>
-            </Link>
+            {/* Authentication Section */}
+            {currentUser ? (
+              // Logged In User
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 text-gray-700">
+                  <FaUser className="text-lg text-pink-600" />
+                  <span className="font-semibold text-sm sm:text-base">
+                    {currentUser.name || currentUser.username || "User"}
+                  </span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-full transition-all duration-300 shadow-sm hover:shadow-md"
+                >
+                  <FaSignOutAlt className="text-sm" />
+                  <span className="text-sm sm:text-base">Logout</span>
+                </button>
+              </div>
+            ) : (
+              // Not Logged In
+              <Link to="/login">
+                <button className="flex items-center space-x-2 bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold px-5 py-3 rounded-full transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-0.5">
+                  <FaUser className="text-lg" />
+                  <span className="text-sm sm:text-base">Login</span>
+                </button>
+              </Link>
+            )}
           </div>
         </div>
 
