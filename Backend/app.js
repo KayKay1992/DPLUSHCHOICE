@@ -16,10 +16,22 @@ import aiRoutes from "./routes/ai.route.js";
 const app = express();
 
 //cors
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://localhost:3000",
+    ],
+    credentials: true,
+  })
+);
 
 //json body
 app.use(express.json());
+
+// Serve static files from uploads directory
+app.use("/uploads", express.static("uploads"));
 
 //cookie parser
 app.use(cookieParser());

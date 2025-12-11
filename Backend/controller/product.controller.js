@@ -19,9 +19,45 @@ export const createProduct = asyncHandler(async (req, res) => {
 
 //update product
 export const updateProduct = asyncHandler(async (req, res) => {
+  let updateData = { ...req.body };
+
+  // Handle categories if it's a string (from JSON)
+  if (updateData.categories && typeof updateData.categories === "string") {
+    try {
+      updateData.categories = JSON.parse(updateData.categories);
+    } catch (error) {
+      // If parsing fails, keep as is
+    }
+  }
+
+  // Handle inStock conversion
+  if (updateData.inStock !== undefined) {
+    updateData.inStock =
+      updateData.inStock === "true" || updateData.inStock === true;
+  }
+
+  // Handle numeric fields
+  if (updateData.originalPrice) {
+    updateData.originalPrice = Number(updateData.originalPrice);
+  }
+  if (updateData.discountPrice) {
+    updateData.discountPrice = Number(updateData.discountPrice);
+  }
+  if (updateData.wholesalePrice) {
+    updateData.wholesalePrice = Number(updateData.wholesalePrice);
+  }
+  if (updateData.wholesaleMinimumQuantity) {
+    updateData.wholesaleMinimumQuantity = Number(
+      updateData.wholesaleMinimumQuantity
+    );
+  }
+  if (updateData.stock) {
+    updateData.stock = Number(updateData.stock);
+  }
+
   const updatedProduct = await Product.findByIdAndUpdate(
     req.params.id,
-    { $set: req.body },
+    { $set: updateData },
     { new: true }
   );
 

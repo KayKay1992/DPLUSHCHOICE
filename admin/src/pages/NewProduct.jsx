@@ -1,6 +1,102 @@
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaTrash } from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { userRequest } from "../requestMethods";
+import { useState } from "react";
+import { toast } from "react-toastify";
 
 const NewProduct = () => {
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [input, setInput] = useState({});
+  const [image, setImage] = useState("");
+  const [uploading, setUploading] = useState("uploading is 0% complete");
+  const navigate = useNavigate();
+  const [selectedOptions, setSelectedOptions] = useState({
+    concern: [],
+    skinType: [],
+    categories: [],
+  });
+
+  const imageChangeHandler = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedImage(e.target.files[0]);
+    }
+  };
+  const handleSelectChange = (e) => {
+    const { name, value } = e.target;
+    setSelectedOptions((prev) => ({
+      ...prev,
+      [name]: [...prev[name], value],
+    }));
+  };
+
+  const handleRemoveOption = (name, value) => {
+    setSelectedOptions((prev) => ({
+      ...prev,
+      [name]: prev[name].filter((option) => option !== value),
+    }));
+  };
+
+  const handleChange = (e) => {
+    setInput((prev) => {
+      return { ...prev, [e.target.name]: e.target.value };
+    });
+  };
+
+  const handleUpload = async (e) => {
+    e.preventDefault();
+
+    // Check if image is selected
+    if (!selectedImage) {
+      toast.error("Please select a product image first.");
+      return;
+    }
+
+    const data = new FormData();
+    data.append("file", selectedImage);
+    data.append("upload_preset", "uploads");
+
+    setUploading("uploading ...");
+    try {
+      const uploadRes = await axios.post(
+        "https://api.cloudinary.com/v1_1/dyrteayr3/image/upload",
+        data
+      );
+      const { url } = uploadRes.data;
+      setImage(url);
+      setUploading("Upload complete!");
+
+      // Create product with the uploaded image URL
+      const productData = {
+        ...input,
+        img: url,
+        concern: selectedOptions.concern,
+        skinType: selectedOptions.skinType,
+        categories: selectedOptions.categories,
+      };
+
+      const res = await userRequest.post("/products", productData);
+      toast.success("Product created successfully!");
+
+      // Reset form and redirect
+      setInput({});
+      setSelectedImage(null);
+      setImage("");
+      setSelectedOptions({
+        concern: [],
+        skinType: [],
+        categories: [],
+      });
+      setUploading("uploading is 0% complete");
+
+      // Redirect to products page
+      navigate("/products");
+    } catch (error) {
+      console.log(error);
+      setUploading("Uploading failed. Please try again.");
+      toast.error("Failed to create product. Please try again.");
+    }
+  };
   return (
     <div className="min-h-screen bg-linear-to-tr from-indigo-900 via-purple-900/40 to-pink-900/30 text-white p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -28,15 +124,39 @@ const NewProduct = () => {
                 <label className="block text-sm font-bold text-gray-200 mb-3">
                   Product Image
                 </label>
-                <div className="border-2 border-dashed border-pink-400/50 rounded-2xl p-8 text-center bg-white/5 hover:bg-white/10 transition-all duration-300">
-                  <div className="flex flex-col items-center">
-                    <FaPlus className="text-pink-400 text-4xl mb-3" />
-                    <span className="text-gray-300 font-medium">
-                      Click to upload product image
-                    </span>
+                {selectedImage ? (
+                  <div className="relative">
+                    <img
+                      src={URL.createObjectURL(selectedImage)}
+                      alt="Product"
+                      className="w-full h-64 object-cover rounded-2xl"
+                    />
+                    <button
+                      onClick={() => setSelectedImage(null)}
+                      className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition-colors duration-200"
+                    >
+                      <FaTrash className="text-sm" />
+                    </button>
                   </div>
-                </div>
+                ) : (
+                  <div className="relative border-2 border-dashed border-pink-400/50 rounded-2xl p-8 text-center bg-white/5 hover:bg-white/10 transition-all duration-300 cursor-pointer">
+                    <div className="flex flex-col items-center">
+                      <FaPlus className="text-pink-400 text-4xl mb-3" />
+                      <span className="text-gray-300 font-medium">
+                        Click to upload product image
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="file"
+                        onChange={imageChangeHandler}
+                        className="absolute inset-0 w-full h-full opacity-0"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
+              <span className="text-sm text-green-800 ">{uploading}</span>
 
               {/* Product Name */}
               <div>
@@ -45,7 +165,10 @@ const NewProduct = () => {
                 </label>
                 <input
                   type="text"
+                  id=""
+                  name="title"
                   placeholder="Enter product name"
+                  onChange={handleChange}
                   className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
                 />
               </div>
@@ -56,7 +179,12 @@ const NewProduct = () => {
                   Product Description
                 </label>
                 <textarea
+                  type="text"
                   rows={6}
+                  cols={15}
+                  name="desc"
+                  onChange={handleChange}
+                  id=""
                   placeholder="Enter detailed product description"
                   className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent resize-none"
                 />
@@ -70,6 +198,9 @@ const NewProduct = () => {
                 <input
                   type="number"
                   placeholder="Enter original price"
+                  onChange={handleChange}
+                  name="originalPrice"
+                  id=""
                   className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
                 />
               </div>
@@ -82,6 +213,9 @@ const NewProduct = () => {
                 <input
                   type="number"
                   placeholder="Enter discounted price"
+                  onChange={handleChange}
+                  name="discountPrice"
+                  id=""
                   className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
                 />
               </div>
@@ -97,6 +231,9 @@ const NewProduct = () => {
                 <input
                   type="number"
                   placeholder="Enter wholesale price"
+                  onChange={handleChange}
+                  name="wholesalePrice"
+                  id=""
                   className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
                 />
               </div>
@@ -108,6 +245,9 @@ const NewProduct = () => {
                 </label>
                 <input
                   type="number"
+                  onChange={handleChange}
+                  name="wholesaleMinimumQuantity"
+                  id=""
                   placeholder="Enter minimum wholesale quantity"
                   className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
                 />
@@ -121,6 +261,9 @@ const NewProduct = () => {
                 <input
                   type="text"
                   placeholder="Enter product brand"
+                  onChange={handleChange}
+                  name="brand"
+                  id=""
                   className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
                 />
               </div>
@@ -130,7 +273,12 @@ const NewProduct = () => {
                 <label className="block text-sm font-bold text-gray-200 mb-3">
                   Concern
                 </label>
-                <select className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent">
+                <select
+                  onChange={handleSelectChange}
+                  name="concern"
+                  id=""
+                  className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
+                >
                   <option value="" disabled selected className="bg-slate-800">
                     Select Concern
                   </option>
@@ -202,13 +350,31 @@ const NewProduct = () => {
                   </option>
                 </select>
               </div>
+              <div className="mt-2">
+                {selectedOptions.concern.map((option) => (
+                  <div key={option} className="flex items-center space-x-2">
+                    <span className="px-3 py-1 bg-pink-600/20 text-pink-300 rounded-full text-sm font-medium">
+                      {option}
+                    </span>
+                    <FaTrash
+                      className="text-red-400 cursor-pointer"
+                      onClick={() => handleRemoveOption("concern", option)}
+                    />
+                  </div>
+                ))}
+              </div>
 
               {/* Skin Type */}
               <div>
                 <label className="block text-sm font-bold text-gray-200 mb-3">
                   Skin Type
                 </label>
-                <select className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent">
+                <select
+                  onChange={handleSelectChange}
+                  name="skinType"
+                  id=""
+                  className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
+                >
                   <option value="" disabled selected className="bg-slate-800">
                     Select Skin Type
                   </option>
@@ -229,13 +395,31 @@ const NewProduct = () => {
                   </option>
                 </select>
               </div>
+              <div className="mt-2">
+                {selectedOptions.skinType.map((option) => (
+                  <div key={option} className="flex items-center space-x-2">
+                    <span className="px-3 py-1 bg-pink-600/20 text-pink-300 rounded-full text-sm font-medium">
+                      {option}
+                    </span>
+                    <FaTrash
+                      className="text-red-400 cursor-pointer"
+                      onClick={() => handleRemoveOption("skinType", option)}
+                    />
+                  </div>
+                ))}
+              </div>
 
               {/* Category */}
               <div>
                 <label className="block text-sm font-bold text-gray-200 mb-3">
                   Category
                 </label>
-                <select className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent">
+                <select
+                  onChange={handleSelectChange}
+                  name="categories"
+                  id=""
+                  className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
+                >
                   <option value="" disabled selected className="bg-slate-800">
                     Select Category
                   </option>
@@ -286,6 +470,19 @@ const NewProduct = () => {
                   </option>
                 </select>
               </div>
+              <div className="mt-2">
+                {selectedOptions.categories.map((option) => (
+                  <div key={option} className="flex items-center space-x-2">
+                    <span className="px-3 py-1 bg-pink-600/20 text-pink-300 rounded-full text-sm font-medium">
+                      {option}
+                    </span>
+                    <FaTrash
+                      className="text-red-400 cursor-pointer"
+                      onClick={() => handleRemoveOption("categories", option)}
+                    />
+                  </div>
+                ))}
+              </div>
 
               {/* Stock Quantity */}
               <div>
@@ -295,6 +492,9 @@ const NewProduct = () => {
                 <input
                   type="number"
                   placeholder="Enter stock quantity"
+                  onChange={handleChange}
+                  name="stock"
+                  id=""
                   className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
                 />
               </div>
@@ -308,6 +508,7 @@ const NewProduct = () => {
                   <input
                     type="checkbox"
                     id="inStock"
+                    name="inStock"
                     className="mr-3 w-5 h-5 accent-pink-400"
                     defaultChecked
                   />
@@ -322,7 +523,10 @@ const NewProduct = () => {
 
               {/* Create Button */}
               <div className="pt-4">
-                <button className="w-full bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105">
+                <button
+                  onClick={handleUpload}
+                  className="w-full bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold py-4 px-8 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105"
+                >
                   Create Product
                 </button>
               </div>

@@ -1,7 +1,118 @@
 import { FaUpload } from "react-icons/fa";
 import LineChart from "../components/LineChart";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useEffect } from "react";
+import { userRequest } from "../requestMethods";
+import { toast } from "react-toastify";
+import axios from "axios";
 
 const Product = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const productId = location.pathname.split("/")[2];
+  const [product, setProduct] = useState({});
+  const [formData, setFormData] = useState({
+    title: "",
+    desc: "",
+    originalPrice: "",
+    discountPrice: "",
+    wholesalePrice: "",
+    wholesaleMinimumQuantity: "",
+    categories: [],
+    inStock: true,
+    stock: "",
+  });
+  const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState("Upload complete!");
+
+  useEffect(() => {
+    const getProduct = async () => {
+      try {
+        const res = await userRequest.get("/products/find/" + productId);
+        setProduct(res.data);
+        setFormData({
+          title: res.data.title || "",
+          desc: res.data.desc || "",
+          originalPrice: res.data.originalPrice || "",
+          discountPrice: res.data.discountPrice || "",
+          wholesalePrice: res.data.wholesalePrice || "",
+          wholesaleMinimumQuantity: res.data.wholesaleMinimumQuantity || "",
+          categories: res.data.categories || [],
+          inStock: res.data.inStock !== undefined ? res.data.inStock : true,
+          stock: res.data.stock || "",
+        });
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to load product data!");
+      }
+    };
+    getProduct();
+  }, [productId]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleCategoryChange = (e) => {
+    const selectedCategories = Array.from(
+      e.target.selectedOptions,
+      (option) => option.value
+    );
+    setFormData((prev) => ({
+      ...prev,
+      categories: selectedCategories,
+    }));
+  };
+
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      let imageUrl = product.img; // Keep existing image if no new file
+
+      // Upload new image to Cloudinary if selected
+      if (file) {
+        setUploading("uploading ...");
+
+        const data = new FormData();
+        data.append("file", file);
+        data.append("upload_preset", "uploads");
+
+        const uploadRes = await axios.post(
+          "https://api.cloudinary.com/v1_1/dyrteayr3/image/upload",
+          data
+        );
+        imageUrl = uploadRes.data.url;
+        setUploading("Upload complete!");
+      }
+
+      // Prepare product data
+      const productData = {
+        ...formData,
+        img: imageUrl,
+      };
+
+      // Update product
+      await userRequest.put(`/products/${productId}`, productData);
+
+      toast.success("Product updated successfully!");
+      // Navigate back to products page
+      navigate("/products");
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to update product!");
+      setUploading("Upload failed. Please try again.");
+    }
+  };
   return (
     <div className="min-h-screen bg-linear-to-tr from-indigo-900 via-purple-900/40 to-pink-900/30 text-white p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -16,9 +127,11 @@ const Product = () => {
                 View and manage product information
               </p>
             </div>
-            <button className="bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105">
-              Create New
-            </button>
+            <Link to="/new-product">
+              <button className="bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105">
+                Create New
+              </button>
+            </Link>
           </div>
         </div>
 
@@ -42,30 +155,46 @@ const Product = () => {
             <div className="flex items-center gap-6 mb-6">
               <img
                 className="w-24 h-24 object-cover rounded-2xl shadow-lg"
-                src="https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400&h=400&fit=crop"
+                src={
+                  product.img
+                    ? product.img.startsWith("http")
+                      ? `${product.img}?t=${Date.now()}`
+                      : `http://localhost:8000/${product.img}?t=${Date.now()}`
+                    : "/placeholder.jpg"
+                }
                 alt="product"
               />
               <div>
                 <h4 className="text-xl font-bold text-white mb-1">
-                  Hydrating Facial Cleanser
+                  {product.title}
                 </h4>
-                <span className="inline-block px-3 py-1 bg-green-500/20 text-green-300 text-sm font-bold rounded-full border border-green-400/30">
-                  Active
+                <span
+                  className={`inline-block px-3 py-1 text-sm font-bold rounded-full border ${
+                    product.inStock
+                      ? "bg-green-500/20 text-green-300 border-green-400/30"
+                      : "bg-red-500/20 text-red-300 border-red-400/30"
+                  }`}
+                >
+                  {product.inStock ? "Active" : "Out of Stock"}
                 </span>
               </div>
             </div>
             <div className="space-y-4">
               <div className="flex justify-between items-center py-2 border-b border-white/10">
                 <span className="text-gray-300 font-medium">Product ID:</span>
-                <span className="text-white font-bold">1aqs345</span>
+                <span className="text-white font-bold">{product._id}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-white/10">
                 <span className="text-gray-300 font-medium">Total Sales:</span>
-                <span className="text-white font-bold">625 units</span>
+                <span className="text-white font-bold">
+                  {product.totalSales}
+                </span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-gray-300 font-medium">Stock Level:</span>
-                <span className="text-white font-bold">150 units</span>
+                <span className="text-white font-bold">
+                  {product.stock} units
+                </span>
               </div>
             </div>
           </div>
@@ -76,7 +205,10 @@ const Product = () => {
           <h3 className="text-2xl font-bold bg-linear-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent mb-8">
             Edit Product Information
           </h3>
-          <form className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <form
+            onSubmit={handleSubmit}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+          >
             {/* Left Column - Form Fields */}
             <div className="space-y-6">
               <div>
@@ -85,7 +217,9 @@ const Product = () => {
                 </label>
                 <input
                   type="text"
-                  placeholder="Hydrating Facial Cleanser"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
                   className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
                 />
               </div>
@@ -95,7 +229,9 @@ const Product = () => {
                   Product Description
                 </label>
                 <textarea
-                  placeholder="Describe your product"
+                  name="desc"
+                  value={formData.desc}
+                  onChange={handleInputChange}
                   rows={5}
                   className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent resize-none"
                 />
@@ -108,7 +244,9 @@ const Product = () => {
                   </label>
                   <input
                     type="number"
-                    placeholder="Price before discount"
+                    name="originalPrice"
+                    value={formData.originalPrice}
+                    onChange={handleInputChange}
                     className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
                   />
                 </div>
@@ -119,7 +257,37 @@ const Product = () => {
                   </label>
                   <input
                     type="number"
-                    placeholder="Price after discount"
+                    name="discountPrice"
+                    value={formData.discountPrice}
+                    onChange={handleInputChange}
+                    className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-200 mb-3">
+                    Wholesale Price
+                  </label>
+                  <input
+                    type="number"
+                    name="wholesalePrice"
+                    value={formData.wholesalePrice}
+                    onChange={handleInputChange}
+                    className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-200 mb-3">
+                    Wholesale Minimum Quantity
+                  </label>
+                  <input
+                    type="number"
+                    name="wholesaleMinimumQuantity"
+                    value={formData.wholesaleMinimumQuantity}
+                    onChange={handleInputChange}
                     className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
                   />
                 </div>
@@ -129,7 +297,13 @@ const Product = () => {
                 <label className="block text-sm font-bold text-gray-200 mb-3">
                   Category
                 </label>
-                <select className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent">
+                <select
+                  multiple
+                  name="categories"
+                  value={formData.categories}
+                  onChange={handleCategoryChange}
+                  className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
+                >
                   <option value="" disabled selected className="bg-slate-800">
                     Select Category
                   </option>
@@ -186,7 +360,17 @@ const Product = () => {
                   <label className="block text-sm font-bold text-gray-200 mb-3">
                     In Stock
                   </label>
-                  <select className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent">
+                  <select
+                    name="inStock"
+                    value={formData.inStock.toString()}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        inStock: e.target.value === "true",
+                      }))
+                    }
+                    className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
+                  >
                     <option value="true" className="bg-slate-800">
                       Yes
                     </option>
@@ -202,7 +386,9 @@ const Product = () => {
                   </label>
                   <input
                     type="number"
-                    placeholder="Stock quantity"
+                    name="stock"
+                    value={formData.stock}
+                    onChange={handleInputChange}
                     className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
                   />
                 </div>
@@ -215,7 +401,17 @@ const Product = () => {
                 <div className="w-48 h-48 bg-white/10 backdrop-blur-sm rounded-2xl border-2 border-dashed border-pink-400/50 flex items-center justify-center mb-4 overflow-hidden">
                   <img
                     className="w-full h-full object-cover"
-                    src="https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400&h=400&fit=crop"
+                    src={
+                      file
+                        ? URL.createObjectURL(file)
+                        : product.img
+                        ? product.img.startsWith("http")
+                          ? `${product.img}?t=${Date.now()}`
+                          : `http://localhost:8000/${
+                              product.img
+                            }?t=${Date.now()}`
+                        : "/placeholder.jpg"
+                    }
                     alt="product"
                   />
                 </div>
@@ -224,7 +420,11 @@ const Product = () => {
                     <FaUpload className="text-sm" />
                     <span>Upload New Image</span>
                   </div>
-                  <input type="file" className="hidden" />
+                  <input
+                    type="file"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
                 </label>
               </div>
 

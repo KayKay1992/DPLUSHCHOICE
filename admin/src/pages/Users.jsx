@@ -1,73 +1,33 @@
 import { DataGrid } from "@mui/x-data-grid";
 import { FaTrash, FaUser, FaUserCheck, FaUserTimes } from "react-icons/fa";
+import { useState, useEffect } from "react";
+import { userRequest } from "../requestMethods";
+import { toast } from "react-toastify";
 
 const Users = () => {
-  const data = [
-    {
-      _id: "u001",
-      username: "john_doe",
-      email: "john@example.com",
-      phone: "+1-234-567-8900",
-      role: "Admin",
-      status: "Active",
-    },
-    {
-      _id: "u002",
-      username: "jane_smith",
-      email: "jane@example.com",
-      phone: "+1-987-654-3210",
-      role: "User",
-      status: "Inactive",
-    },
-    {
-      _id: "u003",
-      username: "bob_jones",
-      email: "bob@example.com",
-      phone: "+1-555-123-4567",
-      role: "Admin",
-      status: "Active",
-    },
-    {
-      _id: "u004",
-      username: "sarah_wilson",
-      email: "sarah@example.com",
-      phone: "+1-111-222-3333",
-      role: "User",
-      status: "Active",
-    },
-    {
-      _id: "u005",
-      username: "mike_brown",
-      email: "mike@example.com",
-      phone: "+1-999-888-7777",
-      role: "User",
-      status: "Active",
-    },
-    {
-      _id: "u006",
-      username: "lisa_davis",
-      email: "lisa@example.com",
-      phone: "+1-444-333-2222",
-      role: "User",
-      status: "Inactive",
-    },
-    {
-      _id: "u007",
-      username: "david_miller",
-      email: "david@example.com",
-      phone: "+1-777-666-5555",
-      role: "Admin",
-      status: "Active",
-    },
-    {
-      _id: "u008",
-      username: "emma_taylor",
-      email: "emma@example.com",
-      phone: "+1-888-999-0000",
-      role: "User",
-      status: "Active",
-    },
-  ];
+  const [users, setUsers] = useState([]);
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await userRequest.get("/users");
+        setUsers(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  const handleDelete = async (id) => {
+    try {
+      await userRequest.delete(`/users/${id}`);
+      setUsers(users.filter((user) => user._id !== id));
+      toast.success("User deleted successfully!");
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to delete user!");
+    }
+  };
 
   const columns = [
     {
@@ -158,7 +118,10 @@ const Users = () => {
       renderCell: (params) => {
         return (
           <div className="flex items-center justify-center">
-            <button className="bg-red-500/40 hover:bg-red-500/50 text-red-100 hover:text-white p-2 rounded-lg transition-all duration-200 border-2 border-red-400/50 hover:border-red-300">
+            <button
+              onClick={() => handleDelete(params.row._id)}
+              className="bg-red-500/40 hover:bg-red-500/50 text-red-100 hover:text-white p-2 rounded-lg transition-all duration-200 border-2 border-red-400/50 hover:border-red-300"
+            >
               <FaTrash className="text-sm" />
             </button>
           </div>
@@ -192,7 +155,7 @@ const Users = () => {
                 <p className="text-pink-200 text-sm font-semibold mb-1">
                   Total Users
                 </p>
-                <p className="text-3xl font-bold text-white">{data.length}</p>
+                <p className="text-3xl font-bold text-white">{users.length}</p>
               </div>
               <div className="w-12 h-12 bg-linear-to-br from-pink-500/30 to-rose-500/30 rounded-xl flex items-center justify-center border border-pink-400/30">
                 <FaUser className="text-pink-300 text-xl" />
@@ -207,7 +170,7 @@ const Users = () => {
                   Active Users
                 </p>
                 <p className="text-3xl font-bold text-white">
-                  {data.filter((user) => user.status === "Active").length}
+                  {users.filter((user) => user.status === "Active").length}
                 </p>
               </div>
               <div className="w-12 h-12 bg-linear-to-br from-blue-500/30 to-cyan-500/30 rounded-xl flex items-center justify-center border border-blue-400/30">
@@ -223,7 +186,7 @@ const Users = () => {
                   Admins
                 </p>
                 <p className="text-3xl font-bold text-white">
-                  {data.filter((user) => user.role === "Admin").length}
+                  {users.filter((user) => user.role === "Admin").length}
                 </p>
               </div>
               <div className="w-12 h-12 bg-linear-to-br from-emerald-500/30 to-teal-500/30 rounded-xl flex items-center justify-center border border-emerald-400/30">
@@ -239,7 +202,7 @@ const Users = () => {
                   Inactive Users
                 </p>
                 <p className="text-3xl font-bold text-white">
-                  {data.filter((user) => user.status === "Inactive").length}
+                  {users.filter((user) => user.status === "Inactive").length}
                 </p>
               </div>
               <div className="w-12 h-12 bg-linear-to-br from-purple-500/30 to-pink-500/30 rounded-xl flex items-center justify-center border border-purple-400/30">
@@ -261,7 +224,7 @@ const Users = () => {
             <div className="min-h-[400px] max-h-[calc(100vh-400px)] w-full overflow-auto rounded-xl">
               <DataGrid
                 getRowId={(row) => row._id}
-                rows={data}
+                rows={users}
                 columns={columns}
                 pageSize={10}
                 rowsPerPageOptions={[5, 10, 25]}

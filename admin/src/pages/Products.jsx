@@ -1,86 +1,43 @@
 import { DataGrid } from "@mui/x-data-grid";
 import { FaTrash, FaPlus, FaEdit } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { userRequest } from "../requestMethods";
+import { toast } from "react-toastify";
 
 const Products = () => {
-  const data = [
-    {
-      _id: 101,
-      title: "Hydrating Face Cream",
-      img: "https://images.unsplash.com/photo-1588776814546-3a3f3b6a1e8f",
-      desc: "A rich moisturizing cream for dry skin with hyaluronic acid.",
-      originalPrice: 10000,
-      discountedPrice: 9000,
-      category: "Skincare",
-      inStock: 50,
-    },
-    {
-      _id: 102,
-      title: "Vitamin C Serum",
-      img: "https://images.unsplash.com/photo-1588776814546-3a3f3b6a1e8f",
-      desc: "Brightening serum with vitamin C for radiant skin.",
-      originalPrice: 15000,
-      discountedPrice: 12000,
-      category: "Skincare",
-      inStock: 35,
-    },
-    {
-      _id: 103,
-      title: "Nourishing Body Lotion",
-      img: "https://images.unsplash.com/photo-1588776814546-3a3f3b6a1e8f",
-      desc: "Deeply nourishing body lotion with shea butter.",
-      originalPrice: 8000,
-      discountedPrice: 6500,
-      category: "Body Care",
-      inStock: 75,
-    },
-    {
-      _id: 104,
-      title: "Gentle Face Cleanser",
-      img: "https://images.unsplash.com/photo-1588776814546-3a3f3b6a1e8f",
-      desc: "Mild foaming cleanser suitable for sensitive skin.",
-      originalPrice: 6000,
-      discountedPrice: 4800,
-      category: "Skincare",
-      inStock: 60,
-    },
-    {
-      _id: 105,
-      title: "Exfoliating Scrub",
-      img: "https://images.unsplash.com/photo-1588776814546-3a3f3b6a1e8f",
-      desc: "Natural exfoliating scrub with sugar and essential oils.",
-      originalPrice: 7500,
-      discountedPrice: 6000,
-      category: "Skincare",
-      inStock: 40,
-    },
-    {
-      _id: 106,
-      title: "Hair Growth Oil",
-      img: "https://images.unsplash.com/photo-1588776814546-3a3f3b6a1e8f",
-      desc: "Premium hair oil blend for healthy scalp and growth.",
-      originalPrice: 12000,
-      discountedPrice: 9600,
-      category: "Hair Care",
-      inStock: 25,
-    },
-    {
-      _id: 107,
-      title: "Soothing Face Mask",
-      img: "https://images.unsplash.com/photo-1588776814546-3a3f3b6a1e8f",
-      desc: "Calming clay mask for irritated or sensitive skin.",
-      originalPrice: 5500,
-      discountedPrice: 4400,
-      category: "Skincare",
-      inStock: 45,
-    },
-  ];
+  const [products, setProducts] = useState([]);
+  const location = useLocation();
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await userRequest.get("/products");
+        setProducts(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    fetchProducts();
+  }, [location]);
+
+  const handleDelete = async (id) => {
+    try {
+      await userRequest.delete(`/products/${id}`);
+      setProducts(products.filter((product) => product._id !== id));
+      toast.success("Product deleted successfully!");
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to delete product!");
+    }
+  };
 
   const columns = [
     {
       field: "_id",
       headerName: "ID",
       width: 80,
+      headerAlign: "center",
       renderCell: (params) => (
         <span className="text-blue-300 font-mono font-bold drop-shadow-sm">
           {params.value}
@@ -91,11 +48,18 @@ const Products = () => {
       field: "product",
       headerName: "Product",
       width: 280,
+      headerAlign: "center",
       renderCell: (params) => {
         return (
           <div className="flex items-center justify-center py-2">
             <img
-              src={params.row.img}
+              src={
+                params.row.img
+                  ? params.row.img.startsWith("http")
+                    ? `${params.row.img}?t=${Date.now()}`
+                    : `http://localhost:8000/${params.row.img}?t=${Date.now()}`
+                  : "/placeholder.jpg"
+              }
               alt=""
               className="h-12 w-12 rounded-xl object-cover mr-3 border-2 border-white/40"
             />
@@ -112,12 +76,13 @@ const Products = () => {
       },
     },
     {
-      field: "category",
+      field: "categories",
       headerName: "Category",
       width: 140,
+      headerAlign: "center",
       renderCell: (params) => (
         <span className="text-cyan-300 font-semibold drop-shadow-sm">
-          {params.value}
+          {Array.isArray(params.value) ? params.value.join(", ") : params.value}
         </span>
       ),
     },
@@ -125,6 +90,7 @@ const Products = () => {
       field: "originalPrice",
       headerName: "Original Price",
       width: 130,
+      headerAlign: "center",
       renderCell: (params) => (
         <span className="text-orange-300 font-bold drop-shadow-sm">
           ₦{params.value?.toLocaleString()}
@@ -132,9 +98,10 @@ const Products = () => {
       ),
     },
     {
-      field: "discountedPrice",
+      field: "discountPrice",
       headerName: "Sale Price",
       width: 120,
+      headerAlign: "center",
       renderCell: (params) => (
         <span className="text-green-200 font-bold drop-shadow-sm">
           ₦{params.value?.toLocaleString()}
@@ -142,9 +109,10 @@ const Products = () => {
       ),
     },
     {
-      field: "inStock",
+      field: "stock",
       headerName: "Stock",
       width: 100,
+      headerAlign: "center",
       renderCell: (params) => (
         <span
           className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${
@@ -163,6 +131,7 @@ const Products = () => {
       field: "edit",
       headerName: "Actions",
       width: 120,
+      headerAlign: "center",
       renderCell: (params) => {
         return (
           <div className="flex items-center justify-center space-x-2">
@@ -171,7 +140,10 @@ const Products = () => {
                 <FaEdit className="text-sm" />
               </button>
             </Link>
-            <button className="bg-red-500/40 hover:bg-red-500/50 text-red-100 hover:text-white p-2 rounded-lg transition-all duration-200 border-2 border-red-400/50 hover:border-red-300">
+            <button
+              onClick={() => handleDelete(params.row._id)}
+              className="bg-red-500/40 hover:bg-red-500/50 text-red-100 hover:text-white p-2 rounded-lg transition-all duration-200 border-2 border-red-400/50 hover:border-red-300"
+            >
               <FaTrash className="text-sm" />
             </button>
           </div>
@@ -179,7 +151,6 @@ const Products = () => {
       },
     },
   ];
-
   return (
     <div className="min-h-full bg-linear-to-br from-gray-950 via-purple-900/10 to-gray-900 text-white p-4 sm:p-6 lg:p-8">
       <div className="w-full">
@@ -194,7 +165,6 @@ const Products = () => {
                 Manage your product inventory and catalog
               </p>
             </div>
-            
 
             <Link to="/new-product">
               <button className="group relative overflow-hidden bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-2xl shadow-lg hover:shadow-pink-500/20 transition-all duration-300 hover:scale-105">
@@ -218,7 +188,7 @@ const Products = () => {
                   Total Products
                 </p>
                 <p className="text-3xl font-bold text-gray-100">
-                  {data.length}
+                  {products.length}
                 </p>
               </div>
               <div className="w-12 h-12 bg-pink-500/20 rounded-xl flex items-center justify-center">
@@ -233,7 +203,7 @@ const Products = () => {
               <div>
                 <p className="text-gray-300 text-sm font-medium">In Stock</p>
                 <p className="text-3xl font-bold text-gray-100">
-                  {data.reduce((sum, i) => sum + i.inStock, 0)}
+                  {products.reduce((sum, i) => sum + i.stock, 0)}
                 </p>
               </div>
               <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
@@ -248,7 +218,7 @@ const Products = () => {
               <div>
                 <p className="text-gray-300 text-sm font-medium">Categories</p>
                 <p className="text-3xl font-bold text-gray-100">
-                  {new Set(data.map((i) => i.category)).size}
+                  {new Set(products.flatMap((i) => i.categories || [])).size}
                 </p>
               </div>
               <div className="w-12 h-12 bg-emerald-500/20 rounded-xl flex items-center justify-center">
@@ -264,8 +234,11 @@ const Products = () => {
                 <p className="text-gray-300 text-sm font-medium">Revenue</p>
                 <p className="text-3xl font-bold text-gray-100">
                   ₦
-                  {data
-                    .reduce((sum, i) => sum + i.discountedPrice, 0)
+                  {products
+                    .reduce(
+                      (sum, i) => sum + (i.discountPrice || 0) * (i.stock || 0),
+                      0
+                    )
                     .toLocaleString()}
                 </p>
               </div>
@@ -293,7 +266,7 @@ const Products = () => {
             <div className="min-h-[500px] w-full overflow-auto rounded-2xl bg-slate-800 border-2 border-purple-500/40">
               <DataGrid
                 getRowId={(row) => row._id}
-                rows={data}
+                rows={products}
                 columns={columns}
                 initialState={{
                   pagination: { paginationModel: { pageSize: 10 } },
