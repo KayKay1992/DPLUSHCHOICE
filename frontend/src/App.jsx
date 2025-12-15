@@ -53,6 +53,10 @@ function App() {
           element: <Register />,
         },
         {
+          path: "/products",
+          element: <ProductList />,
+        },
+        {
           path: "/products/:searchTerm",
           element: <ProductList />,
         },

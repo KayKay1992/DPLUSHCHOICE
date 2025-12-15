@@ -1,120 +1,92 @@
 import React, { useState, useEffect } from "react";
 import Product from "./Product";
+import { userRequest } from "../requestMethods";
 
-const Products = ({ selectedCategory = "all", sortBy = "featured" }) => {
-  // Sample product data - in a real app, this would come from an API
-  const [allProducts] = useState([
-    {
-      id: 1,
-      img: "/lotion.jpg",
-      name: "Luxury Teddy Bear",
-      price: 4500,
-      category: "teddy-bears",
-      rating: 4.5,
-      isNew: true,
-      isPopular: true,
-    },
-    {
-      id: 2,
-      img: "/lotion1.jpg",
-      name: "Plush Panda",
-      price: 5200,
-      category: "plush-animals",
-      rating: 4.8,
-      isNew: false,
-      isPopular: true,
-    },
-    {
-      id: 3,
-      img: "/lotion2.jpg",
-      name: "Elegant Rabbit",
-      price: 3800,
-      category: "plush-animals",
-      rating: 4.2,
-      isNew: true,
-      isPopular: false,
-    },
-    {
-      id: 4,
-      img: "/serum1.jpg",
-      name: "Luxury Pillow Set",
-      price: 8500,
-      category: "luxury-pillows",
-      rating: 4.7,
-      isNew: false,
-      isPopular: true,
-    },
-    {
-      id: 5,
-      img: "/lotion3.jpg",
-      name: "Decorative Unicorn",
-      price: 6200,
-      category: "decorative-items",
-      rating: 4.3,
-      isNew: true,
-      isPopular: false,
-    },
-    {
-      id: 6,
-      img: "/lotion.jpg",
-      name: "Gift Set Bundle",
-      price: 12000,
-      category: "gift-sets",
-      rating: 4.9,
-      isNew: false,
-      isPopular: true,
-    },
-    {
-      id: 7,
-      img: "/lotion1.jpg",
-      name: "Seasonal Reindeer",
-      price: 4800,
-      category: "seasonal",
-      rating: 4.4,
-      isNew: true,
-      isPopular: false,
-    },
-    {
-      id: 8,
-      img: "/lotion2.jpg",
-      name: "Custom Plush Order",
-      price: 15000,
-      category: "custom",
-      rating: 5.0,
-      isNew: false,
-      isPopular: false,
-    },
-  ]);
+const Products = ({ filters, sortBy, selectedCategory, searchTerm }) => {
+  const [products, setProducts] = useState([]);
+  const [filteredProducts, setFilteredProducts] = useState([]);
 
-  const [filteredProducts, setFilteredProducts] = useState(allProducts);
+  useEffect(() => {
+    const getProducts = async () => {
+      try {
+        let url = "/products";
+        if (searchTerm && searchTerm !== "all") {
+          url += `?search=${encodeURIComponent(searchTerm)}`;
+        }
+        const res = await userRequest.get(url);
+        setProducts(res.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getProducts();
+  }, [searchTerm]);
 
   // Filter and sort products based on selected criteria
   useEffect(() => {
-    let filtered = [...allProducts];
+    let filtered = [...products];
+
+    // Apply filters (if any additional filters are passed)
+    if (filters) {
+      filtered = filtered.filter((product) => {
+        return Object.entries(filters).every(([key, value]) => {
+          if (!value || value === "all") return true;
+
+          // Handle different filter types
+          if (key === "priceRange") {
+            const [min, max] = value.split("-").map(Number);
+            return product.discountPrice >= min && product.discountPrice <= max;
+          }
+
+          if (key === "rating") {
+            return product.rating >= Number(value);
+          }
+
+          // For array fields like categories
+          if (Array.isArray(product[key])) {
+            return product[key].includes(value);
+          }
+
+          // For string fields
+          return product[key] === value;
+        });
+      });
+    }
 
     // Filter by category
-    if (selectedCategory !== "all") {
+    if (selectedCategory && selectedCategory !== "all") {
       filtered = filtered.filter(
-        (product) => product.category === selectedCategory
+        (product) =>
+          product.categories && product.categories.includes(selectedCategory)
       );
     }
 
     // Sort products
     switch (sortBy) {
       case "price-low":
-        filtered.sort((a, b) => a.price - b.price);
+        filtered.sort(
+          (a, b) =>
+            (a.discountPrice || a.originalPrice || 0) -
+            (b.discountPrice || b.originalPrice || 0)
+        );
         break;
       case "price-high":
-        filtered.sort((a, b) => b.price - a.price);
+        filtered.sort(
+          (a, b) =>
+            (b.discountPrice || b.originalPrice || 0) -
+            (a.discountPrice || a.originalPrice || 0)
+        );
         break;
       case "rating":
-        filtered.sort((a, b) => b.rating - a.rating);
+        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
         break;
       case "newest":
-        filtered.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
+        filtered.sort(
+          (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+        );
         break;
-      case "popular":
-        filtered.sort((a, b) => (b.isPopular ? 1 : 0) - (a.isPopular ? 1 : 0));
+      case "name":
+        filtered.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
         break;
       case "featured":
       default:
@@ -123,43 +95,83 @@ const Products = ({ selectedCategory = "all", sortBy = "featured" }) => {
     }
 
     setFilteredProducts(filtered);
-  }, [selectedCategory, sortBy, allProducts]);
+  }, [filters, sortBy, products, selectedCategory]);
 
   return (
     <section className="py-16 px-4 bg-linear-to-b from-pink-50 via-purple-50 to-white">
       <div className="max-w-7xl mx-auto">
+        {/* Search Results Header */}
+        {searchTerm && searchTerm !== "all" && (
+          <div className="mb-8 text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              Search Results for "{searchTerm}"
+            </h2>
+            <p className="text-gray-600">
+              Found {filteredProducts.length} product
+              {filteredProducts.length !== 1 ? "s" : ""}
+            </p>
+            <button
+              onClick={() => (window.location.href = "/products")}
+              className="mt-4 px-6 py-2 bg-pink-500 text-white rounded-full hover:bg-pink-600 transition-colors"
+            >
+              Clear Search
+            </button>
+          </div>
+        )}
+
         {/* Products Grid */}
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
             {filteredProducts.map((product) => (
               <Product
-                key={product.id}
-                img={product.img}
-                name={product.name}
-                price={product.price}
-                category={product.category}
-                rating={product.rating}
-                isNew={product.isNew}
-                isPopular={product.isPopular}
+                key={product._id}
+                productId={product._id}
+                img={
+                  product.img
+                    ? product.img.startsWith("http")
+                      ? product.img
+                      : `http://localhost:8000/${product.img}`
+                    : "/placeholder.jpg"
+                }
+                name={product.title}
+                price={product.discountPrice || product.originalPrice}
+                originalPrice={product.originalPrice}
+                category={
+                  product.categories ? product.categories[0] : "general"
+                }
+                rating={4.5} // Default rating since API doesn't have this
+                isNew={
+                  product.createdAt
+                    ? new Date() - new Date(product.createdAt) <
+                      30 * 24 * 60 * 60 * 1000
+                    : false
+                } // New if created within 30 days
+                isPopular={product.totalSales ? product.totalSales > 10 : false}
               />
             ))}
           </div>
         ) : (
           <div className="text-center py-16">
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-xl border border-white/30 max-w-md mx-auto">
-              <div className="text-6xl mb-4">🛍️</div>
+              <div className="text-6xl mb-4">🔍</div>
               <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                No Products Found
+                {searchTerm && searchTerm !== "all"
+                  ? `No products found for "${searchTerm}"`
+                  : "No Products Found"}
               </h3>
               <p className="text-gray-600 mb-6">
-                We couldn't find any products matching your current filters.
+                {searchTerm && searchTerm !== "all"
+                  ? "Try adjusting your search terms or browse our full catalog."
+                  : "We're working on adding more amazing products to our collection."}
               </p>
-              <button
-                onClick={() => window.location.reload()}
-                className="bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-              >
-                Reset Filters
-              </button>
+              {searchTerm && searchTerm !== "all" && (
+                <button
+                  onClick={() => (window.location.href = "/products")}
+                  className="px-6 py-3 bg-pink-500 text-white rounded-full hover:bg-pink-600 transition-colors font-semibold"
+                >
+                  Browse All Products
+                </button>
+              )}
             </div>
           </div>
         )}

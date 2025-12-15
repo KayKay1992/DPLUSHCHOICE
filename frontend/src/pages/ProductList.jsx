@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import Products from "../components/Products";
+import { useParams } from "react-router-dom";
 
 const ProductList = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("featured");
+  const { searchTerm } = useParams();
 
   // Product categories based on Category.jsx file
   const categories = [
@@ -122,7 +124,11 @@ const ProductList = () => {
       </div>
 
       {/* Products Section */}
-      <Products selectedCategory={selectedCategory} sortBy={sortBy} />
+      <Products
+        selectedCategory={selectedCategory}
+        sortBy={sortBy}
+        searchTerm={searchTerm}
+      />
     </div>
   );
 };

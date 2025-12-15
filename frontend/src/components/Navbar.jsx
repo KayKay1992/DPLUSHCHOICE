@@ -8,6 +8,7 @@ import { logout } from "../redux/userRedux";
 import SideMenu from "./SideMenu";
 
 const Navbar = () => {
+  const [search, setSearch] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.user);
@@ -45,8 +46,30 @@ const Navbar = () => {
                 type="text"
                 placeholder="Search plushies, toys, gifts..."
                 className="w-full px-5 py-3 pl-12 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all duration-300 text-gray-800 placeholder-gray-400 font-medium"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    if (search.trim()) {
+                      window.location.href = `/products/${encodeURIComponent(
+                        search.trim()
+                      )}`;
+                    }
+                  }
+                }}
               />
-              <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-500 text-xl" />
+              <button
+                onClick={() => {
+                  if (search.trim()) {
+                    window.location.href = `/products/${encodeURIComponent(
+                      search.trim()
+                    )}`;
+                  }
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-500 text-xl hover:text-pink-600 transition-colors"
+              >
+                <FaSearch />
+              </button>
             </div>
           </div>
 
@@ -98,8 +121,30 @@ const Navbar = () => {
               type="text"
               placeholder="What are you looking for?"
               className="w-full px-5 py-3 pl-12 rounded-full border border-gray-300 focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none text-gray-800 placeholder-gray-400 font-medium"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  if (search.trim()) {
+                    window.location.href = `/products/${encodeURIComponent(
+                      search.trim()
+                    )}`;
+                  }
+                }
+              }}
             />
-            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-500 text-xl" />
+            <button
+              onClick={() => {
+                if (search.trim()) {
+                  window.location.href = `/products/${encodeURIComponent(
+                    search.trim()
+                  )}`;
+                }
+              }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-pink-500 text-xl hover:text-pink-600 transition-colors"
+            >
+              <FaSearch />
+            </button>
           </div>
           <button
             onClick={() => setIsMenuOpen(true)}
