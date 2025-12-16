@@ -1,5 +1,7 @@
 import StarRating from "./StarRating";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { FaMinus, FaPlus } from "react-icons/fa";
 
 const Product = ({
   img,
@@ -11,6 +13,8 @@ const Product = ({
   isPopular = false,
   productId,
 }) => {
+  const [quantity, setQuantity] = useState(1);
+
   // Format price with Nigerian Naira symbol
   const formatPrice = (price) => {
     return new Intl.NumberFormat("en-NG", {
@@ -94,9 +98,34 @@ const Product = ({
             </span>
           </div>
 
+          {/* Quantity Controls */}
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                setQuantity(Math.max(1, quantity - 1));
+              }}
+              className="bg-pink-500 hover:bg-pink-600 text-white p-2 rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+            >
+              <FaMinus className="text-sm" />
+            </button>
+            <span className="text-lg font-semibold px-3 py-1 bg-gray-100 rounded-lg min-w-10 text-center">
+              {quantity}
+            </span>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                setQuantity(quantity + 1);
+              }}
+              className="bg-pink-500 hover:bg-pink-600 text-white p-2 rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+            >
+              <FaPlus className="text-sm" />
+            </button>
+          </div>
+
           {/* Add to Cart Button */}
           <button className="w-full bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-pink-500/50">
-            Add to Cart
+            Add to Cart ({quantity})
           </button>
         </div>
       </div>
