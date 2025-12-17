@@ -79,9 +79,26 @@ const cartSlice = createSlice({
       if (existingProductIndex !== -1) {
         // Update quantity if product exists
         currentCart.products[existingProductIndex].quantity += product.quantity;
+        // Recalculate price based on new quantity and wholesale pricing
+        const item = currentCart.products[existingProductIndex];
+        const isWholesaleActive =
+          item.wholesalePrice &&
+          item.wholesaleMinimumQuantity &&
+          item.quantity >= item.wholesaleMinimumQuantity;
+        item.price = isWholesaleActive
+          ? item.wholesalePrice
+          : item.discountPrice || item.originalPrice;
+        item.isWholesale = isWholesaleActive;
       } else {
-        // Add new product
-        currentCart.products.push(product);
+        // Add new product with wholesale pricing info
+        const cartItem = {
+          ...product,
+          wholesalePrice: product.wholesalePrice,
+          wholesaleMinimumQuantity: product.wholesaleMinimumQuantity,
+          discountPrice: product.discountPrice,
+          originalPrice: product.originalPrice,
+        };
+        currentCart.products.push(cartItem);
       }
 
       // Recalculate totals
@@ -161,6 +178,16 @@ const cartSlice = createSlice({
         } else {
           // Update quantity
           currentCart.products[productIndex].quantity = quantity;
+          // Recalculate price based on new quantity and wholesale pricing
+          const item = currentCart.products[productIndex];
+          const isWholesaleActive =
+            item.wholesalePrice &&
+            item.wholesaleMinimumQuantity &&
+            item.quantity >= item.wholesaleMinimumQuantity;
+          item.price = isWholesaleActive
+            ? item.wholesalePrice
+            : item.discountPrice || item.originalPrice;
+          item.isWholesale = isWholesaleActive;
         }
 
         // Recalculate totals

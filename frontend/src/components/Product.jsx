@@ -41,11 +41,15 @@ const Product = ({
       addProduct({
         ...product,
         quantity,
-        price,
+        price: product.discountPrice || product.originalPrice, // Use regular price initially
         email,
         id: productId,
         title: name,
         img,
+        wholesalePrice: product.wholesalePrice,
+        wholesaleMinimumQuantity: product.wholesaleMinimumQuantity,
+        discountPrice: product.discountPrice,
+        originalPrice: product.originalPrice,
       })
     );
 

@@ -178,12 +178,36 @@ const Cart = () => {
                       {/* Price and Delete */}
                       <div className="flex items-center justify-between sm:flex-col sm:items-end w-full sm:w-auto gap-2">
                         <div className="text-left sm:text-right">
-                          <p className="text-lg sm:text-xl lg:text-2xl font-extrabold text-purple-600">
-                            {formatPrice(product.price * product.quantity)}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {formatPrice(product.price)} each
-                          </p>
+                          {product.isWholesale ? (
+                            <div className="flex flex-col items-end">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                                  WHOLESALE
+                                </span>
+                              </div>
+                              <p className="text-lg sm:text-xl lg:text-2xl font-extrabold text-green-600">
+                                {formatPrice(product.price * product.quantity)}
+                              </p>
+                              <p className="text-sm text-gray-400 line-through">
+                                {formatPrice(
+                                  (product.discountPrice ||
+                                    product.originalPrice) * product.quantity
+                                )}
+                              </p>
+                              <p className="text-sm text-green-600 font-semibold">
+                                {formatPrice(product.price)} each (wholesale)
+                              </p>
+                            </div>
+                          ) : (
+                            <div>
+                              <p className="text-lg sm:text-xl lg:text-2xl font-extrabold text-purple-600">
+                                {formatPrice(product.price * product.quantity)}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {formatPrice(product.price)} each
+                              </p>
+                            </div>
+                          )}
                         </div>
                         <button
                           onClick={() => handleRemoveProduct(product.id)}

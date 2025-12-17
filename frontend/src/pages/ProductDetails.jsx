@@ -65,6 +65,28 @@ const ProductDetails = () => {
     }).format(price);
   };
 
+  // Check if wholesale pricing should be active
+  const isWholesaleActive =
+    product.wholesalePrice &&
+    product.wholesaleMinimumQuantity &&
+    quantity >= product.wholesaleMinimumQuantity;
+
+  // Get the current price (wholesale or regular)
+  const getCurrentPrice = () => {
+    if (isWholesaleActive) {
+      return product.wholesalePrice;
+    }
+    return product.discountPrice || product.originalPrice;
+  };
+
+  // Get the original price for display (if wholesale is active, show regular price as crossed out)
+  const getOriginalPrice = () => {
+    if (isWholesaleActive) {
+      return product.discountPrice || product.originalPrice;
+    }
+    return product.originalPrice;
+  };
+
   const handleAddToCart = () => {
     // Check if user is logged in
     if (!currentUser) {
@@ -76,7 +98,7 @@ const ProductDetails = () => {
       return;
     }
 
-    const price = product.discountPrice || product.originalPrice;
+    const price = getCurrentPrice();
     const email = currentUser?.email || "guest@example.com"; // Use guest email if not logged in
 
     dispatch(
@@ -86,6 +108,7 @@ const ProductDetails = () => {
         price,
         email,
         id: product._id || productId, // Ensure we have an ID
+        isWholesale: isWholesaleActive, // Add wholesale flag
       })
     );
 
@@ -178,17 +201,20 @@ const ProductDetails = () => {
                   </p>
                 )}
                 <div className="flex items-center mb-4">
-                  {product.originalPrice &&
-                    product.originalPrice !== product.discountPrice && (
+                  {getOriginalPrice() &&
+                    getOriginalPrice() !== getCurrentPrice() && (
                       <span className="text-lg text-gray-500 line-through mr-4">
-                        {formatPrice(product.originalPrice)}
+                        {formatPrice(getOriginalPrice())}
                       </span>
                     )}
                   <h2 className="text-2xl lg:text-3xl font-extrabold text-transparent bg-clip-text bg-linear-to-r from-pink-600 to-purple-600">
-                    {formatPrice(
-                      product.discountPrice || product.originalPrice
-                    )}
+                    {formatPrice(getCurrentPrice())}
                   </h2>
+                  {isWholesaleActive && (
+                    <span className="ml-3 px-3 py-1 bg-green-500 text-white text-sm font-bold rounded-full">
+                      WHOLESALE
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm text-gray-600">
                   {product.inStock
@@ -209,9 +235,24 @@ const ProductDetails = () => {
                 </div>
               )}
               {product.wholesalePrice && product.wholesaleMinimumQuantity && (
-                <div className="inline-flex items-center bg-linear-to-r from-pink-400 to-purple-400 text-white font-semibold text-sm px-6 py-3 rounded-full shadow-md mb-6">
-                  Wholesale Price: {formatPrice(product.wholesalePrice)} per
-                  unit (min. {product.wholesaleMinimumQuantity} units)
+                <div
+                  className={`inline-flex items-center font-semibold text-sm px-6 py-3 rounded-full shadow-md mb-6 ${
+                    isWholesaleActive
+                      ? "bg-green-500 text-white"
+                      : "bg-linear-to-r from-pink-400 to-purple-400 text-white"
+                  }`}
+                >
+                  {isWholesaleActive ? (
+                    <>
+                      🎉 Wholesale Price Active:{" "}
+                      {formatPrice(product.wholesalePrice)} per unit
+                    </>
+                  ) : (
+                    <>
+                      Wholesale Price: {formatPrice(product.wholesalePrice)} per
+                      unit (min. {product.wholesaleMinimumQuantity} units)
+                    </>
+                  )}
                 </div>
               )}
               <div className="flex items-center mb-6">
