@@ -3,6 +3,10 @@ import { useParams } from "react-router-dom";
 import { FaMinus, FaPlus } from "react-icons/fa";
 import StarRating from "../components/StarRating";
 import { userRequest } from "../requestMethods";
+import { toast, ToastContainer } from "react-toastify";
+import { useDispatch, useSelector } from "react-redux";
+import { addProduct, selectCurrentCart } from "../redux/cartRedux";
+import { useNavigate } from "react-router-dom";
 
 const ProductDetails = () => {
   const { productId } = useParams();
@@ -10,6 +14,10 @@ const ProductDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const dispatch = useDispatch();
+  const cart = useSelector(selectCurrentCart);
+  const { currentUser } = useSelector((state) => state.user);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -57,8 +65,55 @@ const ProductDetails = () => {
     }).format(price);
   };
 
+  const handleAddToCart = () => {
+    // Check if user is logged in
+    if (!currentUser) {
+      toast.info("Please login to add items to your cart", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      navigate("/login");
+      return;
+    }
+
+    const price = product.discountPrice || product.originalPrice;
+    const email = currentUser?.email || "guest@example.com"; // Use guest email if not logged in
+
+    dispatch(
+      addProduct({
+        ...product,
+        quantity,
+        price,
+        email,
+        id: product._id || productId, // Ensure we have an ID
+      })
+    );
+
+    toast.success(`${product.title} added to cart!`, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+    console.log("Cart after addition:", cart);
+  };
+
   return (
     <div className="min-h-screen bg-linear-to-br from-pink-50 via-white to-purple-50 py-8 px-4">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
       <div className="max-w-7xl mx-auto bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden">
         <div className="flex flex-col lg:flex-row">
           {/* Left Side - Product Images and Gallery */}
@@ -176,7 +231,10 @@ const ProductDetails = () => {
                   <FaPlus />
                 </button>
               </div>
-              <button className="w-full lg:w-3/4 bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 mb-8">
+              <button
+                className="w-full lg:w-3/4 bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 mb-8"
+                onClick={handleAddToCart}
+              >
                 Add to Cart
               </button>
             </div>

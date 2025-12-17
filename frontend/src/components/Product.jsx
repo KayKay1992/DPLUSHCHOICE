@@ -1,7 +1,10 @@
 import StarRating from "./StarRating";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { FaMinus, FaPlus } from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
+import { addProduct } from "../redux/cartRedux";
+import { toast } from "react-toastify";
 
 const Product = ({
   img,
@@ -12,8 +15,49 @@ const Product = ({
   isNew = false,
   isPopular = false,
   productId,
+  product, // Add full product object
 }) => {
   const [quantity, setQuantity] = useState(1);
+  const dispatch = useDispatch();
+  const { currentUser } = useSelector((state) => state.user);
+  const navigate = useNavigate();
+
+  const handleAddToCart = (e) => {
+    e.preventDefault(); // Prevent navigation to product details
+
+    // Check if user is logged in
+    if (!currentUser) {
+      toast.info("Please login to add items to your cart", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      navigate("/login");
+      return;
+    }
+
+    const email = currentUser?.email || "guest@example.com";
+
+    dispatch(
+      addProduct({
+        ...product,
+        quantity,
+        price,
+        email,
+        id: productId,
+        title: name,
+        img,
+      })
+    );
+
+    toast.success(`${name} added to cart!`, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+  };
 
   // Format price with Nigerian Naira symbol
   const formatPrice = (price) => {
@@ -124,7 +168,10 @@ const Product = ({
           </div>
 
           {/* Add to Cart Button */}
-          <button className="w-full bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-pink-500/50">
+          <button
+            onClick={handleAddToCart}
+            className="w-full bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-pink-500/50"
+          >
             Add to Cart ({quantity})
           </button>
         </div>

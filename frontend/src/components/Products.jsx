@@ -126,6 +126,7 @@ const Products = ({ filters, sortBy, selectedCategory, searchTerm }) => {
               <Product
                 key={product._id}
                 productId={product._id}
+                product={product}
                 img={
                   product.img
                     ? product.img.startsWith("http")

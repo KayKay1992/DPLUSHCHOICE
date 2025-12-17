@@ -2,19 +2,30 @@ import { FaSearch, FaUser, FaSignOutAlt } from "react-icons/fa";
 import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import Badge from "@mui/material/Badge";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/userRedux";
+import {
+  clearUserCart,
+  setCurrentUser,
+  selectCurrentCart,
+} from "../redux/cartRedux";
 import SideMenu from "./SideMenu";
 
 const Navbar = () => {
   const [search, setSearch] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
+  const { quantity } = useSelector(selectCurrentCart);
 
   const handleLogout = () => {
     dispatch(logout());
+    // Don't clear the user's cart - preserve it for when they log back in
+    // dispatch(clearUserCart()); // Removed this line
+    dispatch(setCurrentUser(null)); // Set to guest
+    navigate("/"); // Navigate to homepage
   };
 
   return (
@@ -77,7 +88,11 @@ const Navbar = () => {
           <div className="flex items-center space-x-4">
             {/* Cart */}
             <Link to="/cart">
-              <Badge badgeContent={4} color="secondary" overlap="circular">
+              <Badge
+                badgeContent={quantity}
+                color="secondary"
+                overlap="circular"
+              >
                 <div className="p-3 rounded-full hover:bg-pink-50 transition cursor-pointer group">
                   <ShoppingBasketIcon className="text-2xl text-pink-600 group-hover:text-pink-700 transition" />
                 </div>

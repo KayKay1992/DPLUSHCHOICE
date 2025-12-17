@@ -10,8 +10,23 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProductList from "./pages/ProductList";
 import Order from "./pages/Order";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { setCurrentUser } from "./redux/cartRedux";
 
 function App() {
+  const dispatch = useDispatch();
+  const { currentUser } = useSelector((state) => state.user);
+
+  // Initialize cart user on app load
+  useEffect(() => {
+    if (currentUser) {
+      dispatch(setCurrentUser(currentUser));
+    } else {
+      dispatch(setCurrentUser(null)); // Set to guest
+    }
+  }, [currentUser, dispatch]);
+
   const Layout = () => {
     return (
       <>
