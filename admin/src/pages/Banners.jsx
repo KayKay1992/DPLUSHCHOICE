@@ -1,36 +1,117 @@
 import React from "react";
+import { useState, useEffect } from "react";
 import { FaPlus, FaImage, FaEye, FaTrash } from "react-icons/fa";
+import axios from "axios";
+import { userRequest } from "../requestMethods";
+import { toast } from "react-toastify";
 
 const Banners = () => {
-  const banners = [
-    {
-      id: 1,
-      image:
-        "https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=400&h=400&fit=crop",
-      title: "Luxurious Perfume Collection",
-      description:
-        "Discover our exquisite range of premium perfumes. From floral scents to oriental fragrances, find your signature aroma that lasts all day.",
-      status: "Active",
-    },
-    {
-      id: 2,
-      image:
-        "https://images.unsplash.com/photo-1524592094714-0f0654e20314?w=400&h=400&fit=crop",
-      title: "Elegant Wristwatch Collection",
-      description:
-        "Timeless elegance meets modern design. Explore our collection of premium wristwatches, perfect for any occasion with Swiss precision and style.",
-      status: "Active",
-    },
-    {
-      id: 3,
-      image:
-        "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=400&fit=crop",
-      title: "Designer Ladies Handbags",
-      description:
-        "Elevate your style with our curated collection of designer handbags. From classic totes to trendy crossbody bags, find the perfect accessory.",
-      status: "Active",
-    },
-  ];
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [title, setTitle] = useState("");
+  const [bannerDescription, setBannerDescription] = useState("");
+  const [banners, setBanners] = useState([]);
+  const [upLoading, setUploading] = useState("uploading is 0% complete");
+  const [imagePreview, setImagePreview] = useState(null);
+
+  const imageChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedImage(e.target.files[0]);
+      // Create image preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target.result);
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    }
+  };
+
+  const handleUpload = async (e) => {
+    e.preventDefault();
+
+    // Validation
+    if (!selectedImage) {
+      toast.error("Please select a banner image first.");
+      return;
+    }
+    if (!title.trim()) {
+      toast.error("Please enter a banner title.");
+      return;
+    }
+    if (!bannerDescription.trim()) {
+      toast.error("Please enter a banner description.");
+      return;
+    }
+
+    const data = new FormData();
+    data.append("file", selectedImage);
+    data.append("upload_preset", "uploads");
+
+    setUploading("uploading ...");
+    try {
+      const uploadRes = await axios.post(
+        "https://api.cloudinary.com/v1_1/dyrteayr3/image/upload",
+        data
+      );
+      const { url } = uploadRes.data;
+      setUploading("Upload complete!");
+
+      // Create banner with the uploaded image URL
+      const bannerData = {
+        title: title.trim(),
+        subtitle: bannerDescription.trim(),
+        image: url,
+      };
+
+      const res = await userRequest.post("/banners", bannerData);
+      toast.success("Banner created successfully!");
+
+      // Reset form
+      setTitle("");
+      setBannerDescription("");
+      setSelectedImage(null);
+      setImagePreview(null);
+      setUploading("uploading is 0% complete");
+
+      // Refresh banners list
+      fetchBanners();
+    } catch (error) {
+      console.log(error);
+      setUploading("Uploading failed. Please try again.");
+      toast.error("Failed to create banner. Please try again.");
+    }
+  };
+
+  // Fetch banners from database
+  const fetchBanners = async () => {
+    try {
+      const res = await userRequest.get("/banners");
+      setBanners(res.data);
+    } catch (error) {
+      console.log("Error fetching banners:", error);
+      toast.error("Failed to load banners");
+    }
+  };
+
+  // Delete banner
+  const handleDeleteBanner = async (bannerId) => {
+    if (!window.confirm("Are you sure you want to delete this banner?")) {
+      return;
+    }
+
+    try {
+      await userRequest.delete(`/banners/${bannerId}`);
+      toast.success("Banner deleted successfully!");
+      fetchBanners(); // Refresh the list
+    } catch (error) {
+      console.log("Error deleting banner:", error);
+      toast.error("Failed to delete banner");
+    }
+  };
+
+  // Load banners on component mount
+  useEffect(() => {
+    fetchBanners();
+  }, []);
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-900/30 to-slate-900 text-white p-4 sm:p-6 lg:p-8">
@@ -74,7 +155,7 @@ const Banners = () => {
                   Active Banners
                 </p>
                 <p className="text-3xl font-bold text-white">
-                  {banners.filter((b) => b.status === "Active").length}
+                  {banners.length}
                 </p>
               </div>
               <div className="w-12 h-12 bg-linear-to-br from-green-500/30 to-emerald-500/30 rounded-xl flex items-center justify-center border border-green-400/30">
@@ -89,9 +170,7 @@ const Banners = () => {
                 <p className="text-yellow-200 text-sm font-semibold mb-1">
                   Inactive Banners
                 </p>
-                <p className="text-3xl font-bold text-white">
-                  {banners.filter((b) => b.status === "Inactive").length}
-                </p>
+                <p className="text-3xl font-bold text-white">0</p>
               </div>
               <div className="w-12 h-12 bg-linear-to-br from-yellow-500/30 to-orange-500/30 rounded-xl flex items-center justify-center border border-yellow-400/30">
                 <FaTrash className="text-yellow-300 text-xl" />
@@ -122,36 +201,48 @@ const Banners = () => {
                 Active Banners
               </h2>
               <div className="space-y-6">
-                {banners.map((banner) => (
-                  <div
-                    key={banner.id}
-                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-800/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300"
-                  >
-                    <div className="flex items-center space-x-4 flex-1">
-                      <img
-                        src={banner.image}
-                        alt={banner.title}
-                        className="w-20 h-20 object-cover rounded-xl shadow-lg"
-                      />
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-white mb-1">
-                          {banner.title}
-                        </h3>
-                        <p className="text-gray-200 text-sm leading-relaxed">
-                          {banner.description}
-                        </p>
-                        <span className="inline-block mt-2 px-3 py-1 bg-green-500/20 text-green-300 text-xs font-bold rounded-full border border-green-400/30">
-                          {banner.status}
-                        </span>
+                {banners.length > 0 ? (
+                  banners.map((bannerItem) => (
+                    <div
+                      key={bannerItem._id}
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-800/60 backdrop-blur-sm rounded-2xl p-4 border border-slate-700/50 hover:bg-slate-800/70 transition-all duration-300"
+                    >
+                      <div className="flex items-center space-x-4 flex-1">
+                        <img
+                          src={bannerItem.image}
+                          alt={bannerItem.title}
+                          className="w-20 h-20 object-cover rounded-xl shadow-lg"
+                        />
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-white mb-1">
+                            {bannerItem.title}
+                          </h3>
+                          <p className="text-gray-200 text-sm leading-relaxed">
+                            {bannerItem.subtitle}
+                          </p>
+                          <span className="inline-block mt-2 px-3 py-1 bg-green-500/20 text-green-300 text-xs font-bold rounded-full border border-green-400/30">
+                            Active
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2 mt-4 sm:mt-0">
+                        <button
+                          onClick={() => handleDeleteBanner(bannerItem._id)}
+                          className="bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 p-2 rounded-xl transition-all duration-300 border border-red-400/30"
+                        >
+                          <FaTrash className="text-sm" />
+                        </button>
                       </div>
                     </div>
-                    <div className="flex space-x-2 mt-4 sm:mt-0">
-                      <button className="bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 p-2 rounded-xl transition-all duration-300 border border-red-400/30">
-                        <FaTrash className="text-sm" />
-                      </button>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <FaImage className="text-gray-400 text-4xl mx-auto mb-4" />
+                    <p className="text-gray-400">
+                      No banners found. Create your first banner!
+                    </p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>
@@ -164,12 +255,39 @@ const Banners = () => {
               </h2>
               <div className="space-y-6">
                 <div className="border-2 border-dashed border-pink-400/50 rounded-2xl p-8 text-center bg-white/10 hover:bg-white/15 transition-all duration-300">
-                  <div className="flex flex-col items-center">
-                    <FaPlus className="text-pink-400 text-3xl mb-2" />
-                    <span className="text-gray-300">
-                      Click to upload banner image
-                    </span>
-                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={imageChange}
+                    className="hidden"
+                    id="banner-image-upload"
+                  />
+                  <label
+                    htmlFor="banner-image-upload"
+                    className="cursor-pointer"
+                  >
+                    <div className="flex flex-col items-center">
+                      {imagePreview ? (
+                        <img
+                          src={imagePreview}
+                          alt="Banner preview"
+                          className="w-24 h-24 object-cover rounded-xl mb-2 shadow-lg"
+                        />
+                      ) : (
+                        <FaPlus className="text-pink-400 text-3xl mb-2" />
+                      )}
+                      <span className="text-gray-300">
+                        {imagePreview
+                          ? "Click to change image"
+                          : "Click to upload banner image"}
+                      </span>
+                      {selectedImage && (
+                        <span className="text-sm text-pink-300 mt-1">
+                          {selectedImage.name}
+                        </span>
+                      )}
+                    </div>
+                  </label>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-200 mb-2">
@@ -178,6 +296,8 @@ const Banners = () => {
                   <input
                     type="text"
                     placeholder="Enter banner title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
                     className="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent"
                   />
                 </div>
@@ -188,11 +308,22 @@ const Banners = () => {
                   <textarea
                     placeholder="Enter banner description"
                     rows="4"
+                    value={bannerDescription}
+                    onChange={(e) => setBannerDescription(e.target.value)}
                     className="w-full bg-white/10 border border-white/20 rounded-xl p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent resize-none"
                   />
                 </div>
-                <button className="w-full bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105">
-                  Add Banner
+                <div className="text-sm text-gray-300 mb-4">
+                  Status: {upLoading}
+                </div>
+                <button
+                  onClick={handleUpload}
+                  className="w-full bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={upLoading === "uploading ..."}
+                >
+                  {upLoading === "uploading ..."
+                    ? "Uploading..."
+                    : "Add Banner"}
                 </button>
               </div>
             </div>
