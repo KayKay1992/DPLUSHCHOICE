@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FaMinus, FaPlus } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { addProduct } from "../redux/cartRedux";
+import { selectCurrentCart } from "../redux/cartRedux";
 import { toast } from "react-toastify";
 
 const Product = ({
@@ -20,6 +21,7 @@ const Product = ({
   const [quantity, setQuantity] = useState(1);
   const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.user);
+  const cart = useSelector(selectCurrentCart);
   const navigate = useNavigate();
 
   const handleAddToCart = (e) => {
@@ -32,6 +34,22 @@ const Product = ({
         autoClose: 3000,
       });
       navigate("/login");
+      return;
+    }
+
+    // Check stock availability including existing cart quantity
+    const availableStock = product.stock || 50;
+    const existingProduct = cart.products.find((p) => p.id === productId);
+    const currentCartQuantity = existingProduct ? existingProduct.quantity : 0;
+    const totalQuantity = currentCartQuantity + quantity;
+    if (totalQuantity > availableStock) {
+      toast.error(
+        `Only ${availableStock} items available in stock. You already have ${currentCartQuantity} in your cart.`,
+        {
+          position: "top-right",
+          autoClose: 3000,
+        }
+      );
       return;
     }
 
@@ -50,6 +68,7 @@ const Product = ({
         wholesaleMinimumQuantity: product.wholesaleMinimumQuantity,
         discountPrice: product.discountPrice,
         originalPrice: product.originalPrice,
+        stock: availableStock, // Add stock info
       })
     );
 
@@ -163,7 +182,7 @@ const Product = ({
             <button
               onClick={(e) => {
                 e.preventDefault();
-                setQuantity(quantity + 1);
+                setQuantity(Math.min(product.stock || 50, quantity + 1));
               }}
               className="bg-pink-500 hover:bg-pink-600 text-white p-2 rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300"
             >

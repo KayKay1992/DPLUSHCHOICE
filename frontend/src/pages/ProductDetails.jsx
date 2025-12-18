@@ -98,6 +98,24 @@ const ProductDetails = () => {
       return;
     }
 
+    // Check stock availability including existing cart quantity
+    const availableStock = product.stock || 50;
+    const existingProduct = cart.products.find(
+      (p) => p.id === (product._id || productId)
+    );
+    const currentCartQuantity = existingProduct ? existingProduct.quantity : 0;
+    const totalQuantity = currentCartQuantity + quantity;
+    if (totalQuantity > availableStock) {
+      toast.error(
+        `Only ${availableStock} items available in stock. You already have ${currentCartQuantity} in your cart.`,
+        {
+          position: "top-right",
+          autoClose: 3000,
+        }
+      );
+      return;
+    }
+
     const price = getCurrentPrice();
     const email = currentUser?.email || "guest@example.com"; // Use guest email if not logged in
 
@@ -109,6 +127,7 @@ const ProductDetails = () => {
         email,
         id: product._id || productId, // Ensure we have an ID
         isWholesale: isWholesaleActive, // Add wholesale flag
+        stock: availableStock, // Add stock info
       })
     );
 
@@ -266,7 +285,9 @@ const ProductDetails = () => {
                   {quantity}
                 </span>
                 <button
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={() =>
+                    setQuantity(Math.min(product.stock || 50, quantity + 1))
+                  }
                   className="bg-pink-500 hover:bg-pink-600 text-white p-3 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300"
                 >
                   <FaPlus />

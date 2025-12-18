@@ -8,7 +8,7 @@ import {
   selectCurrentCart,
   updateProductQuantity,
 } from "../redux/cartRedux";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -41,6 +41,21 @@ const Cart = () => {
   };
 
   const handleQuantityChange = (productId, newQuantity) => {
+    const product = products.find((p) => p.id === productId);
+    if (product && newQuantity > (product.stock || 50)) {
+      toast.error(
+        `Only ${
+          product.stock || 50
+        } items available in stock. You already have ${
+          product.quantity
+        } in your cart.`,
+        {
+          position: "top-right",
+          autoClose: 3000,
+        }
+      );
+      return;
+    }
     dispatch(updateProductQuantity({ productId, quantity: newQuantity }));
   };
 
@@ -329,6 +344,17 @@ const Cart = () => {
           </div>
         </div>
       </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 };
