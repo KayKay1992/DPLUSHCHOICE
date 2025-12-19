@@ -1,42 +1,146 @@
-### Cart Integration Changes Explanation
+# Stripe Implementation for Testing and Webhooks
 
-#### Overview
-The following changes were made to implement stock validation, user feedback via toasts, and ensure consistent toast display across the application for the cart functionality in the D'Plush Choice e-commerce frontend.
+## Overview
+This project implements Stripe payment processing with checkout sessions, webhooks for order creation, and testing using Stripe CLI. The implementation handles secure payments, order management, and real-time updates.
 
-#### 1. Stock Validation in Product Addition
-- **Files Modified**: `frontend/src/pages/ProductDetails.jsx`, `frontend/src/components/Product.jsx`
-- **Changes**:
-  - Added logic to check available stock before adding products to cart.
-  - If the total quantity (existing in cart + new quantity) exceeds stock, show an error toast: "Only X items available in stock. You already have Y in your cart."
-  - Prevents over-adding items beyond available stock.
-- **Purpose**: Ensures users can't add more items than available, providing immediate feedback.
+## Key Components
 
-#### 2. Stock Validation in Cart Quantity Updates
-- **File Modified**: `frontend/src/pages/Cart.jsx`
-- **Changes**:
-  - Updated `handleQuantityChange` to check stock before allowing quantity increases.
-  - If new quantity exceeds stock, show error toast with the same message format.
-  - Added success toast for successful quantity updates: "Quantity updated successfully!"
-- **Purpose**: Maintains stock integrity when users modify cart quantities directly.
+### 1. Backend Setup (routes/stripe.js)
 
-#### 3. Toast Display Fixes
-- **Files Modified**: `frontend/src/pages/Cart.jsx`, `frontend/src/App.jsx`
-- **Changes**:
-  - Added `ToastContainer` to `Cart.jsx` to display toasts on the cart page.
-  - Added global `ToastContainer` to `App.jsx` to ensure toasts appear immediately on any page, preventing delayed display on navigation.
-- **Purpose**: Fixes the issue where success toasts for adding products were showing on the cart page instead of the page where the action occurred.
+#### Checkout Session Creation
+- **Endpoint**: `POST /api/V1/stripe/create-checkout-session`
+- **Functionality**:
+  - Creates Stripe customer with user email
+  - Generates checkout session with product line items
+  - Collects shipping address and phone number
+  - Sets success/cancel URLs
+  - Includes metadata for order data (userId, products, total, name, email)
+  - Currency set to NGN for Nigerian Naira display
 
-#### 4. Configuration Files
-- **File Added**: `frontend/jsconfig.json`
-- **Changes**:
-  - Configured JavaScript language service with ES2015 target and lib to resolve TypeScript-like errors in JS files.
-- **Purpose**: Ensures proper JavaScript intellisense and error handling without strict TypeScript checks.
+#### Webhook Handling
+- **Endpoint**: `POST /api/V1/stripe/webhook`
+- **Functionality**:
+  - Verifies webhook signature using Stripe CLI secret
+  - Processes `checkout.session.completed` events
+  - Extracts order data from session metadata
+  - Creates order in database with complete product details
+  - Handles shipping and payment information
 
-#### Summary
-These changes enhance the user experience by:
-- Preventing invalid cart states (over-stock additions).
-- Providing clear, immediate feedback via toasts on the correct pages.
-- Ensuring robust stock management across add and update operations.
-- Maintaining consistent UI behavior with global toast handling.
+### 2. Frontend Integration
 
-All changes maintain backward compatibility and follow the existing code patterns.
+#### Cart Checkout (pages/Cart.jsx)
+- Validates user authentication
+- Sends cart data to backend for session creation
+- Redirects to Stripe hosted checkout page
+- Uses test card: `4242 4242 4242 4242`
+
+#### Authentication (requestMethods.js)
+- Axios instance with `withCredentials: true` for cookie-based auth
+- Ensures JWT tokens are sent with requests
+
+### 3. Database Models
+
+#### Order Schema (models/order.model.js)
+- Required fields: name, userId, products, total
+- Optional: address, phone, email, status
+- Status: 0 (pending), 1 (paid)
+
+### 4. Testing with Stripe CLI
+
+#### Setup Commands
+```bash
+# Install Stripe CLI
+# Set up webhook forwarding
+stripe listen --forward-to localhost:8000/api/V1/stripe/webhook
+
+# The command provides webhook signing secret
+# Add to .env: STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+#### Testing Commands
+```bash
+# Test checkout completion
+stripe trigger checkout.session.completed
+
+# Other useful triggers
+stripe trigger payment_intent.succeeded
+stripe trigger customer.created
+```
+
+### 5. Webhook Security
+
+#### Signature Verification
+- Uses `stripe.webhooks.constructEvent()` for signature validation
+- Prevents unauthorized webhook calls
+- Temporarily disabled for debugging, but should be enabled in production
+
+#### Raw Body Handling
+- Express raw body parser for webhook endpoint
+- Required for Stripe signature verification
+
+### 6. Order Creation Flow
+
+1. **Frontend**: User clicks checkout → sends cart data
+2. **Backend**: Creates Stripe session with metadata
+3. **Stripe**: Hosts checkout page → user pays
+4. **Webhook**: Receives completion event → creates order
+5. **Frontend**: Redirects to /myorders → displays order
+
+### 7. Metadata Structure
+```json
+{
+  "userId": "user_id_string",
+  "name": "user_name",
+  "email": "user_email",
+  "products": "[{\"_id\":\"id\",\"title\":\"name\",\"img\":\"url\",\"quantity\":1,\"price\":100}]",
+  "total": "total_amount"
+}
+```
+
+### 8. Error Handling
+
+#### Common Issues Fixed
+- **401 Unauthorized**: Added `withCredentials` for cookie auth
+- **400 Webhook Errors**: Fixed signature verification and metadata
+- **Order Not Found**: Ensured proper order creation with all required fields
+- **Currency Display**: Changed from USD to NGN for local display
+
+#### Debugging
+- Added console logging for webhook events
+- Order creation confirmation logs
+- User order fetching logs
+
+### 9. Environment Variables
+```
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+CLIENT_URL=http://localhost:5173
+```
+
+### 10. Production Considerations
+
+#### Security
+- Enable webhook signature verification
+- Use HTTPS for webhooks
+- Validate all input data
+
+#### Monitoring
+- Log all webhook events
+- Monitor failed payments
+- Handle webhook retries
+
+#### Scalability
+- Process webhooks asynchronously
+- Handle duplicate events
+- Implement webhook queues if needed
+
+## Testing Flow
+
+1. Start backend: `npm run dev`
+2. Start Stripe listener: `stripe listen --forward-to localhost:8000/api/V1/stripe/webhook`
+3. Add product to cart in frontend
+4. Complete checkout with test card
+5. Verify order appears in MyAccount
+6. Check backend logs for successful order creation
+
+This implementation provides a complete Stripe integration with secure webhooks, proper order management, and comprehensive testing capabilities.

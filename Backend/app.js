@@ -1,4 +1,4 @@
-//initialise application
+// initialise application
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -6,16 +6,25 @@ import {
   notFound,
   errorHandler,
 } from "./middleware/errorHandler.middleware.js";
+
 import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
 import bannerRoutes from "./routes/banner.route.js";
 import userRoutes from "./routes/user.route.js";
 import orderRoutes from "./routes/order.route.js";
 import aiRoutes from "./routes/ai.route.js";
+import stripeRoutes from "./routes/stripe.js";
 
 const app = express();
 
-//cors
+/**
+ * 🔥 STRIPE WEBHOOK MUST COME FIRST (RAW BODY)
+ */
+app.use("/api/V1/stripe/webhook", express.raw({ type: "application/json" }));
+
+/**
+ * CORS
+ */
 app.use(
   cors({
     origin: [
@@ -27,24 +36,35 @@ app.use(
   })
 );
 
-//json body
+/**
+ * NORMAL BODY PARSER (AFTER WEBHOOK)
+ */
 app.use(express.json());
 
-// Serve static files from uploads directory
+/**
+ * STATIC FILES
+ */
 app.use("/uploads", express.static("uploads"));
 
-//cookie parser
+/**
+ * COOKIES
+ */
 app.use(cookieParser());
 
-//routes
+/**
+ * ROUTES
+ */
 app.use("/api/V1/auth", authRoutes);
 app.use("/api/V1/products", productRoutes);
 app.use("/api/V1/banners", bannerRoutes);
-app.use("/api/v1/users", userRoutes);
-app.use("/api/v1/orders", orderRoutes);
-app.use("/api/v1/ai", aiRoutes);
+app.use("/api/V1/users", userRoutes);
+app.use("/api/V1/orders", orderRoutes);
+app.use("/api/V1/ai", aiRoutes);
+app.use("/api/V1/stripe", stripeRoutes);
 
-// Error Handling Middleware
+/**
+ * ERRORS
+ */
 app.use(notFound);
 app.use(errorHandler);
 

@@ -9,6 +9,7 @@ import {
   updateProductQuantity,
 } from "../redux/cartRedux";
 import { toast, ToastContainer } from "react-toastify";
+import { userRequest } from "../requestMethods";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -28,6 +29,26 @@ const Cart = () => {
       currency: "NGN",
       minimumFractionDigits: 0,
     }).format(price);
+  };
+
+  const handleCheckout = async () => {
+    try {
+      const res = await userRequest.post("/stripe/create-checkout-session", {
+        cart: { products, quantity, total },
+        name: currentUser.name,
+        email: currentUser.email,
+        userId: currentUser._id,
+      });
+      if (res.data.url) {
+        window.location.href = res.data.url; // Redirect to Stripe Checkout
+      }
+    } catch (error) {
+      console.log("Checkout error:", error.message);
+      toast.error("An error occurred during checkout. Please try again.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+    }
   };
 
   const handleRemoveProduct = (productId) => {
@@ -299,7 +320,10 @@ const Cart = () => {
               </div>
 
               {/* Checkout Button */}
-              <button className="w-full bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 mt-6">
+              <button
+                className="w-full bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 mt-6"
+                onClick={handleCheckout}
+              >
                 Proceed to Checkout
               </button>
 
