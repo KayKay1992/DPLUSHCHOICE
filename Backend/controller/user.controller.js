@@ -4,15 +4,42 @@ import bcrypt from "bcryptjs";
 
 //Update User
 export const updateUser = asyncHandler(async (req, res) => {
+  const userId = req.params.userId;
+
+  // If updating password, verify current password
   if (req.body.password) {
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404);
+      throw new Error("User not found");
+    }
+
+    // Check if currentPassword is provided
+    if (!req.body.currentPassword) {
+      res.status(400);
+      throw new Error("Current password is required to change password");
+    }
+
+    const isMatch = await user.matchPassword(req.body.currentPassword);
+    if (!isMatch) {
+      res.status(400);
+      throw new Error("Current password is incorrect");
+    }
+
+    // Hash the new password
     const salt = await bcrypt.genSalt(10);
     req.body.password = await bcrypt.hash(req.body.password, salt);
+
+    // Remove currentPassword from req.body
+    delete req.body.currentPassword;
   }
+
   const updatedUser = await User.findByIdAndUpdate(
-    req.params.id,
+    userId,
     { $set: req.body },
     { new: true }
-  );
+  ).select("-password");
+
   if (updatedUser) {
     res.status(200).json({
       message: "User updated successfully",
@@ -40,7 +67,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
 
 //Get one User
 export const getUserById = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id).select("-password");
+  const user = await User.findById(req.params.userId).select("-password");
 
   if (user) {
     res.status(200).json(user);

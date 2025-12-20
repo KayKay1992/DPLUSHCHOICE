@@ -23,6 +23,10 @@ export const registerUser = asyncHandler(async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
+      address: user.address,
+      role: user.role,
+      status: user.status,
     });
   } else {
     res.status(400);
@@ -43,13 +47,16 @@ export const loginUser = asyncHandler(async (req, res) => {
       _id: user._id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
+      address: user.address,
+      role: user.role,
+      status: user.status,
     });
   } else {
     res.status(401);
     throw new Error("Invalid email or password");
   }
 });
-
 
 //LOGOUT USER
 //ROUTE POST /api/V1/auth/logout

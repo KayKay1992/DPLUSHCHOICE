@@ -7,10 +7,12 @@ import {
   FaEnvelope,
   FaEdit,
   FaSignOutAlt,
+  FaSave,
+  FaTimes,
 } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../redux/userRedux";
+import { logout, loginSuccess } from "../redux/userRedux";
 import { clearUserCart, setCurrentUser } from "../redux/cartRedux";
 import { userRequest } from "../requestMethods";
 import { toast } from "react-toastify";
@@ -19,6 +21,17 @@ const MyAccount = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [updating, setUpdating] = useState(false);
   const { currentUser } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -29,6 +42,17 @@ const MyAccount = () => {
       return;
     }
     fetchOrders();
+
+    // Initialize form data with current user info
+    setFormData({
+      name: currentUser.name || currentUser.username || "",
+      email: currentUser.email || "",
+      phone: currentUser.phone || "",
+      address: currentUser.address || "",
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
   }, [currentUser, navigate]);
 
   const fetchOrders = async () => {
@@ -51,6 +75,105 @@ const MyAccount = () => {
     dispatch(setCurrentUser(null));
     navigate("/");
     toast.success("Logged out successfully");
+  };
+
+  const handleEditProfile = () => {
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    // Reset form data to current user values
+    setFormData({
+      name: currentUser.name || currentUser.username || "",
+      email: currentUser.email || "",
+      phone: currentUser.phone || "",
+      address: currentUser.address || "",
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSaveProfile = async () => {
+    // Basic validation
+    if (!formData.name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    if (!formData.email.trim()) {
+      toast.error("Email is required");
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    // Password validation
+    if (formData.newPassword) {
+      if (!formData.currentPassword) {
+        toast.error("Current password is required to change password");
+        return;
+      }
+      if (formData.newPassword !== formData.confirmPassword) {
+        toast.error("New passwords do not match");
+        return;
+      }
+      if (formData.newPassword.length < 6) {
+        toast.error("New password must be at least 6 characters long");
+        return;
+      }
+    }
+
+    setUpdating(true);
+    try {
+      const updateData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        address: formData.address,
+      };
+
+      if (formData.newPassword) {
+        updateData.password = formData.newPassword;
+        updateData.currentPassword = formData.currentPassword;
+      }
+
+      const res = await userRequest.put(
+        `/users/${currentUser._id}`,
+        updateData
+      );
+      if (res.data.updatedUser) {
+        // Update Redux state with new user data
+        dispatch(loginSuccess(res.data.updatedUser));
+        setIsEditing(false);
+        // Clear password fields
+        setFormData((prev) => ({
+          ...prev,
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        }));
+        toast.success("Profile updated successfully!");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error(error.response?.data?.message || "Failed to update profile");
+    } finally {
+      setUpdating(false);
+    }
   };
 
   const formatPrice = (price) => {
@@ -145,64 +268,233 @@ const MyAccount = () => {
           <div className="lg:col-span-3">
             {activeTab === "profile" && (
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/30">
-                <h2 className="text-3xl font-bold bg-linear-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mb-6">
-                  Profile Information
-                </h2>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
-                      <FaUser className="text-pink-600 text-xl" />
-                      <div>
-                        <p className="text-sm text-gray-500">Full Name</p>
-                        <p className="font-semibold text-gray-800">
-                          {currentUser.name ||
-                            currentUser.username ||
-                            "Not provided"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
-                      <FaEnvelope className="text-pink-600 text-xl" />
-                      <div>
-                        <p className="text-sm text-gray-500">Email Address</p>
-                        <p className="font-semibold text-gray-800">
-                          {currentUser.email}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
-                      <FaPhone className="text-pink-600 text-xl" />
-                      <div>
-                        <p className="text-sm text-gray-500">Phone Number</p>
-                        <p className="font-semibold text-gray-800">
-                          Not provided
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
-                      <FaMapMarkerAlt className="text-pink-600 text-xl" />
-                      <div>
-                        <p className="text-sm text-gray-500">Address</p>
-                        <p className="font-semibold text-gray-800">
-                          Not provided
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-3xl font-bold bg-linear-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                    {isEditing ? "Edit Profile" : "Profile Information"}
+                  </h2>
+                  {!isEditing && (
+                    <button
+                      onClick={handleEditProfile}
+                      className="flex items-center space-x-2 bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
+                    >
+                      <FaEdit className="text-lg" />
+                      <span>Edit Profile</span>
+                    </button>
+                  )}
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-gray-200">
-                  <button className="flex items-center space-x-2 bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-0.5">
-                    <FaEdit className="text-lg" />
-                    <span>Edit Profile</span>
-                  </button>
-                </div>
+                {isEditing ? (
+                  // Edit Mode
+                  <div className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Full Name *
+                          </label>
+                          <input
+                            type="text"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all duration-300"
+                            placeholder="Enter your full name"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Email Address *
+                          </label>
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all duration-300"
+                            placeholder="Enter your email"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Phone Number
+                          </label>
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all duration-300"
+                            placeholder="Enter your phone number"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Address
+                          </label>
+                          <textarea
+                            name="address"
+                            value={formData.address}
+                            onChange={handleInputChange}
+                            rows={3}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all duration-300 resize-none"
+                            placeholder="Enter your address"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Password Section */}
+                    <div className="pt-6 border-t border-gray-200">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                        Change Password (Optional)
+                      </h3>
+                      <div className="grid md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Current Password
+                          </label>
+                          <input
+                            type="password"
+                            name="currentPassword"
+                            value={formData.currentPassword}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all duration-300"
+                            placeholder="Enter current password"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            New Password
+                          </label>
+                          <input
+                            type="password"
+                            name="newPassword"
+                            value={formData.newPassword}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all duration-300"
+                            placeholder="Enter new password"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Confirm New Password
+                          </label>
+                          <input
+                            type="password"
+                            name="confirmPassword"
+                            value={formData.confirmPassword}
+                            onChange={handleInputChange}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-pink-500 focus:ring-4 focus:ring-pink-100 outline-none transition-all duration-300"
+                            placeholder="Confirm new password"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-2">
+                        Leave password fields empty if you don't want to change
+                        your password.
+                      </p>
+                    </div>
+
+                    <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                      <button
+                        onClick={handleCancelEdit}
+                        className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-full hover:bg-gray-50 transition-all duration-300"
+                        disabled={updating}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSaveProfile}
+                        disabled={updating}
+                        className="flex items-center space-x-2 bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {updating ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            <span>Saving...</span>
+                          </>
+                        ) : (
+                          <>
+                            <FaEdit className="text-lg" />
+                            <span>Save Changes</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  // View Mode
+                  <>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
+                          <FaUser className="text-pink-600 text-xl" />
+                          <div>
+                            <p className="text-sm text-gray-500">Full Name</p>
+                            <p className="font-semibold text-gray-800">
+                              {currentUser.name ||
+                                currentUser.username ||
+                                "Not provided"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
+                          <FaEnvelope className="text-pink-600 text-xl" />
+                          <div>
+                            <p className="text-sm text-gray-500">
+                              Email Address
+                            </p>
+                            <p className="font-semibold text-gray-800">
+                              {currentUser.email}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
+                          <FaPhone className="text-pink-600 text-xl" />
+                          <div>
+                            <p className="text-sm text-gray-500">
+                              Phone Number
+                            </p>
+                            <p className="font-semibold text-gray-800">
+                              {currentUser.phone || "Not provided"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-xl">
+                          <FaMapMarkerAlt className="text-pink-600 text-xl" />
+                          <div>
+                            <p className="text-sm text-gray-500">Address</p>
+                            <p className="font-semibold text-gray-800">
+                              {currentUser.address || "Not provided"}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 pt-6 border-t border-gray-200">
+                      <button
+                        onClick={handleEditProfile}
+                        className="flex items-center space-x-2 bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-semibold px-6 py-3 rounded-full transition-all duration-300 shadow-md hover:shadow-xl transform hover:-translate-y-0.5"
+                      >
+                        <FaEdit className="text-lg" />
+                        <span>Edit Profile</span>
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
