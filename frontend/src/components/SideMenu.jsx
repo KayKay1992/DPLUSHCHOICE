@@ -1,4 +1,9 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { FaUser, FaSignOutAlt } from "react-icons/fa";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../redux/userRedux";
+import { clearUserCart, setCurrentUser } from "../redux/cartRedux";
 
 const categories = [
   { name: "Perfumes", image: "/perfume.jpg" },
@@ -19,6 +24,15 @@ const categories = [
 ];
 
 const SideMenu = ({ isOpen, onClose }) => {
+  const dispatch = useDispatch();
+  const { currentUser } = useSelector((state) => state.user);
+
+  const handleLogout = () => {
+    dispatch(logout());
+    dispatch(setCurrentUser(null));
+    onClose();
+  };
+
   return (
     <div
       className={`fixed inset-0 z-50 lg:hidden ${isOpen ? "block" : "hidden"}`}
@@ -55,6 +69,40 @@ const SideMenu = ({ isOpen, onClose }) => {
               Shop by Category
             </h2>
           </div>
+
+          {/* User Account Section */}
+          {currentUser && (
+            <div className="mb-6 p-4 bg-white/70 backdrop-blur-sm rounded-2xl border border-white/50">
+              <div className="flex items-center space-x-3 mb-3">
+                <div className="w-10 h-10 bg-linear-to-r from-pink-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <FaUser className="text-white text-lg" />
+                </div>
+                <div>
+                  <p className="font-semibold text-gray-800">
+                    {currentUser.name || currentUser.username || "User"}
+                  </p>
+                  <p className="text-sm text-gray-600">{currentUser.email}</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Link
+                  to="/myaccount"
+                  onClick={onClose}
+                  className="flex items-center space-x-3 w-full px-3 py-2 text-gray-700 hover:bg-pink-50 hover:text-pink-700 rounded-lg transition-colors duration-200"
+                >
+                  <FaUser className="text-lg" />
+                  <span className="font-medium">My Account</span>
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center space-x-3 w-full px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                >
+                  <FaSignOutAlt className="text-lg" />
+                  <span className="font-medium">Logout</span>
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Categories List */}
           <div className="flex-1 overflow-y-auto space-y-3">

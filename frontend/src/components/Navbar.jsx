@@ -15,6 +15,7 @@ import SideMenu from "./SideMenu";
 const Navbar = () => {
   const [search, setSearch] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
@@ -102,13 +103,64 @@ const Navbar = () => {
             {/* Authentication Section */}
             {currentUser ? (
               // Logged In User
-              <div className="flex items-center space-x-3">
-                <div className="flex items-center space-x-2 text-gray-700">
-                  <FaUser className="text-lg text-pink-600" />
-                  <span className="font-semibold text-sm sm:text-base">
-                    {currentUser.name || currentUser.username || "User"}
-                  </span>
+              <div className="flex items-center space-x-3 relative">
+                <div
+                  className="relative"
+                  onMouseEnter={() => setIsUserDropdownOpen(true)}
+                  onMouseLeave={() => setIsUserDropdownOpen(false)}
+                >
+                  <div className="flex items-center space-x-2 text-gray-700 hover:text-pink-600 transition-colors duration-200 cursor-pointer">
+                    <FaUser className="text-lg text-pink-600" />
+                    <span className="font-semibold text-sm sm:text-base">
+                      {currentUser.name || currentUser.username || "User"}
+                    </span>
+                    <svg
+                      className={`w-4 h-4 transition-transform duration-200 ${
+                        isUserDropdownOpen ? "rotate-180" : ""
+                      }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </div>
+
+                  {/* User Dropdown Menu */}
+                  <div
+                    className={`absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 transition-all duration-200 ${
+                      isUserDropdownOpen
+                        ? "opacity-100 visible"
+                        : "opacity-0 invisible"
+                    }`}
+                  >
+                    <Link
+                      to="/myaccount"
+                      className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-pink-50 hover:text-pink-700 transition-colors duration-200"
+                      onClick={() => setIsUserDropdownOpen(false)}
+                    >
+                      <FaUser className="text-lg" />
+                      <span className="font-medium">My Account</span>
+                    </Link>
+                    <div className="border-t border-gray-100 my-1"></div>
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsUserDropdownOpen(false);
+                      }}
+                      className="flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 w-full text-left transition-colors duration-200"
+                    >
+                      <FaSignOutAlt className="text-lg" />
+                      <span className="font-medium">Logout</span>
+                    </button>
+                  </div>
                 </div>
+
                 <button
                   onClick={handleLogout}
                   className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-full transition-all duration-300 shadow-sm hover:shadow-md"

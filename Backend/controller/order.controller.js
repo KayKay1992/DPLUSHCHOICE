@@ -51,16 +51,11 @@ export const deleteOrder = asyncHandler(async (req, res) => {
 });
 
 
-// Get User Orders
+// Get User Orders (FIXED)
 export const getUserOrders = asyncHandler(async (req, res) => {
-  const orders = await Order.find({ userId: req.params.id }).sort({
-    createdAt: -1,
-  });
-
-  if (orders.length === 0) {
-    res.status(404);
-    throw new Error("No orders found for this user");
-  }
+  const orders = await Order.find({
+    userId: req.params.userId,
+  }).sort({ createdAt: -1 });
 
   res.status(200).json(orders);
 });
