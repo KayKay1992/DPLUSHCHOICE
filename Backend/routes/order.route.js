@@ -5,6 +5,7 @@ import {
   deleteOrder,
   getUserOrders,
   getAllOrders,
+  getOrderById,
 } from "../controller/order.controller.js";
 import protect from "../middleware/auth.middleware.js";
 const router = express.Router();
@@ -20,6 +21,9 @@ router.delete("/:id", protect, deleteOrder);
 
 //GET USER ORDERS ROUTE
 router.get("/find/:userId", protect, getUserOrders);
+
+//GET SINGLE ORDER ROUTE
+router.get("/:id", protect, getOrderById);
 
 //GET ALL ORDERS ROUTE
 router.get("/", protect, getAllOrders);

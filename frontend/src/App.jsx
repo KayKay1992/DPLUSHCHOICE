@@ -80,6 +80,10 @@ function App() {
           path: "/myorders",
           element: <Order />,
         },
+        {
+          path: "/myorders/:orderId",
+          element: <Order />,
+        },
       ],
     },
   ]);
