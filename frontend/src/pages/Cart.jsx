@@ -17,12 +17,6 @@ const Cart = () => {
   const { products, quantity, total } = useSelector(selectCurrentCart);
   const { currentUser } = useSelector((state) => state.user);
 
-  // Redirect guests to login
-  if (!currentUser) {
-    navigate("/login");
-    return null;
-  }
-
   const formatPrice = (price) => {
     return new Intl.NumberFormat("en-NG", {
       style: "currency",

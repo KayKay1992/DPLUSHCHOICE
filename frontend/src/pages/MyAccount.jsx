@@ -37,10 +37,6 @@ const MyAccount = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!currentUser) {
-      navigate("/login");
-      return;
-    }
     fetchOrders();
 
     // Initialize form data with current user info
@@ -53,7 +49,7 @@ const MyAccount = () => {
       newPassword: "",
       confirmPassword: "",
     });
-  }, [currentUser, navigate]);
+  }, [currentUser]);
 
   const fetchOrders = async () => {
     console.log("Fetching orders for user:", currentUser._id);

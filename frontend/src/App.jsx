@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProductList from "./pages/ProductList";
 import Order from "./pages/Order";
+import ProtectedRoute from "./components/ProtectedRoute";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setCurrentUser } from "./redux/cartRedux";
@@ -50,11 +51,19 @@ function App() {
         },
         {
           path: "/cart",
-          element: <Cart />,
+          element: (
+            <ProtectedRoute>
+              <Cart />
+            </ProtectedRoute>
+          ),
         },
         {
           path: "/myaccount",
-          element: <MyAccount />,
+          element: (
+            <ProtectedRoute>
+              <MyAccount />
+            </ProtectedRoute>
+          ),
         },
         {
           path: "/product/:productId",
@@ -78,11 +87,19 @@ function App() {
         },
         {
           path: "/myorders",
-          element: <Order />,
+          element: (
+            <ProtectedRoute>
+              <Order />
+            </ProtectedRoute>
+          ),
         },
         {
           path: "/myorders/:orderId",
-          element: <Order />,
+          element: (
+            <ProtectedRoute>
+              <Order />
+            </ProtectedRoute>
+          ),
         },
       ],
     },

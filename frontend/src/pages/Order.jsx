@@ -17,12 +17,8 @@ const Order = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    if (!currentUser) {
-      navigate("/login");
-      return;
-    }
     fetchOrder();
-  }, [currentUser, orderId, navigate]);
+  }, [orderId]);
 
   const fetchOrder = async () => {
     try {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FaEye, FaEyeSlash, FaUser, FaLock } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "../redux/apiCalls";
@@ -14,12 +14,16 @@ const Login = () => {
   const { currentUser, isFetching, error } = useSelector((state) => state.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the intended destination from location state, default to home
+  const from = location.state?.from?.pathname || "/";
 
   useEffect(() => {
     if (currentUser) {
-      navigate("/");
+      navigate(from, { replace: true });
     }
-  }, [currentUser, navigate]);
+  }, [currentUser, navigate, from]);
 
   const handleInputChange = (e) => {
     setFormData({
