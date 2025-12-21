@@ -5,6 +5,7 @@ import { userRequest } from "../requestMethods";
 const Products = ({ filters, sortBy, selectedCategory, searchTerm }) => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [productReviews, setProductReviews] = useState({}); // Store reviews by product ID
 
   useEffect(() => {
     const getProducts = async () => {
@@ -15,12 +16,59 @@ const Products = ({ filters, sortBy, selectedCategory, searchTerm }) => {
         }
         const res = await userRequest.get(url);
         setProducts(res.data);
+        // Fetch reviews for all products
+        await fetchReviewsForProducts(res.data);
       } catch (error) {
         console.log(error);
       }
     };
     getProducts();
   }, [searchTerm]);
+
+  const fetchReviewsForProducts = async (productsList) => {
+    try {
+      const reviewsMap = {};
+
+      // Fetch reviews for each product
+      await Promise.all(
+        productsList.map(async (product) => {
+          try {
+            const res = await userRequest.get(
+              `/reviews/product/${product._id}`
+            );
+            const reviews = res.data;
+
+            // Calculate average rating
+            const averageRating =
+              reviews.length > 0
+                ? reviews.reduce((sum, review) => sum + review.rating, 0) /
+                  reviews.length
+                : 0;
+
+            reviewsMap[product._id] = {
+              reviews: reviews,
+              averageRating: averageRating,
+              reviewCount: reviews.length,
+            };
+          } catch (error) {
+            console.error(
+              `Error fetching reviews for product ${product._id}:`,
+              error
+            );
+            reviewsMap[product._id] = {
+              reviews: [],
+              averageRating: 0,
+              reviewCount: 0,
+            };
+          }
+        })
+      );
+
+      setProductReviews(reviewsMap);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+    }
+  };
 
   // Filter and sort products based on selected criteria
   useEffect(() => {
@@ -78,7 +126,11 @@ const Products = ({ filters, sortBy, selectedCategory, searchTerm }) => {
         );
         break;
       case "rating":
-        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        filtered.sort((a, b) => {
+          const aRating = productReviews[a._id]?.averageRating || 0;
+          const bRating = productReviews[b._id]?.averageRating || 0;
+          return bRating - aRating;
+        });
         break;
       case "newest":
         filtered.sort(
@@ -122,34 +174,43 @@ const Products = ({ filters, sortBy, selectedCategory, searchTerm }) => {
         {/* Products Grid */}
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-            {filteredProducts.map((product) => (
-              <Product
-                key={product._id}
-                productId={product._id}
-                product={product}
-                img={
-                  product.img
-                    ? product.img.startsWith("http")
-                      ? product.img
-                      : `http://localhost:8000/${product.img}`
-                    : "/placeholder.jpg"
-                }
-                name={product.title}
-                price={product.discountPrice || product.originalPrice}
-                originalPrice={product.originalPrice}
-                category={
-                  product.categories ? product.categories[0] : "general"
-                }
-                rating={4.5} // Default rating since API doesn't have this
-                isNew={
-                  product.createdAt
-                    ? new Date() - new Date(product.createdAt) <
-                      30 * 24 * 60 * 60 * 1000
-                    : false
-                } // New if created within 30 days
-                isPopular={product.totalSales ? product.totalSales > 10 : false}
-              />
-            ))}
+            {filteredProducts.map((product) => {
+              const reviewData = productReviews[product._id] || {
+                averageRating: 0,
+                reviewCount: 0,
+              };
+              return (
+                <Product
+                  key={product._id}
+                  productId={product._id}
+                  product={product}
+                  img={
+                    product.img
+                      ? product.img.startsWith("http")
+                        ? product.img
+                        : `http://localhost:8000/${product.img}`
+                      : "/placeholder.jpg"
+                  }
+                  name={product.title}
+                  price={product.discountPrice || product.originalPrice}
+                  originalPrice={product.originalPrice}
+                  category={
+                    product.categories ? product.categories[0] : "general"
+                  }
+                  rating={reviewData.averageRating}
+                  reviewCount={reviewData.reviewCount}
+                  isNew={
+                    product.createdAt
+                      ? new Date() - new Date(product.createdAt) <
+                        30 * 24 * 60 * 60 * 1000
+                      : false
+                  } // New if created within 30 days
+                  isPopular={
+                    product.totalSales ? product.totalSales > 10 : false
+                  }
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-16">

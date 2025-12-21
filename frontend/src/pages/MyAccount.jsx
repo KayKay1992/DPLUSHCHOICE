@@ -9,6 +9,8 @@ import {
   FaSignOutAlt,
   FaSave,
   FaTimes,
+  FaStar,
+  FaRegStar,
 } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -22,6 +24,19 @@ const MyAccount = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [userReviews, setUserReviews] = useState([]);
+  const [reviewModal, setReviewModal] = useState({
+    isOpen: false,
+    product: null,
+    orderId: null,
+    existingReview: null,
+    isEditing: false,
+  });
+  const [reviewForm, setReviewForm] = useState({
+    rating: 0,
+    comment: "",
+  });
+  const [submittingReview, setSubmittingReview] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -54,9 +69,14 @@ const MyAccount = () => {
   const fetchOrders = async () => {
     console.log("Fetching orders for user:", currentUser._id);
     try {
-      const res = await userRequest.get(`/orders/find/${currentUser._id}`);
-      console.log("Orders response:", res.data);
-      setOrders(res.data);
+      const [ordersRes, reviewsRes] = await Promise.all([
+        userRequest.get(`/orders/find/${currentUser._id}`),
+        userRequest.get(`/reviews/user/${currentUser._id}`),
+      ]);
+
+      console.log("Orders response:", ordersRes.data);
+      setOrders(ordersRes.data);
+      setUserReviews(reviewsRes.data);
     } catch (error) {
       console.log("Error fetching orders:", error);
       console.log("Error response:", error.response);
@@ -66,11 +86,10 @@ const MyAccount = () => {
     }
   };
 
-  const handleLogout = () => {
-    dispatch(logout());
-    dispatch(setCurrentUser(null));
-    navigate("/");
-    toast.success("Logged out successfully");
+  const hasUserReviewedProduct = (productId, orderId) => {
+    return userReviews.some(
+      (review) => review.productId === productId && review.orderId === orderId
+    );
   };
 
   const handleEditProfile = () => {
@@ -91,12 +110,139 @@ const MyAccount = () => {
     });
   };
 
+  const handleLogout = () => {
+    dispatch(logout());
+    dispatch(setCurrentUser(null));
+    navigate("/");
+    toast.success("Logged out successfully");
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleOpenReviewModal = async (product, orderId) => {
+    try {
+      // Check if user has already reviewed this product in this order
+      const res = await userRequest.get(`/reviews/user/${currentUser._id}`);
+      const userReviews = res.data;
+      const existingReview = userReviews.find(
+        (review) =>
+          review.productId === (product._id || product.id) &&
+          review.orderId === orderId
+      );
+
+      if (existingReview) {
+        // Pre-populate form with existing review data
+        setReviewForm({
+          rating: existingReview.rating,
+          comment: existingReview.comment,
+        });
+        setReviewModal({
+          isOpen: true,
+          product,
+          orderId,
+          existingReview,
+          isEditing: true,
+        });
+      } else {
+        // New review
+        setReviewForm({
+          rating: 0,
+          comment: "",
+        });
+        setReviewModal({
+          isOpen: true,
+          product,
+          orderId,
+          existingReview: null,
+          isEditing: false,
+        });
+      }
+    } catch (error) {
+      console.error("Error checking for existing review:", error);
+      // If error checking, assume new review
+      setReviewForm({
+        rating: 0,
+        comment: "",
+      });
+      setReviewModal({
+        isOpen: true,
+        product,
+        orderId,
+        existingReview: null,
+        isEditing: false,
+      });
+    }
+  };
+
+  const handleCloseReviewModal = () => {
+    setReviewModal({
+      isOpen: false,
+      product: null,
+      orderId: null,
+      existingReview: null,
+      isEditing: false,
+    });
+    setReviewForm({
+      rating: 0,
+      comment: "",
+    });
+  };
+
+  const handleRatingChange = (rating) => {
+    setReviewForm((prev) => ({
+      ...prev,
+      rating,
+    }));
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+
+    if (reviewForm.rating === 0) {
+      toast.error("Please select a rating");
+      return;
+    }
+
+    if (!reviewForm.comment.trim()) {
+      toast.error("Please write a review comment");
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      if (reviewModal.isEditing && reviewModal.existingReview) {
+        // Update existing review
+        await userRequest.put(`/reviews/${reviewModal.existingReview._id}`, {
+          rating: reviewForm.rating,
+          comment: reviewForm.comment,
+        });
+        toast.success("Review updated successfully!");
+      } else {
+        // Create new review
+        await userRequest.post("/reviews", {
+          productId: reviewModal.product._id || reviewModal.product.id,
+          orderId: reviewModal.orderId,
+          rating: reviewForm.rating,
+          comment: reviewForm.comment,
+        });
+        toast.success("Review submitted successfully!");
+      }
+
+      handleCloseReviewModal();
+      // Refresh orders and reviews to show updated review status
+      fetchOrders();
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      toast.error(error.response?.data?.message || "Failed to submit review");
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -573,39 +719,54 @@ const MyAccount = () => {
 
                           {order.products && order.products.length > 0 && (
                             <div className="border-t border-gray-200 pt-4">
-                              <p className="text-sm text-gray-500 mb-2">
+                              <p className="text-sm text-gray-500 mb-3">
                                 Items:
                               </p>
-                              <div className="flex flex-wrap gap-3">
-                                {order.products
-                                  .slice(0, 4)
-                                  .map((product, index) => (
-                                    <div
-                                      key={index}
-                                      className="flex items-center space-x-2 bg-gray-50 rounded-lg p-2 min-w-0"
-                                    >
+                              <div className="space-y-3">
+                                {order.products.map((product, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center justify-between bg-gray-50 rounded-lg p-3"
+                                  >
+                                    <div className="flex items-center space-x-3">
                                       <img
                                         src={product.img}
                                         alt={product.title}
-                                        className="w-10 h-10 object-cover rounded-md shrink-0"
+                                        className="w-12 h-12 object-cover rounded-md"
                                       />
-                                      <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-medium text-gray-800 truncate">
+                                      <div>
+                                        <p className="text-sm font-medium text-gray-800">
                                           {product.title}
                                         </p>
                                         <p className="text-xs text-gray-500">
-                                          Qty: {product.quantity}
+                                          Qty: {product.quantity} •{" "}
+                                          {formatPrice(
+                                            product.price * product.quantity
+                                          )}
                                         </p>
                                       </div>
                                     </div>
-                                  ))}
-                                {order.products.length > 4 && (
-                                  <div className="flex items-center justify-center bg-gray-100 rounded-lg p-2 w-10 h-10">
-                                    <span className="text-sm font-medium text-gray-600">
-                                      +{order.products.length - 4}
-                                    </span>
+                                    <button
+                                      onClick={() =>
+                                        handleOpenReviewModal(
+                                          product,
+                                          order._id
+                                        )
+                                      }
+                                      className="bg-pink-500 hover:bg-pink-600 text-white text-sm px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-1"
+                                    >
+                                      <FaStar className="text-xs" />
+                                      <span>
+                                        {hasUserReviewedProduct(
+                                          product._id || product.id,
+                                          order._id
+                                        )
+                                          ? "Update Review"
+                                          : "Review"}
+                                      </span>
+                                    </button>
                                   </div>
-                                )}
+                                ))}
                               </div>
                             </div>
                           )}
@@ -619,6 +780,118 @@ const MyAccount = () => {
           </div>
         </div>
       </div>
+
+      {/* Review Modal */}
+      {reviewModal.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-800">
+                {reviewModal.isEditing
+                  ? "Update Your Review"
+                  : "Write a Review"}
+              </h3>
+              <button
+                onClick={handleCloseReviewModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <FaTimes className="text-xl" />
+              </button>
+            </div>
+
+            {reviewModal.product && (
+              <div className="mb-6">
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <img
+                    src={reviewModal.product.img}
+                    alt={reviewModal.product.title}
+                    className="w-12 h-12 object-cover rounded-md"
+                  />
+                  <div>
+                    <p className="font-medium text-gray-800">
+                      {reviewModal.product.title}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Quantity: {reviewModal.product.quantity}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={handleReviewSubmit}>
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Rating *
+                </label>
+                <div className="flex space-x-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => handleRatingChange(star)}
+                      className="text-2xl transition-colors"
+                    >
+                      {star <= reviewForm.rating ? (
+                        <FaStar className="text-yellow-400" />
+                      ) : (
+                        <FaRegStar className="text-gray-300" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Your Review *
+                </label>
+                <textarea
+                  value={reviewForm.comment}
+                  onChange={(e) =>
+                    setReviewForm((prev) => ({
+                      ...prev,
+                      comment: e.target.value,
+                    }))
+                  }
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none"
+                  rows="4"
+                  placeholder="Share your experience with this product..."
+                  required
+                />
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={handleCloseReviewModal}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-3 px-4 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingReview}
+                  className="flex-1 bg-pink-500 hover:bg-pink-600 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                >
+                  {submittingReview ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    <span>
+                      {reviewModal.isEditing
+                        ? "Update Review"
+                        : "Submit Review"}
+                    </span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

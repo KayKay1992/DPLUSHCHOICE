@@ -11,7 +11,9 @@ import { useNavigate } from "react-router-dom";
 const ProductDetails = () => {
   const { productId } = useParams();
   const [product, setProduct] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const dispatch = useDispatch();
@@ -30,7 +32,20 @@ const ProductDetails = () => {
         setLoading(false);
       }
     };
+
+    const fetchReviews = async () => {
+      try {
+        const res = await userRequest.get(`/reviews/product/${productId}`);
+        setReviews(res.data);
+        setReviewsLoading(false);
+      } catch (err) {
+        console.error("Error fetching reviews:", err);
+        setReviewsLoading(false);
+      }
+    };
+
     fetchProduct();
+    fetchReviews();
   }, [productId]);
 
   if (loading) {
@@ -79,12 +94,25 @@ const ProductDetails = () => {
     return product.discountPrice || product.originalPrice;
   };
 
-  // Get the original price for display (if wholesale is active, show regular price as crossed out)
+  // Get the original price (always the base price)
   const getOriginalPrice = () => {
-    if (isWholesaleActive) {
-      return product.discountPrice || product.originalPrice;
-    }
     return product.originalPrice;
+  };
+
+  // Calculate average rating
+  const calculateAverageRating = () => {
+    if (reviews.length === 0) return 0;
+    const sum = reviews.reduce((acc, review) => acc + review.rating, 0);
+    return sum / reviews.length;
+  };
+
+  // Format date for reviews
+  const formatReviewDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
   };
 
   const handleAddToCart = () => {
@@ -205,8 +233,10 @@ const ProductDetails = () => {
 
               <div className="mb-6">
                 <div className="flex items-center mb-2">
-                  <StarRating rating={4} starSize={24} />
-                  <span className="ml-2 text-gray-600">(2 reviews)</span>
+                  <StarRating rating={calculateAverageRating()} starSize={24} />
+                  <span className="ml-2 text-gray-600">
+                    ({reviews.length} review{reviews.length !== 1 ? "s" : ""})
+                  </span>
                 </div>
                 {/* Placeholder for skin type and concern */}
                 {product.skinType && (
@@ -305,28 +335,44 @@ const ProductDetails = () => {
               <hr className="my-6" />
               <div className="flex flex-col">
                 <h2 className="text-2xl font-bold mb-6 text-gray-900">
-                  Customer Reviews
+                  Customer Reviews ({reviews.length})
                 </h2>
-                {product.ratings && product.ratings.length > 0 ? (
-                  product.ratings.map((rating, index) => (
-                    <div
-                      key={index}
-                      className="mb-6 p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-semibold text-gray-900">
-                          {rating.name || "Anonymous"}
-                        </span>
-                        <StarRating
-                          rating={parseInt(rating.star) || 5}
-                          starSize={16}
-                        />
+                {reviewsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mx-auto mb-2"></div>
+                    <p className="text-gray-600">Loading reviews...</p>
+                  </div>
+                ) : reviews.length > 0 ? (
+                  <div className="space-y-4">
+                    {reviews.map((review, index) => (
+                      <div
+                        key={review._id || index}
+                        className="p-4 bg-gray-50 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-semibold text-gray-900">
+                              {review.userName || "Anonymous"}
+                            </span>
+                            <span className="text-sm text-gray-500">
+                              {formatReviewDate(review.createdAt)}
+                            </span>
+                          </div>
+                          <StarRating rating={review.rating} starSize={16} />
+                        </div>
+                        <p className="text-gray-700 leading-relaxed">
+                          {review.comment}
+                        </p>
                       </div>
-                      <p className="text-gray-700">{rating.comment}</p>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 ) : (
-                  <p className="text-gray-600">No reviews yet.</p>
+                  <div className="text-center py-8">
+                    <p className="text-gray-600 mb-4">No reviews yet.</p>
+                    <p className="text-sm text-gray-500">
+                      Be the first to review this product!
+                    </p>
+                  </div>
                 )}
               </div>
             </div>

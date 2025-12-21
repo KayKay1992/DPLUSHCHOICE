@@ -13,6 +13,7 @@ const Product = ({
   price = 4500,
   category,
   rating = 4,
+  reviewCount = 0,
   isNew = false,
   isPopular = false,
   productId,
@@ -161,7 +162,7 @@ const Product = ({
           <div className="flex justify-center items-center gap-2 mb-4">
             <StarRating rating={rating} starSize={20} />
             <span className="text-sm text-gray-600 font-medium">
-              ({rating})
+              ({reviewCount} {reviewCount === 1 ? "review" : "reviews"})
             </span>
           </div>
 
