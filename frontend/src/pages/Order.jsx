@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { FaCheckCircle, FaSpinner } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams, useNavigate } from "react-router-dom";
-import StarRating from "../components/StarRating";
 import { userRequest } from "../requestMethods";
 import { toast } from "react-toastify";
 import { clearUserCart } from "../redux/cartRedux";
@@ -164,17 +163,11 @@ const Order = () => {
                         </div>
                       </div>
                       <div className="mt-6">
-                        <h3 className="font-semibold text-gray-800 mb-3 text-lg">
-                          Rate This Product:
-                        </h3>
-                        <StarRating rating={4} />
-                        <textarea
-                          className="mt-4 w-full p-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-pink-500 focus:ring-4 focus:ring-pink-500/20 transition-all duration-300 bg-white/80 backdrop-blur-sm resize-none"
-                          rows="4"
-                          placeholder="Write a review..."
-                        ></textarea>
-                        <button className="mt-4 bg-linear-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-                          Submit Review
+                        <button
+                          onClick={() => navigate("/myaccount")}
+                          className="bg-linear-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                        >
+                          View Your Orders
                         </button>
                       </div>
                     </div>
@@ -269,13 +262,13 @@ const Order = () => {
               </div>
             </div>
 
-            {/* Continue Shopping Button */}
+            {/* View Your Orders Button */}
             <div className="text-center pt-4">
               <button
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/myaccount")}
                 className="bg-linear-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold px-8 py-4 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 text-lg w-full"
               >
-                Continue Shopping
+                View Your Orders
               </button>
             </div>
           </div>
