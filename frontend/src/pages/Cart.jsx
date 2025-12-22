@@ -26,6 +26,17 @@ const Cart = () => {
   };
 
   const handleCheckout = async () => {
+    console.log("=== CART CHECKOUT DEBUG ===");
+    console.log("Cart state:", { products, quantity, total });
+    console.log("Products in cart:");
+    products.forEach((p, i) => {
+      console.log(
+        `Product ${i}: ${p.title}, quantity: ${p.quantity}, id: ${p.id}`
+      );
+    });
+    console.log("Total cart quantity:", quantity);
+    console.log("=== END CART CHECKOUT DEBUG ===");
+
     try {
       const res = await userRequest.post("/stripe/create-checkout-session", {
         cart: { products, quantity, total },

@@ -20,13 +20,27 @@ const Product = ({
   product, // Add full product object
 }) => {
   const [quantity, setQuantity] = useState(1);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.user);
   const cart = useSelector(selectCurrentCart);
   const navigate = useNavigate();
 
+  const isOutOfStock = product ? (product.stock || 0) <= 0 : false;
+
+  // Early return if product is not available
+  if (!product) {
+    return (
+      <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 cursor-pointer border border-white/50 overflow-hidden p-8 text-center">
+        <p className="text-gray-500">Product not available</p>
+      </div>
+    );
+  }
+
   const handleAddToCart = (e) => {
     e.preventDefault(); // Prevent navigation to product details
+
+    if (isAddingToCart) return; // Prevent multiple clicks
 
     // Check if user is logged in
     if (!currentUser) {
@@ -53,6 +67,8 @@ const Product = ({
       );
       return;
     }
+
+    setIsAddingToCart(true);
 
     const email = currentUser?.email || "guest@example.com";
 
@@ -81,6 +97,8 @@ const Product = ({
       pauseOnHover: true,
       draggable: true,
     });
+
+    setIsAddingToCart(false);
   };
 
   // Format price with Nigerian Naira symbol
@@ -173,7 +191,10 @@ const Product = ({
                 e.preventDefault();
                 setQuantity(Math.max(1, quantity - 1));
               }}
-              className="bg-pink-500 hover:bg-pink-600 text-white p-2 rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+              disabled={isOutOfStock}
+              className={`bg-pink-500 hover:bg-pink-600 text-white p-2 rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 ${
+                isOutOfStock ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               <FaMinus className="text-sm" />
             </button>
@@ -185,7 +206,10 @@ const Product = ({
                 e.preventDefault();
                 setQuantity(Math.min(product.stock || 50, quantity + 1));
               }}
-              className="bg-pink-500 hover:bg-pink-600 text-white p-2 rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+              disabled={isOutOfStock}
+              className={`bg-pink-500 hover:bg-pink-600 text-white p-2 rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 ${
+                isOutOfStock ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               <FaPlus className="text-sm" />
             </button>
@@ -194,9 +218,18 @@ const Product = ({
           {/* Add to Cart Button */}
           <button
             onClick={handleAddToCart}
-            className="w-full bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-pink-500/50"
+            disabled={isOutOfStock || isAddingToCart}
+            className={`w-full font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-pink-500/50 ${
+              isOutOfStock || isAddingToCart
+                ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                : "bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white"
+            }`}
           >
-            Add to Cart ({quantity})
+            {isOutOfStock
+              ? "Out of Stock"
+              : isAddingToCart
+              ? "Adding..."
+              : `Add to Cart (${quantity})`}
           </button>
         </div>
       </div>

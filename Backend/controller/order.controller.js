@@ -1,8 +1,39 @@
 import Order from "../models/order.model.js";
+import Product from "../models/product.model.js";
 import asyncHandler from "express-async-handler";
 
 //Create Order
 export const createOrder = asyncHandler(async (req, res) => {
+  const { products, userId } = req.body;
+
+  // Check stock availability and update stock for each product
+  for (const product of products) {
+    const dbProduct = await Product.findById(product._id || product.id);
+
+    if (!dbProduct) {
+      res.status(404);
+      throw new Error(`Product ${product.title} not found`);
+    }
+
+    const requestedQuantity = product.quantity || 1;
+    const availableStock = dbProduct.stock || 0;
+
+    if (availableStock < requestedQuantity) {
+      res.status(400);
+      throw new Error(
+        `Insufficient stock for ${product.title}. Available: ${availableStock}, Requested: ${requestedQuantity}`
+      );
+    }
+
+    // Reduce stock
+    await Product.findByIdAndUpdate(
+      dbProduct._id,
+      { $inc: { stock: -requestedQuantity } },
+      { new: true }
+    );
+  }
+
+  // Create the order after stock validation and reduction
   const newOrder = new Order(req.body);
   const order = await newOrder.save();
 

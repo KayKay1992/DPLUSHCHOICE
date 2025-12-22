@@ -1,96 +1,187 @@
 ================================================================================
 
-ORDER CONFIRMATION PAGE MODIFICATION ADDITION OF VIEW ORDER BUTTON - December 20, 2025
+STOCK MANAGEMENT SYSTEM IMPLEMENTATION
 
-Modified the order confirmation page to replace the "Continue Shopping" button with a "View Your Orders" button for better user experience.
+Initial implementation: December 20, 2025
+Documentation updated: December 22, 2025
 
-================================================================================
-
-PROBLEM STATEMENT:
-
-After placing an order, users were navigated to the order confirmation page (/myorders) which had a "Continue Shopping" button. However, users might want to view their order history or manage their orders instead of continuing to shop immediately.
+Goal: Keep product inventory accurate by (1) preventing customers from adding more than available stock in the UI, and (2) enforcing stock validation + stock reduction on the backend when an order is created (both normal orders and Stripe Checkout orders).
 
 ================================================================================
 
-SOLUTION IMPLEMENTED:
+1) DATA MODEL (MongoDB / Mongoose)
 
-Replaced the "Continue Shopping" button with a "View Your Orders" button that navigates users to their account page where they can view all their orders, track order status, and access review functionality.
+Product stock lives on the Product document:
 
-================================================================================
+- Backend/models/product.model.js
+  - `stock: Number` (source of truth for inventory)
+  - `inStock: Boolean` exists but the UI/logic mainly uses `stock`.
 
-TECHNICAL CHANGES:
+Orders store purchased items and quantities:
 
-File Modified: Frontend/src/pages/Order.jsx
-
-Change Details:
-- Replaced the "Continue Shopping" button with "View Your Orders" button
-- Updated navigation target from "/" (home page) to "/myaccount" (user account page)
-- Maintained the same styling and user experience design
-- Preserved all button functionality and hover effects
-
-================================================================================
-
-CODE CHANGES:
-
-BEFORE:
-```jsx
-{/* Continue Shopping Button */}
-<div className="text-center pt-4">
-  <button
-    onClick={() => navigate("/")}
-    className="bg-linear-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold px-8 py-4 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 text-lg w-full"
-  >
-    Continue Shopping
-  </button>
-</div>
-```
-
-AFTER:
-```jsx
-{/* View Your Orders Button */}
-<div className="text-center pt-4">
-  <button
-    onClick={() => navigate("/myaccount")}
-    className="bg-linear-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-bold px-8 py-4 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 text-lg w-full"
-  >
-    View Your Orders
-  </button>
-</div>
-```
+- Backend/models/order.model.js
+  - `products: Array` (each item contains product id + quantity, etc.)
+  - `total`, `address`, `phone`, `email`, `status`
+  - `stripeSessionId` (added later for Stripe webhook idempotency)
 
 ================================================================================
 
-USER EXPERIENCE IMPROVEMENT:
+2) FRONTEND UX (React)
 
-1. **Better Navigation Flow**: After order completion, users are directed to view their orders rather than back to shopping
-2. **Order Management Access**: Direct access to order tracking, reviews, and account management
-3. **Reduced Friction**: Eliminates the need for users to manually navigate to their account to check order status
-4. **Consistent Experience**: Aligns with the expectation that post-purchase, users want to see their order details
+The frontend uses `product.stock` to:
+
+2.1 Product Listing Card
+- frontend/src/components/Product.jsx
+  - Calculates `isOutOfStock = (product.stock || 0) <= 0`
+  - Disables +/- quantity controls when out of stock
+  - Disables “Add to Cart” button when out of stock
+  - Uses a small “loading” flag (`isAddingToCart`) to prevent multiple clicks
+
+2.2 Product Details Page
+- frontend/src/pages/ProductDetails.jsx
+  - Displays “Out of Stock” vs “In Stock (X available)” using `product.stock`
+  - Blocks add-to-cart if out of stock
+  - Checks stock before adding to cart:
+    - Reads existing quantity already in cart
+    - Ensures `(existingCartQty + selectedQty) <= product.stock`
+
+2.3 Cart Page (Quantity changes)
+- frontend/src/pages/Cart.jsx
+  - On +/- quantity changes, prevents increasing above `(product.stock || 50)`
+  - Checkout sends cart payload to backend Stripe route
+  - Note: There are still debug `console.log` statements in `handleCheckout`.
 
 ================================================================================
 
-INTEGRATION POINTS:
+3) CART STATE MANAGEMENT (Redux Toolkit)
 
-- **Stripe Success URL**: After successful payment, users are redirected to /myorders (Order component)
-- **MyAccount Component**: The destination page where users can view all orders and access review functionality
-- **Order History**: Users can see order status, track deliveries, and leave reviews
-- **Review System**: Seamless access to review products from completed orders
+- frontend/src/redux/cartRedux.js
+  - Stores carts per-user (`userCarts[userId]`) and a `guestCart`
+  - `addProduct` INCREMENTS quantity if the item already exists in the cart
+    - This is intentional in the current code (“increment quantity” behavior)
+  - `updateProductQuantity` sets absolute quantity and recalculates totals
 
-================================================================================
-
-TESTING CONSIDERATIONS:
-
-1. **Navigation Flow**: Verify button correctly navigates to /myaccount
-2. **User Authentication**: Ensure protected route works correctly
-3. **Order Display**: Confirm orders are properly loaded and displayed
-4. **Review Access**: Verify review buttons work for completed orders
-5. **Responsive Design**: Ensure button works on all device sizes
+Important: The frontend tries to prevent exceeding stock, but the backend is the final authority.
 
 ================================================================================
 
-FILES MODIFIED:
+4) BACKEND: NORMAL ORDER FLOW (Non-Stripe)
+
+Route:
+- Backend/routes/order.route.js
+  - POST /api/V1/orders
+
+Controller:
+- Backend/controller/order.controller.js → `createOrder`
+
+Stock enforcement happens here:
+
+Step-by-step:
+1. Receive `req.body.products` (each product includes `_id` or `id`, and `quantity`)
+2. For each product:
+   - Fetch Product from DB
+   - Validate product exists
+   - Validate `availableStock >= requestedQuantity`
+   - Decrement stock using MongoDB `$inc: { stock: -requestedQuantity }`
+3. After all items are validated + decremented, create and save the Order
+
+Note about concurrency:
+- `$inc` is atomic on a single document update.
+- The validation and decrement are done in separate steps per product, so strict “no oversell under extreme concurrency” would require a conditional update or transaction. For typical usage this still keeps stock accurate.
+
+================================================================================
+
+5) BACKEND: STRIPE CHECKOUT FLOW
+
+5.1 Create Checkout Session
+- Backend/routes/stripe.js
+  - POST /api/V1/stripe/create-checkout-session
+  - Builds Stripe `line_items` from cart products (uses product.quantity)
+  - Stores cart products inside Stripe metadata as JSON (`session.metadata.products`)
+  - Collects shipping address and phone number
+
+5.2 Webhook Endpoint Wiring
+- Backend/app.js
+  - Webhook route uses raw body first:
+    `app.use('/api/V1/stripe/webhook', express.raw({ type: 'application/json' }))`
+  - Then normal `express.json()` runs for other routes
+
+5.3 Webhook Handler (checkout.session.completed)
+- Backend/routes/stripe.js
+  - POST /api/V1/stripe/webhook
+
+Webhook step-by-step (current implementation):
+1. Parse webhook event from the raw request body
+2. On `checkout.session.completed`:
+   - Extract `session.id` (Stripe Checkout Session id)
+   - Parse products from `session.metadata.products`
+   - Validate each product stock and decrement using `$inc` (same idea as normal orders)
+   - Save a new Order with `stripeSessionId = session.id`
+
+Important security note:
+- The webhook currently parses JSON directly (there is a comment saying verification is temporarily disabled for testing).
+- For production, Stripe signature verification should be enabled using the Stripe webhook secret.
+
+================================================================================
+
+6) CRITICAL BUG FIXES FOR STRIPE STOCK
+
+6.1 Bug: Stock not reducing after Stripe orders
+Cause:
+- Stock reduction existed in the normal order controller, but Stripe orders were created in the webhook without stock logic.
+
+Fix:
+- Added stock validation + `$inc` stock decrement into the Stripe webhook flow.
+
+6.2 Bug: Stock reduced multiple times (often “minus 3”) for one checkout
+Cause:
+- Stripe may deliver the same webhook event more than once.
+- Without idempotency, the webhook repeated the stock decrement multiple times.
+
+Fix (Idempotency):
+- Backend/models/order.model.js
+  - Added `stripeSessionId` with a unique sparse index
+- Backend/models/stripeSession.model.js
+  - Added a lock/status model with: `sessionId`, `status`, `processedAt`, `lastError`
+- Backend/routes/stripe.js
+  - Uses the lock + existing order check to ensure each `session.id` is processed once
+
+================================================================================
+
+7) FILES INVOLVED
+
+Backend:
+- Backend/models/product.model.js
+- Backend/controller/order.controller.js
+- Backend/routes/order.route.js
+- Backend/app.js
+- Backend/routes/stripe.js
+- Backend/models/order.model.js
+- Backend/models/stripeSession.model.js
 
 Frontend:
-- Frontend/src/pages/Order.jsx (button replacement and navigation update)
+- frontend/src/components/Product.jsx
+- frontend/src/pages/ProductDetails.jsx
+- frontend/src/redux/cartRedux.js
+- frontend/src/pages/Cart.jsx
+
+================================================================================
+
+8) TESTING CHECKLIST
+
+1. Product stock > 0
+   - Can add to cart
+   - Can increase cart quantity up to stock
+
+2. Product stock = 0
+   - UI shows “Out of Stock”
+   - Add to cart disabled
+
+3. Normal order (non-Stripe)
+   - Place order → stock decreases by ordered quantity
+
+4. Stripe order
+   - Complete checkout → webhook creates order → stock decreases by ordered quantity
+   - Retried webhook deliveries do NOT decrement stock again (idempotency)
 
 ================================================================================

@@ -14,8 +14,10 @@ const ProductDetails = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reviewsLoading, setReviewsLoading] = useState(true);
+  const isOutOfStock = product ? (product.stock || 0) <= 0 : false;
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const dispatch = useDispatch();
   const cart = useSelector(selectCurrentCart);
   const { currentUser } = useSelector((state) => state.user);
@@ -116,6 +118,8 @@ const ProductDetails = () => {
   };
 
   const handleAddToCart = () => {
+    if (isAddingToCart) return; // Prevent multiple clicks
+
     // Check if user is logged in
     if (!currentUser) {
       toast.info("Please login to add items to your cart", {
@@ -123,6 +127,15 @@ const ProductDetails = () => {
         autoClose: 3000,
       });
       navigate("/login");
+      return;
+    }
+
+    // Check if product is out of stock
+    if (isOutOfStock) {
+      toast.error("This product is currently out of stock", {
+        position: "top-right",
+        autoClose: 3000,
+      });
       return;
     }
 
@@ -143,6 +156,8 @@ const ProductDetails = () => {
       );
       return;
     }
+
+    setIsAddingToCart(true);
 
     const price = getCurrentPrice();
     const email = currentUser?.email || "guest@example.com"; // Use guest email if not logged in
@@ -168,8 +183,43 @@ const ProductDetails = () => {
       draggable: true,
       progress: undefined,
     });
+
+    setIsAddingToCart(false);
     console.log("Cart after addition:", cart);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-linear-to-br from-pink-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-pink-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 text-lg">Loading product details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="min-h-screen bg-linear-to-br from-pink-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">😞</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Product Not Found
+          </h2>
+          <p className="text-gray-600 mb-6">
+            {error || "The product you're looking for doesn't exist."}
+          </p>
+          <button
+            onClick={() => navigate("/")}
+            className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300"
+          >
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-br from-pink-50 via-white to-purple-50 py-8 px-4">
@@ -266,9 +316,9 @@ const ProductDetails = () => {
                   )}
                 </div>
                 <p className="text-sm text-gray-600">
-                  {product.inStock
-                    ? `In Stock (${product.stock || 50} available)`
-                    : "Out of Stock"}
+                  {isOutOfStock
+                    ? "Out of Stock"
+                    : `In Stock (${product.stock || 50} available)`}
                 </p>
               </div>
               {product.whatinbox && (
@@ -307,7 +357,12 @@ const ProductDetails = () => {
               <div className="flex items-center mb-6">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="bg-pink-500 hover:bg-pink-600 text-white p-3 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+                  disabled={isOutOfStock}
+                  className={`p-3 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 ${
+                    isOutOfStock
+                      ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                      : "bg-pink-500 hover:bg-pink-600 text-white"
+                  }`}
                 >
                   <FaMinus />
                 </button>
@@ -318,16 +373,30 @@ const ProductDetails = () => {
                   onClick={() =>
                     setQuantity(Math.min(product.stock || 50, quantity + 1))
                   }
-                  className="bg-pink-500 hover:bg-pink-600 text-white p-3 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300"
+                  disabled={isOutOfStock}
+                  className={`p-3 rounded-lg shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-300 ${
+                    isOutOfStock
+                      ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                      : "bg-pink-500 hover:bg-pink-600 text-white"
+                  }`}
                 >
                   <FaPlus />
                 </button>
               </div>
               <button
-                className="w-full lg:w-3/4 bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 mb-8"
+                className={`w-full lg:w-3/4 font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 mb-8 ${
+                  isOutOfStock || isAddingToCart
+                    ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                    : "bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white"
+                }`}
                 onClick={handleAddToCart}
+                disabled={isOutOfStock || isAddingToCart}
               >
-                Add to Cart
+                {isOutOfStock
+                  ? "Out of Stock"
+                  : isAddingToCart
+                  ? "Adding..."
+                  : "Add to Cart"}
               </button>
             </div>
 

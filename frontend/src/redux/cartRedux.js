@@ -1,244 +1,179 @@
 import { createSlice, createSelector } from "@reduxjs/toolkit";
 
+const initialCartState = {
+  products: [],
+  quantity: 0,
+  total: 0,
+};
+
 const cartSlice = createSlice({
   name: "cart",
   initialState: {
-    userCarts: {}, // Store carts by user ID
-    currentUserId: null, // Track current user
-    guestCart: {
-      products: [], // Cart for non-logged-in users
-      quantity: 0,
-      total: 0,
-    },
+    userCarts: {},
+    currentUserId: null,
+    guestCart: { ...initialCartState },
   },
+
   reducers: {
-    // Set current user and switch to their cart
+    // =========================
+    // SET CURRENT USER
+    // =========================
     setCurrentUser: (state, action) => {
       const userId = action.payload?.id || action.payload?._id || "guest";
       state.currentUserId = userId;
 
-      // Ensure userCarts object exists
-      if (!state.userCarts) {
-        state.userCarts = {};
-      }
-
-      // Initialize cart for new user if it doesn't exist
       if (userId !== "guest" && !state.userCarts[userId]) {
-        state.userCarts[userId] = {
-          products: [],
-          quantity: 0,
-          total: 0,
-        };
+        state.userCarts[userId] = { ...initialCartState };
       }
     },
 
-    // Clear cart for logout
+    // =========================
+    // CLEAR USER CART (LOGOUT)
+    // =========================
     clearUserCart: (state) => {
-      if (state.currentUserId === "guest") {
-        state.guestCart = {
-          products: [],
-          quantity: 0,
-          total: 0,
-        };
-      } else if (state.currentUserId) {
-        state.userCarts[state.currentUserId] = {
-          products: [],
-          quantity: 0,
-          total: 0,
-        };
+      if (state.currentUserId === "guest" || !state.currentUserId) {
+        state.guestCart = { ...initialCartState };
+      } else {
+        state.userCarts[state.currentUserId] = { ...initialCartState };
       }
     },
 
-    // Add product to current user's cart
+    // =========================
+    // ADD PRODUCT (INCREMENT)
+    // =========================
     addProduct: (state, action) => {
       const product = action.payload;
-      let currentCart;
 
-      if (state.currentUserId === "guest" || !state.currentUserId) {
-        currentCart = state.guestCart;
-      } else {
-        // Ensure userCarts exists
-        if (!state.userCarts) {
-          state.userCarts = {};
-        }
-        if (!state.userCarts[state.currentUserId]) {
-          state.userCarts[state.currentUserId] = {
-            products: [],
-            quantity: 0,
-            total: 0,
-          };
-        }
-        currentCart = state.userCarts[state.currentUserId];
-      }
+      const currentCart =
+        state.currentUserId === "guest" || !state.currentUserId
+          ? state.guestCart
+          : state.userCarts[state.currentUserId];
 
-      // Check if product already exists
-      const existingProductIndex = currentCart.products.findIndex(
-        (p) => p.id === product.id
+      const existingItem = currentCart.products.find(
+        (item) => item.id === product.id
       );
 
-      if (existingProductIndex !== -1) {
-        // Update quantity if product exists
-        currentCart.products[existingProductIndex].quantity += product.quantity;
-        // Recalculate price based on new quantity and wholesale pricing
-        const item = currentCart.products[existingProductIndex];
-        const isWholesaleActive =
-          item.wholesalePrice &&
-          item.wholesaleMinimumQuantity &&
-          item.quantity >= item.wholesaleMinimumQuantity;
-        item.price = isWholesaleActive
-          ? item.wholesalePrice
-          : item.discountPrice || item.originalPrice;
-        item.isWholesale = isWholesaleActive;
+      const increment = Number(product.quantity) || 1;
+
+      if (existingItem) {
+        // ✅ increment quantity (CRITICAL FIX)
+        existingItem.quantity += increment;
       } else {
-        // Add new product with wholesale pricing info
-        const cartItem = {
+        currentCart.products.push({
           ...product,
-          wholesalePrice: product.wholesalePrice,
-          wholesaleMinimumQuantity: product.wholesaleMinimumQuantity,
-          discountPrice: product.discountPrice,
-          originalPrice: product.originalPrice,
-        };
-        currentCart.products.push(cartItem);
+          quantity: increment,
+        });
       }
 
-      // Recalculate totals
+      // ✅ recalc totals
       currentCart.quantity = currentCart.products.reduce(
-        (total, p) => total + p.quantity,
+        (sum, item) => sum + item.quantity,
         0
       );
+
       currentCart.total = currentCart.products.reduce(
-        (total, p) => total + p.price * p.quantity,
+        (sum, item) => sum + item.price * item.quantity,
         0
       );
     },
 
-    // Remove product from current user's cart
+    // =========================
+    // REMOVE PRODUCT
+    // =========================
     removeProduct: (state, action) => {
-      let currentCart;
+      const currentCart =
+        state.currentUserId === "guest" || !state.currentUserId
+          ? state.guestCart
+          : state.userCarts[state.currentUserId];
 
-      if (state.currentUserId === "guest" || !state.currentUserId) {
-        currentCart = state.guestCart;
-      } else {
-        // Ensure userCarts exists
-        if (!state.userCarts) {
-          state.userCarts = {};
-        }
-        currentCart = state.userCarts[state.currentUserId] || {
-          products: [],
-          quantity: 0,
-          total: 0,
-        };
-      }
-
-      const index = currentCart.products.findIndex(
-        (product) => product.id === action.payload.id
+      currentCart.products = currentCart.products.filter(
+        (item) => item.id !== action.payload.id
       );
 
-      if (index !== -1) {
-        currentCart.products.splice(index, 1);
-        // Recalculate totals
-        currentCart.quantity = currentCart.products.reduce(
-          (total, p) => total + p.quantity,
-          0
-        );
-        currentCart.total = currentCart.products.reduce(
-          (total, p) => total + p.price * p.quantity,
-          0
-        );
-      }
+      currentCart.quantity = currentCart.products.reduce(
+        (sum, item) => sum + item.quantity,
+        0
+      );
+
+      currentCart.total = currentCart.products.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
     },
 
-    // Update product quantity in current user's cart
+    // =========================
+    // UPDATE PRODUCT QUANTITY (ABSOLUTE)
+    // =========================
     updateProductQuantity: (state, action) => {
       const { productId, quantity } = action.payload;
-      let currentCart;
 
-      if (state.currentUserId === "guest" || !state.currentUserId) {
-        currentCart = state.guestCart;
-      } else {
-        // Ensure userCarts exists
-        if (!state.userCarts) {
-          state.userCarts = {};
-        }
-        currentCart = state.userCarts[state.currentUserId] || {
-          products: [],
-          quantity: 0,
-          total: 0,
-        };
-      }
+      if (quantity < 1) return;
 
-      const productIndex = currentCart.products.findIndex(
+      const currentCart =
+        state.currentUserId === "guest" || !state.currentUserId
+          ? state.guestCart
+          : state.userCarts[state.currentUserId];
+
+      const item = currentCart.products.find(
         (product) => product.id === productId
       );
 
-      if (productIndex !== -1) {
-        if (quantity <= 0) {
-          // Remove product if quantity is 0 or less
-          currentCart.products.splice(productIndex, 1);
-        } else {
-          // Update quantity
-          currentCart.products[productIndex].quantity = quantity;
-          // Recalculate price based on new quantity and wholesale pricing
-          const item = currentCart.products[productIndex];
-          const isWholesaleActive =
-            item.wholesalePrice &&
-            item.wholesaleMinimumQuantity &&
-            item.quantity >= item.wholesaleMinimumQuantity;
-          item.price = isWholesaleActive
-            ? item.wholesalePrice
-            : item.discountPrice || item.originalPrice;
-          item.isWholesale = isWholesaleActive;
-        }
+      if (!item) return;
 
-        // Recalculate totals
-        currentCart.quantity = currentCart.products.reduce(
-          (total, p) => total + p.quantity,
-          0
-        );
-        currentCart.total = currentCart.products.reduce(
-          (total, p) => total + p.price * p.quantity,
-          0
-        );
+      // ✅ absolute quantity set (SAFE)
+      item.quantity = Number(quantity);
+
+      // Optional: wholesale logic
+      if (
+        item.wholesalePrice &&
+        item.wholesaleMinimumQuantity &&
+        item.quantity >= item.wholesaleMinimumQuantity
+      ) {
+        item.price = item.wholesalePrice;
+        item.isWholesale = true;
+      } else {
+        item.price = item.discountPrice || item.originalPrice;
+        item.isWholesale = false;
       }
+
+      currentCart.quantity = currentCart.products.reduce(
+        (sum, item) => sum + item.quantity,
+        0
+      );
+
+      currentCart.total = currentCart.products.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
     },
 
-    // Clear current user's cart
+    // =========================
+    // CLEAR CART
+    // =========================
     clearCart: (state) => {
       if (state.currentUserId === "guest" || !state.currentUserId) {
-        state.guestCart = {
-          products: [],
-          quantity: 0,
-          total: 0,
-        };
-      } else if (state.currentUserId) {
-        // Ensure userCarts exists
-        if (!state.userCarts) {
-          state.userCarts = {};
-        }
-        state.userCarts[state.currentUserId] = {
-          products: [],
-          quantity: 0,
-          total: 0,
-        };
+        state.guestCart = { ...initialCartState };
+      } else {
+        state.userCarts[state.currentUserId] = { ...initialCartState };
       }
     },
   },
 });
 
-// Selectors to get current cart data
+// =========================
+// SELECTOR
+// =========================
 export const selectCurrentCart = createSelector(
   [(state) => state.cart],
   (cartState) => {
     if (cartState.currentUserId === "guest" || !cartState.currentUserId) {
-      return cartState.guestCart || { products: [], quantity: 0, total: 0 };
-    } else {
-      const userCart = cartState.userCarts?.[cartState.currentUserId] || {
-        products: [],
-        quantity: 0,
-        total: 0,
-      };
-      return userCart;
+      return cartState.guestCart;
     }
+    return (
+      cartState.userCarts[cartState.currentUserId] || {
+        ...initialCartState,
+      }
+    );
   }
 );
 
@@ -250,4 +185,5 @@ export const {
   updateProductQuantity,
   clearCart,
 } = cartSlice.actions;
+
 export default cartSlice.reducer;

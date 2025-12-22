@@ -1,37 +1,47 @@
 import mongoose from "mongoose";
 
-const OrderSchema = new mongoose.Schema({
+const OrderSchema = new mongoose.Schema(
+  {
     name: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     userId: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     products: {
-        type: Array,
-        required: true,
+      type: Array,
+      required: true,
     },
     total: {
-        type: Number,
-        required: true,
+      type: Number,
+      required: true,
     },
     address: {
-        type: String,
-        
+      type: String,
     },
     phone: {
-        type: String,
+      type: String,
     },
     email: {
-        type: String,
+      type: String,
     },
     status: {
-        type: Number,
-        default: 0,
+      type: Number,
+      default: 0,
     },
-}, { timestamps: true })
+
+    // Stripe idempotency / tracing
+    stripeSessionId: {
+      type: String,
+      index: true,
+      unique: true,
+      sparse: true,
+    },
+  },
+  { timestamps: true }
+);
 
 const Order = mongoose.model("Order", OrderSchema);
 export default Order;
