@@ -5,7 +5,7 @@ import { useParams } from "react-router-dom";
 const ProductList = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("featured");
-  const { searchTerm } = useParams();
+  const { searchTerm, category } = useParams();
 
   // Product categories based on Category.jsx file
   const categories = [
@@ -26,6 +26,13 @@ const ProductList = () => {
     { value: "jewelry-set", label: "Jewelry Set" },
     { value: "other-accessories", label: "Other Accessories" },
   ];
+
+  // If user came from a category click, preselect that category.
+  useEffect(() => {
+    if (!category) return;
+    const isValid = categories.some((c) => c.value === category);
+    setSelectedCategory(isValid ? category : "all");
+  }, [category]);
 
   // Sorting options
   const sortOptions = [

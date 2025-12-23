@@ -18,6 +18,7 @@ const Product = ({
   isPopular = false,
   productId,
   product, // Add full product object
+  imageFit = "cover",
 }) => {
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -136,12 +137,26 @@ const Product = ({
     <Link to={`/product/${productId}`}>
       <div className="group relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 cursor-pointer border border-white/50 overflow-hidden flex flex-col">
         {/* Image Container */}
-        <div className="relative h-56 sm:h-64 w-full overflow-hidden rounded-t-3xl">
-          <img
-            src={img}
-            alt={name}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-          />
+        <div
+          className={`relative h-56 sm:h-64 w-full overflow-hidden rounded-t-3xl ${
+            imageFit === "contain" ? "bg-white/70" : ""
+          }`}
+        >
+          <div
+            className={
+              imageFit === "contain"
+                ? "w-full h-full flex items-center justify-center p-3"
+                : "w-full h-full"
+            }
+          >
+            <img
+              src={img}
+              alt={name}
+              className={`w-full h-full transition-transform duration-700 group-hover:scale-110 ${
+                imageFit === "contain" ? "object-contain" : "object-cover"
+              }`}
+            />
+          </div>
           {/* Overlay Gradient */}
           <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 

@@ -82,6 +82,10 @@ function App() {
           element: <ProductList />,
         },
         {
+          path: "/products/category/:category",
+          element: <ProductList />,
+        },
+        {
           path: "/products/:searchTerm",
           element: <ProductList />,
         },

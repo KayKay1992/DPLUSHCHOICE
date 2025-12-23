@@ -1,35 +1,49 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FaUser, FaSignOutAlt } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/userRedux";
 import { clearUserCart, setCurrentUser } from "../redux/cartRedux";
 
 const categories = [
-  { name: "Perfumes", image: "/perfume.jpg" },
-  { name: "Body Sprays", image: "/body spray.jpg" },
-  { name: "Diffusers", image: "/diffusers.jpg" },
-  { name: "Scented Candles", image: "/scented candles.jpg" },
-  { name: "Necklace", image: "/Necklace.jpg" },
-  { name: "Earrings", image: "/earring.jpg" },
-  { name: "Rings", image: "/rings.avif" },
-  { name: "Wristwatches", image: "/wristwatch.jpg" },
-  { name: "Anklets", image: "/anklets.jpg" },
-  { name: "Bracelets", image: "/bracelets.jpg" },
-  { name: "Bangles", image: "/bangles.jpg" },
-  { name: "Bags", image: "/bags.jpg" },
-  { name: "Clutch Purse", image: "/clutch purse.jpg" },
-  { name: "Jewelry Set", image: "/jewery set.jpg" },
-  { name: "Other accessories", image: "/product1.png" },
+  { slug: "perfumes", name: "Perfumes", image: "/perfume.jpg" },
+  { slug: "body-sprays", name: "Body Sprays", image: "/body spray.jpg" },
+  { slug: "diffusers", name: "Diffusers", image: "/diffusers.jpg" },
+  {
+    slug: "scented-candles",
+    name: "Scented Candles",
+    image: "/scented candles.jpg",
+  },
+  { slug: "necklace", name: "Necklace", image: "/Necklace.jpg" },
+  { slug: "earrings", name: "Earrings", image: "/earring.jpg" },
+  { slug: "rings", name: "Rings", image: "/rings.avif" },
+  { slug: "wristwatches", name: "Wristwatches", image: "/wristwatch.jpg" },
+  { slug: "anklets", name: "Anklets", image: "/anklets.jpg" },
+  { slug: "bracelets", name: "Bracelets", image: "/bracelets.jpg" },
+  { slug: "bangles", name: "Bangles", image: "/bangles.jpg" },
+  { slug: "bags", name: "Bags", image: "/bags.jpg" },
+  { slug: "clutch-purse", name: "Clutch Purse", image: "/clutch purse.jpg" },
+  { slug: "jewelry-set", name: "Jewelry Set", image: "/jewery set.jpg" },
+  {
+    slug: "other-accessories",
+    name: "Other accessories",
+    image: "/product1.png",
+  },
 ];
 
 const SideMenu = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.user);
+  const navigate = useNavigate();
 
   const handleLogout = () => {
     dispatch(logout());
     dispatch(setCurrentUser(null));
+    onClose();
+  };
+
+  const handleCategoryClick = (slug) => {
+    navigate(`/products/category/${slug}`);
     onClose();
   };
 
@@ -109,6 +123,14 @@ const SideMenu = ({ isOpen, onClose }) => {
             {categories.map((cat, index) => (
               <div
                 key={cat.name}
+                onClick={() => handleCategoryClick(cat.slug)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    handleCategoryClick(cat.slug);
+                  }
+                }}
                 className="flex items-center p-4 rounded-2xl bg-white/70 backdrop-blur-sm border border-white/50 hover:bg-white hover:shadow-lg hover:scale-105 hover:border-pink-200 transition-all duration-300 cursor-pointer group"
                 style={{ animationDelay: `${index * 80}ms` }}
               >

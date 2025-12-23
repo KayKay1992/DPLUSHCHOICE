@@ -1,26 +1,36 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const categories = [
-  { name: "Perfumes", image: "/perfume.jpg" },
-  { name: "Body Sprays", image: "/body spray.jpg" },
-  { name: "Diffusers", image: "/diffusers.jpg" },
-  { name: "Scented Candles", image: "/scented candles.jpg" },
-  { name: "Necklace", image: "/Necklace.jpg" },
-  { name: "Earrings", image: "/earring.jpg" },
-  { name: "Rings", image: "/rings.avif" },
-  { name: "Wristwatches", image: "/wristwatch.jpg" },
-  { name: "Anklets", image: "/anklets.jpg" },
-  { name: "Bracelets", image: "/bracelets.jpg" },
-  { name: "Bangles", image: "/bangles.jpg" },
-  { name: "Bags", image: "/bags.jpg" },
-  { name: "Clutch Purse", image: "/clutch purse.jpg" },
-  { name: "Jewelry Set", image: "/jewery set.jpg" },
-  { name: "Other accessories", image: "/product1.png" },
+  { slug: "perfumes", name: "Perfumes", image: "/perfume.jpg" },
+  { slug: "body-sprays", name: "Body Sprays", image: "/body spray.jpg" },
+  { slug: "diffusers", name: "Diffusers", image: "/diffusers.jpg" },
+  {
+    slug: "scented-candles",
+    name: "Scented Candles",
+    image: "/scented candles.jpg",
+  },
+  { slug: "necklace", name: "Necklace", image: "/Necklace.jpg" },
+  { slug: "earrings", name: "Earrings", image: "/earring.jpg" },
+  { slug: "rings", name: "Rings", image: "/rings.avif" },
+  { slug: "wristwatches", name: "Wristwatches", image: "/wristwatch.jpg" },
+  { slug: "anklets", name: "Anklets", image: "/anklets.jpg" },
+  { slug: "bracelets", name: "Bracelets", image: "/bracelets.jpg" },
+  { slug: "bangles", name: "Bangles", image: "/bangles.jpg" },
+  { slug: "bags", name: "Bags", image: "/bags.jpg" },
+  { slug: "clutch-purse", name: "Clutch Purse", image: "/clutch purse.jpg" },
+  { slug: "jewelry-set", name: "Jewelry Set", image: "/jewery set.jpg" },
+  {
+    slug: "other-accessories",
+    name: "Other accessories",
+    image: "/product1.png",
+  },
 ];
 
 const Category = () => {
   const [showAll, setShowAll] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleResize = () => {
@@ -53,6 +63,14 @@ const Category = () => {
           {visibleCategories.map((cat, index) => (
             <div
               key={cat.name}
+              onClick={() => navigate(`/products/category/${cat.slug}`)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  navigate(`/products/category/${cat.slug}`);
+                }
+              }}
               className="group relative overflow-hidden rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 cursor-pointer"
               style={{
                 animationDelay: `${index * 100}ms`,

@@ -204,6 +204,7 @@ const Products = ({
                   key={product._id}
                   productId={product._id}
                   product={product}
+                  imageFit={isHome ? "cover" : "contain"}
                   img={
                     product.img
                       ? product.img.startsWith("http")

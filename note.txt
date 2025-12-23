@@ -1,70 +1,98 @@
 
-HOME PAGE PRODUCT DISPLAY (RESTRUCTURE)
-======================================
+CATEGORY CLICK → OPEN CATEGORY PRODUCTS PAGE (+ IMAGE FIX + SIDEMENU)
+===================================================================
 
 Goal
 ----
-Make the products displayed on the Home page cleaner and more refined:
-- Better spacing and responsive layout
-- Consistent product card height/structure
-- Less clutter on each card
-- Show a curated number of products on Home (instead of everything)
+1) When a user clicks a category (from the Home categories section or SideMenu), open a page that shows only products in that category.
+2) Fix product images on the category page so they display properly.
+3) Make the SideMenu categories actually navigate to the category page and close the menu.
 
 
-What changed (Frontend)
------------------------
+1) Category navigation (Routing)
+--------------------------------
+File: frontend/src/App.jsx
 
-1) Home page now uses a “Home variant” of the products grid
-File: frontend/src/pages/Home.jsx
+Added a dedicated category route:
+- /products/category/:category
 
-- Before:
-	- Home rendered: <Products /> (showing the full products grid behavior)
-
-- After:
-	- Home renders:
-		- <Products isHome limit={8} />
-
-Effect:
-- Home shows a cleaner grid with only the first 8 products.
-- Full catalog behavior is still available on the Products page.
+This route re-uses the existing ProductList page, but now it can receive a category slug from the URL.
 
 
-2) Products grid supports a home layout + optional limiting
-File: frontend/src/components/Products.jsx
+2) ProductList auto-selects category from the URL
+-------------------------------------------------
+File: frontend/src/pages/ProductList.jsx
 
-New props added:
-- isHome (boolean)
-	- When true, uses a tighter grid suitable for the Home page.
-- limit (number)
-	- When isHome is true, only renders the first N items (default 8).
-- showLoadMore (boolean)
-	- Controls whether the “Load More Products” button renders.
+Change:
+- Read both params from the URL:
+	- searchTerm (existing)
+	- category (new)
 
-Layout changes:
-- Home grid uses:
-	- 2 columns on small screens
-	- 3 columns on medium screens
-	- 4 columns on large screens
-	- tighter spacing (gap-4 / gap-6)
+Behavior:
+- When you navigate to /products/category/rings, ProductList automatically sets:
+	- selectedCategory = "rings" (if it’s a valid category)
+- Then it passes selectedCategory to the Products component.
 
-Note:
-- The placeholder “Load More Products” button is hidden by default (it only appears if showLoadMore={true}).
+Filtering logic (already existed):
+- Products filters items using:
+	product.categories.includes(selectedCategory)
+
+So the category page works without creating a new page component.
 
 
-3) Product card made cleaner and more consistent
+3) Making the category cards clickable
+--------------------------------------
+File: frontend/src/components/Category.jsx
+
+Changes:
+- Each category item now has a slug (example: perfumes, body-sprays, rings, bags, etc.)
+- On click, it navigates to:
+	- /products/category/<slug>
+
+
+4) Fixing images on the category/product list page
+--------------------------------------------------
+Problem:
+- Some product images were getting cropped badly on the category/product list page.
+
+Solution:
+We added a flexible image display mode to the Product card.
+
 File: frontend/src/components/Product.jsx
+- Added a prop: imageFit
+	- "cover"  => fills the image area (nice for Home)
+	- "contain" => shows full image without aggressive cropping (better for list/category pages)
 
-Improvements:
-- Reduced the image height (cleaner card proportions)
-- Removed the non-functional “Quick View” and “❤️” overlay buttons (less clutter)
-- Made the card layout more consistent by using flex-column and pushing the Add-to-Cart button to the bottom
-- Updated the category badge mapping to match your actual categories:
-	perfumes, body-sprays, diffusers, scented-candles, necklace, earrings, rings, wristwatches,
-	anklets, bracelets, bangles, bags, clutch-purse, jewelry-set, other-accessories
+File: frontend/src/components/Products.jsx
+- When rendering <Product />, we now set:
+	- imageFit = "cover" on Home
+	- imageFit = "contain" on non-Home pages (ProductList / category pages)
+
+Result:
+- Home page keeps the nice “full card” look.
+- Category page shows cleaner product images (less cropping).
 
 
-How to adjust
--------------
-- To show more products on Home:
-	- Change limit={8} to limit={12} (or any number) in Home.jsx.
+5) SideMenu improvements (Category navigation)
+---------------------------------------------
+File: frontend/src/components/SideMenu.jsx
+
+Problem:
+- The SideMenu displayed category items but they didn’t navigate to the category products page.
+
+Fix:
+- Added category slugs (same slugs as Category.jsx / ProductList).
+- On clicking a SideMenu category:
+	- navigate to /products/category/<slug>
+	- automatically close the SideMenu
+- Added keyboard support (Enter / Space) for accessibility.
+
+
+Quick test
+----------
+1) Home → click a category card (e.g., Rings)
+	 - Expected: opens /products/category/rings and shows only ring products
+2) Open SideMenu → click a category
+	 - Expected: navigates to the category page and closes the SideMenu
+3) Confirm product images look better on the category page (less cropping)
 
