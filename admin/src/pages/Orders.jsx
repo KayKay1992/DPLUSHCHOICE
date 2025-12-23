@@ -15,6 +15,9 @@ const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
+  const [orderIdQuery, setOrderIdQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResultOrder, setSearchResultOrder] = useState(null);
 
   const fetchOrders = async () => {
     try {
@@ -31,6 +34,55 @@ const Orders = () => {
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  const isMongoObjectId = (value) => /^[a-fA-F0-9]{24}$/.test(value);
+
+  const handleSearchSubmit = async (e) => {
+    e.preventDefault();
+    const q = orderIdQuery.trim();
+
+    setSearchResultOrder(null);
+    if (!q) return;
+
+    // If user typed a full ObjectId, try to fetch that exact order.
+    if (isMongoObjectId(q)) {
+      const localMatch = orders.find((o) => o?._id === q);
+      if (localMatch) {
+        setSearchResultOrder(localMatch);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const res = await userRequest.get(`/orders/${q}`);
+        setSearchResultOrder(res.data);
+      } catch (error) {
+        console.log(error);
+        toast.error("Order not found (check the Order ID)");
+      } finally {
+        setIsSearching(false);
+      }
+    }
+  };
+
+  const handleClearSearch = () => {
+    setOrderIdQuery("");
+    setSearchResultOrder(null);
+  };
+
+  const displayedOrders = useMemo(() => {
+    if (searchResultOrder) return [searchResultOrder];
+
+    const q = orderIdQuery.trim().toLowerCase();
+    if (!q) return orders;
+
+    // Partial ID search (filters already-loaded orders)
+    return orders.filter((o) =>
+      String(o?._id || "")
+        .toLowerCase()
+        .includes(q)
+    );
+  }, [orders, orderIdQuery, searchResultOrder]);
 
   const formatPrice = (amount) => {
     const value = Number(amount) || 0;
@@ -213,8 +265,12 @@ const Orders = () => {
     [updatingOrderId]
   );
 
-  const deliveredCount = orders.filter((o) => Number(o.status) === 1).length;
-  const pendingCount = orders.filter((o) => Number(o.status) !== 1).length;
+  const deliveredCount = displayedOrders.filter(
+    (o) => Number(o.status) === 1
+  ).length;
+  const pendingCount = displayedOrders.filter(
+    (o) => Number(o.status) !== 1
+  ).length;
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-900 via-purple-900/30 to-slate-900 text-white p-4 sm:p-6 lg:p-8">
@@ -229,6 +285,34 @@ const Orders = () => {
                 Manage customer orders and track deliveries
               </p>
             </div>
+
+            <form
+              onSubmit={handleSearchSubmit}
+              className="w-full sm:w-auto flex flex-col sm:flex-row gap-3"
+            >
+              <input
+                value={orderIdQuery}
+                onChange={(e) => setOrderIdQuery(e.target.value)}
+                placeholder="Search by Order ID"
+                className="w-full sm:w-[320px] px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder:text-white/60 outline-hidden focus:border-white/25"
+              />
+              <button
+                type="submit"
+                disabled={isSearching}
+                className={`px-4 py-3 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-semibold transition-colors ${
+                  isSearching ? "opacity-60 cursor-not-allowed" : ""
+                }`}
+              >
+                Search
+              </button>
+              <button
+                type="button"
+                onClick={handleClearSearch}
+                className="px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 font-semibold transition-colors"
+              >
+                Clear
+              </button>
+            </form>
           </div>
         </div>
 
@@ -239,7 +323,9 @@ const Orders = () => {
                 <p className="text-pink-200 text-sm font-semibold mb-1">
                   Total Orders
                 </p>
-                <p className="text-3xl font-bold text-white">{orders.length}</p>
+                <p className="text-3xl font-bold text-white">
+                  {displayedOrders.length}
+                </p>
               </div>
               <div className="w-12 h-12 bg-linear-to-br from-pink-500/30 to-rose-500/30 rounded-xl flex items-center justify-center border border-pink-400/30">
                 <FaShoppingCart className="text-pink-300 text-xl" />
@@ -295,9 +381,9 @@ const Orders = () => {
         <div className="bg-white/10 backdrop-blur-xl border border-white/15 rounded-2xl p-4 sm:p-6 shadow-2xl">
           <div className="h-[520px] w-full">
             <DataGrid
-              rows={orders}
+              rows={displayedOrders}
               columns={columns}
-              loading={loading}
+              loading={loading || isSearching}
               getRowId={(row) => row._id}
               pageSizeOptions={[10, 25, 50]}
               initialState={{
