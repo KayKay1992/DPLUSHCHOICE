@@ -34,7 +34,11 @@ export const createOrder = asyncHandler(async (req, res) => {
   }
 
   // Create the order after stock validation and reduction
-  const newOrder = new Order(req.body);
+  // New orders should be pending until an admin marks them completed/delivered.
+  const newOrder = new Order({
+    ...req.body,
+    status: 0,
+  });
   const order = await newOrder.save();
 
   if (order) {

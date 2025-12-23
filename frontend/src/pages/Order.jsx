@@ -225,7 +225,7 @@ const Order = () => {
                         : "bg-yellow-100 text-yellow-800"
                     }`}
                   >
-                    {order.status === 1 ? "Paid" : "Pending"}
+                    {order.status === 1 ? "Completed" : "Pending"}
                   </span>
                 </p>
                 <p className="text-gray-700 font-medium text-lg">

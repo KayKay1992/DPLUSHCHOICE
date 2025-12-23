@@ -1,75 +1,84 @@
 
-ADMIN ORDERS: SEARCH BY ORDER ID
-===============================
+ORDER STATUS: PENDING UNTIL ADMIN COMPLETES
+==========================================
 
-Goal
-----
-Allow the admin to quickly find any order using its Order ID directly from the Orders page.
+Problem
+-------
+When a user places an order, it was becoming “completed” immediately.
+You wanted all new orders to start as Pending, and only become Completed when an admin marks them as completed/delivered.
 
 
-Where it was implemented
+Status meaning (backend)
 ------------------------
-- Admin UI: admin/src/pages/Orders.jsx
-- Backend API (already existed):
-	- GET /api/V1/orders          (load all orders)
-	- GET /api/V1/orders/:id      (fetch a single order by MongoDB ObjectId)
+We use a numeric status field on the Order:
+
+- status = 0  => Pending (default)
+- status = 1  => Completed / Delivered (admin action)
+
+Important: this status is fulfillment/completion, NOT payment.
+(Stripe payment can succeed, but the order should still be Pending until delivered.)
 
 
-How the search works (two modes)
---------------------------------
-The search input supports both “partial search” and “exact search”.
+Changes made (Backend)
+----------------------
 
-1) Partial search (filters the table)
-- As the admin types into the “Search by Order ID” input, the page filters the already-loaded orders list.
-- It checks whether each order’s `_id` includes the typed text.
-- This is fast and does not call the backend.
+1) Stripe orders (webhook-created orders)
+File: Backend/routes/stripe.js
 
-Example:
-- If an order ID is: 6760b4d5d8c1a2f07d3a9c11
-- Typing: 6760b4 will filter the table to show matching rows.
+Before:
+- The Stripe webhook created the order with `status: 1`, which made it look “completed” immediately.
 
-2) Exact search (fetch by full Order ID)
-- If the admin pastes a full MongoDB ObjectId (24 hex characters) and presses Enter / clicks “Search”, the page tries to fetch that exact order.
-- This uses the API route:
-	- GET /api/V1/orders/:id
-- If the order exists, the table switches to show only that single order.
-- If not found, an error toast is shown: “Order not found (check the Order ID)”.
-
-Why exact search is needed:
-- If your database has many orders, loading/filtering all orders might be heavy.
-- Exact search allows you to fetch one order by ID directly.
+After:
+- The Stripe webhook now creates the order with:
+	- status: 0
+So every new Stripe-paid order starts Pending.
 
 
-UI behavior
+2) Normal orders (API-created orders)
+File: Backend/controller/order.controller.js
+
+Before:
+- createOrder used: new Order(req.body)
+- If the frontend ever sent status=1 (or if defaults changed), the order could be created as completed.
+
+After:
+- createOrder now forces status=0 at creation:
+	- new Order({ ...req.body, status: 0 })
+
+This guarantees that customers cannot create “completed” orders.
+
+
+Admin completes the order
+-------------------------
+Admin uses the existing update endpoint:
+
+- PUT /api/V1/orders/:id
+	Body: { status: 1 }  -> mark Completed
+	Body: { status: 0 }  -> mark Pending
+
+This is triggered from the Admin Orders page action button.
+
+
+Frontend display update
+-----------------------
+File: frontend/src/pages/Order.jsx
+
+Before:
+- It displayed status as “Paid” when status===1.
+
+After:
+- It displays:
+	- “Completed” when status===1
+	- “Pending” when status!==1
+
+
+How to test
 -----------
-- The Orders header area contains:
-	- An input: “Search by Order ID”
-	- A “Search” button
-	- A “Clear” button
-
-- Clear button:
-	- Clears the search input
-	- Resets the table back to showing all orders
-
-- While an exact search request is running:
-	- The page sets `isSearching` true
-	- The table shows a loading state
-
-
-Important requirement: CORS + cookies
--------------------------------------
-Because the admin runs on a different origin (example: http://localhost:5175) and the backend uses cookie auth, the backend must:
-- Allow the admin origin in CORS
-- Use `credentials: true`
-- Ensure the auth cookie is not blocked in local development
-
-
-Quick test steps
-----------------
-1) Open Admin → Orders
-2) Copy an order’s `_id`
-3) Paste it into the search input
-4) Press Enter / click Search
-5) Confirm the table shows that one order
-6) Click Clear to return to the full list
+1) Place an order as a user (Stripe checkout or normal order route)
+2) Check the created order in DB or Admin Orders table:
+	 - It should be Pending (status 0)
+3) In Admin Orders page, click the action button to mark Delivered/Completed:
+	 - Status should change to Completed (status 1)
+4) Refresh Admin Orders page:
+	 - Status change should persist
 

@@ -267,7 +267,8 @@ router.post("/webhook", async (req, res) => {
         address: fullAddress,
         products: products,
         total: parseFloat(session.metadata.total),
-        status: 1,
+        // New orders should be pending until an admin marks them completed/delivered
+        status: 0,
         stripeSessionId,
       });
 
