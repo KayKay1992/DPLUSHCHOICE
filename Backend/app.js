@@ -31,6 +31,21 @@ app.use(
     origin: [
       "http://localhost:5173",
       "http://localhost:5174",
+      "http://localhost:5175",
+      "http://localhost:3000",
+    ],
+    credentials: true,
+  })
+);
+
+// Handle CORS preflight for all routes (Express 5 doesn't accept '*' here)
+app.options(
+  /.*/,
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://localhost:5175",
       "http://localhost:3000",
     ],
     credentials: true,

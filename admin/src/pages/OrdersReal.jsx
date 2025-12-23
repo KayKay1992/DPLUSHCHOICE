@@ -11,7 +11,9 @@ import { useEffect, useMemo, useState } from "react";
 import { userRequest } from "../requestMethods";
 import { toast } from "react-toastify";
 
-const Orders = () => {
+// Deprecated: kept temporarily for compatibility.
+// The maintained Orders page is now in Orders.jsx.
+const OrdersReal = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
@@ -263,7 +265,7 @@ const Orders = () => {
             </div>
           </div>
 
-          <div className="bg-linear-to-br from-yellow-500/15 to-amber-500/10 border border-yellow-400/40 backdrop-blur-xl rounded-2xl p-6 shadow-2xl">
+          <div className="bg-linear-to-br from-yellow-500/15 to-orange-500/10 border border-yellow-400/40 backdrop-blur-xl rounded-2xl p-6 shadow-2xl">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-yellow-200 text-sm font-semibold mb-1">
@@ -271,80 +273,93 @@ const Orders = () => {
                 </p>
                 <p className="text-3xl font-bold text-white">{pendingCount}</p>
               </div>
-              <div className="w-12 h-12 bg-linear-to-br from-yellow-500/30 to-amber-500/30 rounded-xl flex items-center justify-center border border-yellow-400/30">
+              <div className="w-12 h-12 bg-linear-to-br from-yellow-500/30 to-orange-500/30 rounded-xl flex items-center justify-center border border-yellow-400/30">
                 <FaClock className="text-yellow-300 text-xl" />
               </div>
             </div>
           </div>
 
-          <div className="bg-linear-to-br from-red-500/15 to-rose-500/10 border border-red-400/40 backdrop-blur-xl rounded-2xl p-6 shadow-2xl">
+          <div className="bg-linear-to-br from-blue-500/15 to-cyan-500/10 border border-blue-400/40 backdrop-blur-xl rounded-2xl p-6 shadow-2xl">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-red-200 text-sm font-semibold mb-1">
-                  Cancelled
+                <p className="text-blue-200 text-sm font-semibold mb-1">
+                  Processing
                 </p>
                 <p className="text-3xl font-bold text-white">0</p>
               </div>
-              <div className="w-12 h-12 bg-linear-to-br from-red-500/30 to-rose-500/30 rounded-xl flex items-center justify-center border border-red-400/30">
-                <FaTimesCircle className="text-red-300 text-xl" />
+              <div className="w-12 h-12 bg-linear-to-br from-blue-500/30 to-cyan-500/30 rounded-xl flex items-center justify-center border border-blue-400/30">
+                <FaTimesCircle className="text-blue-300 text-xl" />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-xl border border-white/15 rounded-2xl p-4 sm:p-6 shadow-2xl">
-          <div className="h-[520px] w-full">
-            <DataGrid
-              rows={orders}
-              columns={columns}
-              loading={loading}
-              getRowId={(row) => row._id}
-              pageSizeOptions={[10, 25, 50]}
-              initialState={{
-                pagination: {
-                  paginationModel: { pageSize: 10, page: 0 },
-                },
-              }}
-              sx={{
-                border: 0,
-                color: "rgba(255,255,255,0.92)",
-                backgroundColor: "rgba(0,0,0,0.22)",
-                "& .MuiDataGrid-columnHeaders": {
-                  backgroundColor: "rgba(0,0,0,0.35)",
-                  color: "rgba(255,255,255,0.92)",
-                  borderBottom: "1px solid rgba(255,255,255,0.12)",
-                },
-                "& .MuiDataGrid-columnHeader": {
-                  backgroundColor: "rgba(0,0,0,0.45)",
-                },
-                "& .MuiDataGrid-columnHeaderTitle": {
-                  fontWeight: 700,
-                  color: "rgba(255,255,255,0.95)",
-                },
-                "& .MuiDataGrid-cell": {
-                  borderColor: "rgba(255,255,255,0.10)",
-                },
-                "& .MuiDataGrid-virtualScroller": {
-                  backgroundColor: "rgba(0,0,0,0.18)",
-                },
-                "& .MuiDataGrid-row": {
-                  backgroundColor: "rgba(0,0,0,0.12)",
-                },
-                "& .MuiDataGrid-row:hover": {
-                  backgroundColor: "rgba(255,255,255,0.08)",
-                },
-                "& .MuiDataGrid-footerContainer": {
-                  borderColor: "rgba(255,255,255,0.12)",
-                  backgroundColor: "rgba(0,0,0,0.28)",
-                },
-                "& .MuiTablePagination-root": {
-                  color: "rgba(255,255,255,0.88)",
-                },
-                "& .MuiDataGrid-iconSeparator": {
-                  color: "rgba(255,255,255,0.18)",
-                },
-              }}
-            />
+        <div className="bg-white/12 backdrop-blur-xl rounded-3xl border border-white/25 shadow-2xl overflow-hidden">
+          <div className="p-6 sm:p-8 border-b border-white/15">
+            <h2 className="text-2xl font-bold bg-linear-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
+              Order Management
+            </h2>
+          </div>
+
+          <div className="p-6 sm:p-8">
+            <div className="min-h-[400px] max-h-[calc(100vh-400px)] w-full overflow-auto rounded-xl">
+              <DataGrid
+                getRowId={(row) => row._id}
+                rows={orders}
+                columns={columns}
+                pageSize={10}
+                rowsPerPageOptions={[5, 10, 25]}
+                checkboxSelection
+                disableSelectionOnClick
+                loading={loading}
+                sx={{
+                  border: 0,
+                  color: "#ffffff",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  fontFamily: "Inter, system-ui, sans-serif",
+                  "& .MuiDataGrid-columnHeaders": {
+                    background:
+                      "linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%)",
+                    borderBottom: "3px solid #ffffff",
+                    fontWeight: 700,
+                    fontSize: "13px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                    color: "magenta",
+                    textAlign: "center",
+                    padding: "16px 12px",
+                  },
+                  "& .MuiDataGrid-columnHeaderTitle": {
+                    fontWeight: 800,
+                    color: "#ffffff",
+                    fontSize: "13px",
+                    backgroundColor: "#1e293b",
+                    padding: "6px 8px",
+                    borderRadius: "4px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                    textAlign: "center",
+                    transition: "all 0.2s ease",
+                    "&:hover": {
+                      backgroundColor: "#312e81",
+                    },
+                  },
+                  "& .MuiDataGrid-row": {
+                    backgroundColor: "#1e293b",
+                    borderBottom: "1px solid #334155",
+                    transition: "all 0.2s ease",
+                    "&:hover": {
+                      backgroundColor: "#312e81",
+                      borderBottom: "1px solid #8b5cf6",
+                    },
+                    "&:nth-of-type(even)": {
+                      backgroundColor: "#0f172a",
+                    },
+                  },
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -352,4 +367,4 @@ const Orders = () => {
   );
 };
 
-export default Orders;
+export default OrdersReal;

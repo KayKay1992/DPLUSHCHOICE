@@ -7,6 +7,8 @@ import Orders from "./pages/Orders";
 import Banners from "./pages/Banners";
 import NewProduct from "./pages/NewProduct";
 import Product from "./pages/Product";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 const App = () => {
   const Layout = () => {
     return (
@@ -17,6 +19,16 @@ const App = () => {
         <div className="flex-1 overflow-auto">
           <Outlet />
         </div>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
       </div>
     );
   };
@@ -48,12 +60,12 @@ const App = () => {
         },
         {
           path: "/new-product",
-          element: <NewProduct/>,
+          element: <NewProduct />,
         },
         {
           path: "/product/:id",
-          element: <Product/>,
-        }
+          element: <Product />,
+        },
       ],
     },
   ]);
