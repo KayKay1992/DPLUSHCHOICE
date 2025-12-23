@@ -1,84 +1,70 @@
 
-ORDER STATUS: PENDING UNTIL ADMIN COMPLETES
-==========================================
+HOME PAGE PRODUCT DISPLAY (RESTRUCTURE)
+======================================
 
-Problem
--------
-When a user places an order, it was becoming “completed” immediately.
-You wanted all new orders to start as Pending, and only become Completed when an admin marks them as completed/delivered.
-
-
-Status meaning (backend)
-------------------------
-We use a numeric status field on the Order:
-
-- status = 0  => Pending (default)
-- status = 1  => Completed / Delivered (admin action)
-
-Important: this status is fulfillment/completion, NOT payment.
-(Stripe payment can succeed, but the order should still be Pending until delivered.)
+Goal
+----
+Make the products displayed on the Home page cleaner and more refined:
+- Better spacing and responsive layout
+- Consistent product card height/structure
+- Less clutter on each card
+- Show a curated number of products on Home (instead of everything)
 
 
-Changes made (Backend)
-----------------------
-
-1) Stripe orders (webhook-created orders)
-File: Backend/routes/stripe.js
-
-Before:
-- The Stripe webhook created the order with `status: 1`, which made it look “completed” immediately.
-
-After:
-- The Stripe webhook now creates the order with:
-	- status: 0
-So every new Stripe-paid order starts Pending.
-
-
-2) Normal orders (API-created orders)
-File: Backend/controller/order.controller.js
-
-Before:
-- createOrder used: new Order(req.body)
-- If the frontend ever sent status=1 (or if defaults changed), the order could be created as completed.
-
-After:
-- createOrder now forces status=0 at creation:
-	- new Order({ ...req.body, status: 0 })
-
-This guarantees that customers cannot create “completed” orders.
-
-
-Admin completes the order
--------------------------
-Admin uses the existing update endpoint:
-
-- PUT /api/V1/orders/:id
-	Body: { status: 1 }  -> mark Completed
-	Body: { status: 0 }  -> mark Pending
-
-This is triggered from the Admin Orders page action button.
-
-
-Frontend display update
+What changed (Frontend)
 -----------------------
-File: frontend/src/pages/Order.jsx
 
-Before:
-- It displayed status as “Paid” when status===1.
+1) Home page now uses a “Home variant” of the products grid
+File: frontend/src/pages/Home.jsx
 
-After:
-- It displays:
-	- “Completed” when status===1
-	- “Pending” when status!==1
+- Before:
+	- Home rendered: <Products /> (showing the full products grid behavior)
+
+- After:
+	- Home renders:
+		- <Products isHome limit={8} />
+
+Effect:
+- Home shows a cleaner grid with only the first 8 products.
+- Full catalog behavior is still available on the Products page.
 
 
-How to test
------------
-1) Place an order as a user (Stripe checkout or normal order route)
-2) Check the created order in DB or Admin Orders table:
-	 - It should be Pending (status 0)
-3) In Admin Orders page, click the action button to mark Delivered/Completed:
-	 - Status should change to Completed (status 1)
-4) Refresh Admin Orders page:
-	 - Status change should persist
+2) Products grid supports a home layout + optional limiting
+File: frontend/src/components/Products.jsx
+
+New props added:
+- isHome (boolean)
+	- When true, uses a tighter grid suitable for the Home page.
+- limit (number)
+	- When isHome is true, only renders the first N items (default 8).
+- showLoadMore (boolean)
+	- Controls whether the “Load More Products” button renders.
+
+Layout changes:
+- Home grid uses:
+	- 2 columns on small screens
+	- 3 columns on medium screens
+	- 4 columns on large screens
+	- tighter spacing (gap-4 / gap-6)
+
+Note:
+- The placeholder “Load More Products” button is hidden by default (it only appears if showLoadMore={true}).
+
+
+3) Product card made cleaner and more consistent
+File: frontend/src/components/Product.jsx
+
+Improvements:
+- Reduced the image height (cleaner card proportions)
+- Removed the non-functional “Quick View” and “❤️” overlay buttons (less clutter)
+- Made the card layout more consistent by using flex-column and pushing the Add-to-Cart button to the bottom
+- Updated the category badge mapping to match your actual categories:
+	perfumes, body-sprays, diffusers, scented-candles, necklace, earrings, rings, wristwatches,
+	anklets, bracelets, bangles, bags, clutch-purse, jewelry-set, other-accessories
+
+
+How to adjust
+-------------
+- To show more products on Home:
+	- Change limit={8} to limit={12} (or any number) in Home.jsx.
 

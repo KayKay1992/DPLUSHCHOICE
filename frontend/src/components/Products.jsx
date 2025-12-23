@@ -1,8 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Product from "./Product";
 import { userRequest } from "../requestMethods";
 
-const Products = ({ filters, sortBy, selectedCategory, searchTerm }) => {
+const Products = ({
+  filters,
+  sortBy,
+  selectedCategory,
+  searchTerm,
+  isHome = false,
+  limit,
+  showLoadMore = false,
+}) => {
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [productReviews, setProductReviews] = useState({}); // Store reviews by product ID
@@ -149,8 +157,14 @@ const Products = ({ filters, sortBy, selectedCategory, searchTerm }) => {
     setFilteredProducts(filtered);
   }, [filters, sortBy, products, selectedCategory]);
 
+  const productsToRender = useMemo(() => {
+    if (!isHome) return filteredProducts;
+    const take = Number(limit) > 0 ? Number(limit) : 8;
+    return filteredProducts.slice(0, take);
+  }, [filteredProducts, isHome, limit]);
+
   return (
-    <section className="py-16 px-4 bg-linear-to-b from-pink-50 via-purple-50 to-white">
+    <section className="py-12 sm:py-16 px-4 bg-linear-to-b from-pink-50 via-purple-50 to-white">
       <div className="max-w-7xl mx-auto">
         {/* Search Results Header */}
         {searchTerm && searchTerm !== "all" && (
@@ -172,9 +186,15 @@ const Products = ({ filters, sortBy, selectedCategory, searchTerm }) => {
         )}
 
         {/* Products Grid */}
-        {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
-            {filteredProducts.map((product) => {
+        {productsToRender.length > 0 ? (
+          <div
+            className={
+              isHome
+                ? "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6"
+                : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8"
+            }
+          >
+            {productsToRender.map((product) => {
               const reviewData = productReviews[product._id] || {
                 averageRating: 0,
                 reviewCount: 0,
@@ -239,7 +259,7 @@ const Products = ({ filters, sortBy, selectedCategory, searchTerm }) => {
         )}
 
         {/* Load More Button (for future pagination) */}
-        {filteredProducts.length > 0 && (
+        {showLoadMore && filteredProducts.length > 0 && (
           <div className="text-center mt-12">
             <button className="bg-white/80 backdrop-blur-sm border-2 border-pink-200 hover:border-pink-400 text-pink-600 hover:text-pink-700 font-bold py-3 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
               Load More Products

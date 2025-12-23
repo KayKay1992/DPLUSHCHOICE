@@ -113,22 +113,30 @@ const Product = ({
   // Get category display name
   const getCategoryDisplayName = (category) => {
     const categoryMap = {
-      "teddy-bears": "Teddy Bear",
-      "plush-animals": "Plush Animal",
-      "luxury-pillows": "Luxury Pillow",
-      "decorative-items": "Decorative Item",
-      "gift-sets": "Gift Set",
-      seasonal: "Seasonal Item",
-      custom: "Custom Order",
+      perfumes: "Perfumes",
+      "body-sprays": "Body Sprays",
+      diffusers: "Diffusers",
+      "scented-candles": "Scented Candles",
+      necklace: "Necklace",
+      earrings: "Earrings",
+      rings: "Rings",
+      wristwatches: "Wristwatches",
+      anklets: "Anklets",
+      bracelets: "Bracelets",
+      bangles: "Bangles",
+      bags: "Bags",
+      "clutch-purse": "Clutch Purse",
+      "jewelry-set": "Jewelry Set",
+      "other-accessories": "Other Accessories",
     };
     return categoryMap[category] || "Luxury Item";
   };
 
   return (
     <Link to={`/product/${productId}`}>
-      <div className="group relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 cursor-pointer border border-white/50 overflow-hidden">
+      <div className="group relative bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-1 cursor-pointer border border-white/50 overflow-hidden flex flex-col">
         {/* Image Container */}
-        <div className="relative h-80 w-full overflow-hidden rounded-t-3xl">
+        <div className="relative h-56 sm:h-64 w-full overflow-hidden rounded-t-3xl">
           <img
             src={img}
             alt={name}
@@ -155,22 +163,10 @@ const Product = ({
           <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-gray-800 px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
             {getCategoryDisplayName(category)}
           </div>
-
-          {/* Quick Actions Overlay */}
-          <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="flex gap-2">
-              <button className="flex-1 bg-white/90 backdrop-blur-sm text-pink-600 hover:text-pink-700 font-semibold py-2 px-4 rounded-full text-sm shadow-lg hover:shadow-xl transition-all duration-300">
-                Quick View
-              </button>
-              <button className="bg-pink-500 hover:bg-pink-600 text-white p-2 rounded-full shadow-lg hover:shadow-xl transition-all duration-300">
-                ❤️
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 text-center">
+        <div className="p-5 sm:p-6 text-center flex flex-col flex-1">
           <h3 className="text-xl font-bold text-gray-800 mb-2 group-hover:text-pink-700 transition-colors duration-300 line-clamp-2">
             {name}
           </h3>
@@ -219,7 +215,7 @@ const Product = ({
           <button
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAddingToCart}
-            className={`w-full font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-pink-500/50 ${
+            className={`w-full mt-auto font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-pink-500/50 ${
               isOutOfStock || isAddingToCart
                 ? "bg-gray-400 text-gray-200 cursor-not-allowed"
                 : "bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white"

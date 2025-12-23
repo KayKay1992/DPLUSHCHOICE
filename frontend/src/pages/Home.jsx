@@ -20,7 +20,7 @@ const Home = () => {
       />
       <Banner />
       <Category />
-      <Products />
+      <Products isHome limit={8} />
     </div>
   );
 };
