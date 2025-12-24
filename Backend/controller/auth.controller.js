@@ -69,3 +69,26 @@ export const logOut = asyncHandler(async (req, res) => {
   });
   res.status(200).json({ message: "Logged out successfully" });
 });
+
+// GET CURRENT USER (ME)
+// ROUTE GET /api/V1/auth/me
+// PRIVATE
+export const getMe = asyncHandler(async (req, res) => {
+  // `protect` middleware attaches the user to req.user
+  if (!req.user) {
+    res.status(401);
+    throw new Error("Not authorized");
+  }
+
+  res.status(200).json({
+    _id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+    phone: req.user.phone,
+    address: req.user.address,
+    role: req.user.role,
+    status: req.user.status,
+    createdAt: req.user.createdAt,
+    updatedAt: req.user.updatedAt,
+  });
+});

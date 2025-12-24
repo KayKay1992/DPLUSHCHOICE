@@ -19,8 +19,28 @@ const Login = () => {
   // Get the intended destination from location state, default to home
   const from = location.state?.from?.pathname || "/";
 
+  const isAdminRole = (role) => {
+    const r = String(role || "")
+      .trim()
+      .toLowerCase();
+    return (
+      r === "admin" ||
+      r === "super-admin" ||
+      r === "superadmin" ||
+      r === "staff" ||
+      r === "moderator"
+    );
+  };
+
   useEffect(() => {
     if (currentUser) {
+      if (isAdminRole(currentUser?.role)) {
+        const adminUrl =
+          import.meta.env.VITE_ADMIN_URL || "http://localhost:5175";
+        window.location.replace(adminUrl);
+        return;
+      }
+
       navigate(from, { replace: true });
     }
   }, [currentUser, navigate, from]);

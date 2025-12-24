@@ -1,27 +1,91 @@
 
-ADMIN ORDERS PAGE – SHOW NAME, ADDRESS, PHONE
+ROLE-BASED LOGIN REDIRECT (USER APP vs ADMIN APP) + FIXING PORT CONFLICT
 
-1) What you requested
-- On the Admin Orders page, you wanted:
-	- Customer “name” column title changed to just “Name”
-	- Show each order’s Address
-	- Show each order’s Phone number
+PROBLEM
+- You have 2 separate React apps:
+	- frontend (user side)
+	- admin (admin panel)
+- Both were trying to run on the same dev URL (http://localhost:5173).
+- That cannot work because only ONE app can listen on a port at a time.
 
-2) What I changed (Admin)
-File: admin/src/pages/Orders.jsx
-- Updated the DataGrid columns:
-	- Renamed the header of the existing `name` field from “Customer Name” to “Name”.
-	- Added a new `phone` column (shows `order.phone` or “-” if missing).
-	- Added a new `address` column (shows `order.address` or “-” if missing).
+SOLUTION OVERVIEW
+1) Use two different ports
+- frontend runs on: http://localhost:5173
+- admin runs on: http://localhost:5175
 
-3) Where the data comes from (Backend)
-File: Backend/models/order.model.js
-- The Order schema already contains:
-	- `name` (String)
-	- `phone` (String)
-	- `address` (String)
-So admin can display them directly as long as the order record has those fields saved.
+2) Role-based redirect after login
+- When a user logs in from the frontend login page:
+	- if role is admin/staff => redirect to the Admin app URL
+	- otherwise => stay on the user app and go to the intended page
 
-4) Why some old orders may show “-”
-- If an order was created before you started saving address/phone (or if a particular checkout flow didn’t provide them), then that order document won’t have `phone`/`address` values, so the admin table shows “-”.
+3) Admin-side guard (security)
+- When someone opens the Admin app:
+	- it calls the backend to confirm the current logged-in user
+	- if NOT logged in or NOT admin/staff => redirect to the user app
+
+
+IMPLEMENTATION DETAILS
+
+PART A — PORT SEPARATION (VITE)
+- frontend/vite.config.js
+	- server.port = 5173
+	- server.strictPort = true
+	- strictPort ensures Vite fails if the port is already occupied (instead of silently switching ports).
+
+- admin/vite.config.js
+	- server.port = 5175
+	- server.strictPort = true
+
+
+PART B — ENV VARIABLES FOR REDIRECT URLS
+- frontend/.env
+	- VITE_ADMIN_URL=http://localhost:5175
+
+- admin/.env
+	- VITE_CLIENT_URL=http://localhost:5173
+
+
+PART C — BACKEND ENDPOINT TO READ CURRENT USER (COOKIE SESSION)
+Because both apps use cookie auth (withCredentials), we need a safe way to check who is logged in.
+
+- Backend/controller/auth.controller.js
+	- Added getMe controller.
+
+- Backend/routes/auth.route.js
+	- Added: GET /api/V1/auth/me
+	- This route is protected by the same JWT cookie middleware.
+	- Response includes user fields + role.
+
+
+PART D — FRONTEND LOGIN REDIRECT BASED ON ROLE
+- frontend/src/pages/Login.jsx
+	- After login sets currentUser in Redux, a useEffect checks currentUser.role.
+	- If role is admin-like (admin/super-admin/staff/moderator), it redirects to:
+		- import.meta.env.VITE_ADMIN_URL (defaults to http://localhost:5175)
+	- Else it navigates to the normal user destination (home or the protected page you wanted).
+
+
+PART E — ADMIN APP GUARD (ONLY ADMINS CAN STAY)
+- admin/src/App.jsx
+	- On app load, it calls:
+		- GET /auth/me
+	- If request fails => user is not logged in => redirect to user app login.
+	- If request succeeds but role is not admin-like => redirect to user app.
+	- If role is admin-like => allow rendering the admin routes.
+
+
+HOW TO FIX “Error: Port 5173 is already in use”
+- It means an old Vite/Node process is still running on that port.
+- Fix:
+	1) Stop the old dev server (in VS Code terminal press Ctrl + C)
+	2) Restart:
+		 - frontend: npm run dev  (should show Local: http://localhost:5173)
+		 - admin: npm run dev     (should show Local: http://localhost:5175)
+
+
+IMPORTANT NOTE ABOUT “SIGNIFYING ADMIN” DURING SIGNUP
+- Do NOT allow people to choose admin role during registration.
+- The safe method is:
+	- Register as normal user
+	- Promote to admin/staff manually in DB, or through a protected endpoint only super-admin can call.
 

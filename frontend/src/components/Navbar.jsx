@@ -19,7 +19,8 @@ const Navbar = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
-  const { quantity } = useSelector(selectCurrentCart);
+  const cart = useSelector(selectCurrentCart) || { quantity: 0 };
+  const quantity = Number(cart.quantity) || 0;
 
   const handleLogout = () => {
     dispatch(logout());
