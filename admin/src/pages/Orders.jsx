@@ -147,7 +147,7 @@ const Orders = () => {
       },
       {
         field: "name",
-        headerName: "Customer Name",
+        headerName: "Name",
         width: 200,
         headerAlign: "center",
         renderCell: (params) => (
@@ -164,6 +164,31 @@ const Orders = () => {
         renderCell: (params) => (
           <span className="text-cyan-300 font-semibold drop-shadow-sm">
             {params.value}
+          </span>
+        ),
+      },
+      {
+        field: "phone",
+        headerName: "Phone",
+        width: 160,
+        headerAlign: "center",
+        renderCell: (params) => (
+          <span className="text-gray-100 font-medium drop-shadow-sm">
+            {params.value || "-"}
+          </span>
+        ),
+      },
+      {
+        field: "address",
+        headerName: "Address",
+        width: 320,
+        headerAlign: "center",
+        renderCell: (params) => (
+          <span
+            title={params.value || ""}
+            className="text-gray-100 font-medium drop-shadow-sm truncate block w-full"
+          >
+            {params.value || "-"}
           </span>
         ),
       },

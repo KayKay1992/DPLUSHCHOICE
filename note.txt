@@ -1,83 +1,27 @@
 
-ADMIN DASHBOARD (HOME) – REAL DATA + LATEST TRANSACTIONS TABLE UI
+ADMIN ORDERS PAGE – SHOW NAME, ADDRESS, PHONE
 
-1) What was implemented
-- The Admin Home page now pulls REAL data from the backend (orders, users, products).
-- The “Latest Transactions” table is no longer hard-coded; it shows the most recent orders.
-- The “Sales Overview” line chart now uses real monthly revenue derived from orders.
-- The Latest Transactions card/table background was restyled to a darker theme so the text is more readable (no more light gray/white look).
+1) What you requested
+- On the Admin Orders page, you wanted:
+	- Customer “name” column title changed to just “Name”
+	- Show each order’s Address
+	- Show each order’s Phone number
 
-2) Files changed/added
-- admin/src/pages/Home.jsx
-	- Added API fetching and real data rendering for dashboard cards, latest transactions table, and chart.
-	- Updated Latest Transactions card/table background styling.
+2) What I changed (Admin)
+File: admin/src/pages/Orders.jsx
+- Updated the DataGrid columns:
+	- Renamed the header of the existing `name` field from “Customer Name” to “Name”.
+	- Added a new `phone` column (shows `order.phone` or “-” if missing).
+	- Added a new `address` column (shows `order.address` or “-” if missing).
 
-- admin/src/components/LineChart.jsx
-	- Refactored the chart to accept a prop: dataset
-	- It now plots dataset items shaped like: { date: Date, value: number }
+3) Where the data comes from (Backend)
+File: Backend/models/order.model.js
+- The Order schema already contains:
+	- `name` (String)
+	- `phone` (String)
+	- `address` (String)
+So admin can display them directly as long as the order record has those fields saved.
 
-- admin/src/utils/adminHomeMetrics.js (NEW)
-	- Formatting helpers (Naira currency, relative time)
-	- Month helpers (last N months list + YYYY-MM key)
-	- Percent change helper
-
-3) How the Admin Home now fetches “real data”
-In admin/src/pages/Home.jsx:
-- On page load (useEffect), it calls these endpoints using userRequest (axios with cookies):
-	- GET /orders
-	- GET /users
-	- GET /products
-
-Code pattern:
-- Promise.all([ userRequest.get("/orders"), userRequest.get("/users"), userRequest.get("/products") ])
-
-The response shapes are handled safely:
-- Orders: expects an array; if not array, it falls back to []
-- Users/Products: if array it uses .length, otherwise tries Number(value)
-
-4) How totals and revenue are calculated
-- Total Orders: orders.length
-- Total Users: usersCount
-- Products: productsCount
-- Revenue total:
-	- revenueTotal = sum of order.total across all orders
-	- Uses Number(o.total) || 0 to avoid NaN
-
-5) How Latest Transactions table is built
-- latestOrders is derived from orders:
-	- Sort by createdAt descending
-	- Take first 6
-
-Each table row is an order:
-- Transaction ID: uses the last 8 chars of Mongo ObjectId for a short label (ORDXXXXXXXX)
-- Customer: uses o.name if available, otherwise “Customer”
-- Amount: formatted to NGN currency
-- Status:
-	- status === 0 => Pending
-	- status === 1 => Completed
-- Date: uses relative time formatting (e.g., “2 hours ago”)
-
-6) How the Sales Overview chart uses real data
-- Orders are grouped by month (YYYY-MM) using createdAt.
-- For each month, revenue is summed.
-- chartDataset is built for the last 12 months:
-	- Each point: { date: first day of the month, value: monthRevenue }
-- The chart is rendered as:
-	<LineChart dataset={chartDataset} />
-
-7) Latest Transactions table background styling (dark theme)
-In admin/src/pages/Home.jsx the Latest Transactions card/table styling was changed to remove the “light gray/white” look:
-- Card background:
-	- bg-linear-to-br from-purple-900/25 to-black/30
-- Table header background:
-	- bg-black/20
-- Row hover:
-	- hover:bg-black/20
-- Text colors kept bright for readability:
-	- text-gray-100 and text-gray-100/80
-
-This keeps the same layout but makes the letters clearer and the overall table darker.
-
-NOTE
-- Admin uses cookies (withCredentials), so the backend must allow the admin origin in CORS and allow credentials.
+4) Why some old orders may show “-”
+- If an order was created before you started saving address/phone (or if a particular checkout flow didn’t provide them), then that order document won’t have `phone`/`address` values, so the admin table shows “-”.
 
