@@ -1,91 +1,141 @@
 
-ROLE-BASED LOGIN REDIRECT (USER APP vs ADMIN APP) + FIXING PORT CONFLICT
+ADMIN ACCESS LOCK (ADMIN APP @ http://localhost:5175)
 
-PROBLEM
-- You have 2 separate React apps:
-	- frontend (user side)
-	- admin (admin panel)
-- Both were trying to run on the same dev URL (http://localhost:5173).
-- That cannot work because only ONE app can listen on a port at a time.
+Goal
+- Only admin users can access the admin app (localhost:5175).
+- If a guest (not logged in) or a normal user tries to visit any admin URL, they must be redirected to the user homepage (localhost:5173).
 
-SOLUTION OVERVIEW
-1) Use two different ports
-- frontend runs on: http://localhost:5173
-- admin runs on: http://localhost:5175
+How it was implemented (3 layers for reliability)
 
-2) Role-based redirect after login
-- When a user logs in from the frontend login page:
-	- if role is admin/staff => redirect to the Admin app URL
-	- otherwise => stay on the user app and go to the intended page
+1) Server-side gate at the Vite dev server (strongest)
+File: admin/vite.config.js
 
-3) Admin-side guard (security)
-- When someone opens the Admin app:
-	- it calls the backend to confirm the current logged-in user
-	- if NOT logged in or NOT admin/staff => redirect to the user app
+Why this layer exists
+- Client-side guards can show a “flash” of admin UI or be bypassed if the HTML/JS bundle loads.
+- This middleware blocks the admin app BEFORE the HTML is even served.
 
+What it does
+- A custom Vite plugin named "admin-auth-gate" is registered in the Vite plugins list.
+- It adds a dev-server middleware (server.middlewares.use(...)).
+- For every GET request that looks like a real page navigation (Accept header contains "text/html"), it:
+	1) reads the browser cookies from req.headers.cookie
+	2) calls the backend endpoint: GET {apiBase}/auth/me
+		 - apiBase defaults to http://localhost:8000/api/V1
+		 - it forwards cookies in the request so the backend can read the jwt cookie
+	3) checks the returned user role
+	4) if NOT logged in (401) OR role is not admin/staff/super-admin:
+		 - responds with HTTP 302 redirect to clientUrl (frontend homepage)
 
-IMPLEMENTATION DETAILS
+Admin role check used
+- Allowed roles: "admin", "staff", "super-admin" (also accepts "superadmin").
 
-PART A — PORT SEPARATION (VITE)
-- frontend/vite.config.js
-	- server.port = 5173
-	- server.strictPort = true
-	- strictPort ensures Vite fails if the port is already occupied (instead of silently switching ports).
+Environment variables used by this layer
+- VITE_CLIENT_URL (defaults to http://localhost:5173)
+- VITE_API_BASE_URL (optional, defaults to http://localhost:8000/api/V1)
 
-- admin/vite.config.js
-	- server.port = 5175
-	- server.strictPort = true
-
-
-PART B — ENV VARIABLES FOR REDIRECT URLS
-- frontend/.env
-	- VITE_ADMIN_URL=http://localhost:5175
-
-- admin/.env
-	- VITE_CLIENT_URL=http://localhost:5173
+Result
+- Even if someone types http://localhost:5175/orders directly, the admin dev server will redirect them to http://localhost:5173 BEFORE any admin UI is delivered.
 
 
-PART C — BACKEND ENDPOINT TO READ CURRENT USER (COOKIE SESSION)
-Because both apps use cookie auth (withCredentials), we need a safe way to check who is logged in.
+2) Client bootstrap gate before mounting React
+File: admin/src/main.jsx
 
-- Backend/controller/auth.controller.js
-	- Added getMe controller.
+Why this layer exists
+- Extra safety: even if the dev server serves the bundle (or in production build scenarios), we still prevent the React app from mounting for non-admins.
 
-- Backend/routes/auth.route.js
-	- Added: GET /api/V1/auth/me
-	- This route is protected by the same JWT cookie middleware.
-	- Response includes user fields + role.
-
-
-PART D — FRONTEND LOGIN REDIRECT BASED ON ROLE
-- frontend/src/pages/Login.jsx
-	- After login sets currentUser in Redux, a useEffect checks currentUser.role.
-	- If role is admin-like (admin/super-admin/staff/moderator), it redirects to:
-		- import.meta.env.VITE_ADMIN_URL (defaults to http://localhost:5175)
-	- Else it navigates to the normal user destination (home or the protected page you wanted).
+What it does
+- Before calling createRoot(...).render(...), it calls:
+	userRequest.get("/auth/me")
+	where userRequest baseURL is http://localhost:8000/api/V1/ and withCredentials=true.
+- If it fails (guest) or role is not admin/staff/super-admin:
+	window.location.replace(clientUrl)
+	and React is never mounted.
 
 
-PART E — ADMIN APP GUARD (ONLY ADMINS CAN STAY)
+3) Router-level guard inside the admin React app
+File: admin/src/App.jsx
+
+Why this layer exists
+- It protects route navigation inside the admin app.
+- It ensures that all admin routes are behind the same check.
+
+What it does
+- Uses React Router v7 data router loader:
+	loader: requireAdminLoader
+- requireAdminLoader calls /auth/me.
+- If role is not allowed (or request fails), it redirects to an internal route /__redirect.
+- /__redirect renders a tiny component that performs a hard external navigation.
+
+Files involved
 - admin/src/App.jsx
-	- On app load, it calls:
-		- GET /auth/me
-	- If request fails => user is not logged in => redirect to user app login.
-	- If request succeeds but role is not admin-like => redirect to user app.
-	- If role is admin-like => allow rendering the admin routes.
+	- loader: requireAdminLoader
+	- route: /__redirect
+- admin/src/pages/ExternalRedirect.jsx
+	- window.location.replace(to)
 
 
-HOW TO FIX “Error: Port 5173 is already in use”
-- It means an old Vite/Node process is still running on that port.
-- Fix:
-	1) Stop the old dev server (in VS Code terminal press Ctrl + C)
-	2) Restart:
-		 - frontend: npm run dev  (should show Local: http://localhost:5173)
-		 - admin: npm run dev     (should show Local: http://localhost:5175)
+BACKEND ENDPOINTS USED
+
+1) Get current user (used by all gates)
+Files:
+- Backend/routes/auth.route.js
+- Backend/controller/auth.controller.js
+
+Endpoint
+- GET /api/V1/auth/me
+
+How it works
+- It is protected by the "protect" middleware which reads the jwt cookie.
+- If the cookie is missing/invalid, it returns 401.
+- If valid, it returns the user object including role.
 
 
-IMPORTANT NOTE ABOUT “SIGNIFYING ADMIN” DURING SIGNUP
-- Do NOT allow people to choose admin role during registration.
-- The safe method is:
-	- Register as normal user
-	- Promote to admin/staff manually in DB, or through a protected endpoint only super-admin can call.
+2) Logout endpoint (used by admin logout button)
+Files:
+- Backend/routes/auth.route.js
+- Backend/controller/auth.controller.js
+
+Endpoint
+- GET /api/V1/auth/logout
+
+How it works
+- It clears the jwt cookie by setting it to an empty value with an expired date.
+
+
+ADMIN LOGOUT BUTTON
+
+File: admin/src/components/Menu.jsx
+
+What was changed
+- The “Logout” footer item is now a real button.
+- On click it calls: userRequest.get("/auth/logout")
+	(this clears the backend jwt cookie)
+- Then it redirects to the user homepage:
+	window.location.replace(VITE_CLIENT_URL or http://localhost:5173)
+- It also disables the button while the logout request is in progress and changes the label to "Logging out...".
+
+
+HOW TO TEST (recommended)
+
+1) Start backend
+- cd Backend
+- npm run dev
+
+2) Start admin
+- cd admin
+- npm run dev
+
+3) Test as guest
+- Open an Incognito/Private window (no cookies)
+- Go to http://localhost:5175
+- Expected: immediate redirect to http://localhost:5173
+
+4) Test as admin
+- Login as an admin user so the jwt cookie exists and role is admin/staff/super-admin
+- Go to http://localhost:5175
+- Expected: admin loads normally
+
+5) Test logout
+- Click Logout in the admin sidebar
+- Expected: cookie is cleared and browser redirects to http://localhost:5173
 

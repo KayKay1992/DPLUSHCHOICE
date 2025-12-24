@@ -16,9 +16,29 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import { userRequest } from "../requestMethods";
 
 const Menu = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const clientUrl = import.meta.env.VITE_CLIENT_URL || "http://localhost:5173";
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await userRequest.get("/auth/logout");
+    } catch (e) {
+      // Even if logout fails (expired cookie, backend down), we still kick the user out of admin.
+      console.log(e);
+    } finally {
+      setIsMobileMenuOpen(false);
+      toast.success("Logged out");
+      window.location.replace(clientUrl);
+    }
+  };
 
   const menuItems = [
     { icon: FaHome, label: "Home", path: "/" },
@@ -160,12 +180,17 @@ const Menu = () => {
 
           {/* FOOTER — Always at bottom */}
           <div className="shrink-0 border-t border-white/10 px-8 py-6 space-y-5">
-            <div className="group flex items-center space-x-4 px-5 py-4 rounded-2xl cursor-pointer hover:bg-red-500/10">
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="group w-full flex items-center space-x-4 px-5 py-4 rounded-2xl cursor-pointer hover:bg-red-500/10 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
               <FaSignOutAlt className="text-xl text-gray-400 group-hover:text-red-400 transition-colors" />
               <span className="font-medium text-gray-300 group-hover:text-red-400">
-                Logout
+                {isLoggingOut ? "Logging out..." : "Logout"}
               </span>
-            </div>
+            </button>
             <p className="text-center text-xs text-gray-500">
               © 2025 D' Plush Choice
             </p>
