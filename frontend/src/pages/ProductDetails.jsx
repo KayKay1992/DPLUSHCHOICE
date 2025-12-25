@@ -9,6 +9,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { addProduct, selectCurrentCart } from "../redux/cartRedux";
 import { useNavigate } from "react-router-dom";
 import { getWishlistIds, toggleWishlistId } from "../utils/wishlistStorage";
+import { addRecentlyViewedId } from "../utils/recentlyViewedStorage";
+import RecentlyViewedSection from "../components/RecentlyViewedSection";
 
 const ProductDetails = () => {
   const { productId } = useParams();
@@ -35,6 +37,7 @@ const ProductDetails = () => {
       try {
         const res = await userRequest.get(`/products/find/${productId}`);
         setProduct(res.data);
+        addRecentlyViewedId(productId);
         setLoading(false);
       } catch (err) {
         setError("Product not found");
@@ -496,6 +499,8 @@ const ProductDetails = () => {
           </div>
         </div>
       </div>
+
+      <RecentlyViewedSection excludeId={productId} limit={8} />
     </div>
   );
 };

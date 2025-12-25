@@ -1,6 +1,7 @@
 import Banner from "../components/Banner";
 import Category from "../components/Category";
 import Products from "../components/Products";
+import RecentlyViewedSection from "../components/RecentlyViewedSection";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -21,6 +22,7 @@ const Home = () => {
       <Banner />
       <Category />
       <Products isHome limit={8} />
+      <RecentlyViewedSection limit={8} />
     </div>
   );
 };

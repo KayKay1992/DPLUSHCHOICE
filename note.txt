@@ -1,107 +1,97 @@
 
-WISHLIST FEATURE + 404 FIX (IMPLEMENTATION NOTES)
-===============================================
+RECENTLY VIEWED PRODUCTS (IMPLEMENTATION NOTES)
+==============================================
 
-1) What was implemented (end-to-end)
------------------------------------
-
-A) Backend (Node/Express/Mongoose)
-
-Goal:
-- Guests can “wishlist” using localStorage only.
-- Logged-in users can wishlist permanently in MongoDB.
-
-Data model:
-- Added a wishlist field to the user schema:
-	- User.wishlist: [ObjectId] referencing Product
-	- This stores product IDs the user has saved.
-
-Routes (mounted under /api/V1/users):
-- GET    /api/V1/users/:userId/wishlist
-- POST   /api/V1/users/:userId/wishlist/:productId
-- DELETE /api/V1/users/:userId/wishlist/:productId
-
-Important details:
-- These wishlist routes are protected by the auth middleware (protect), so they require a valid auth cookie/JWT.
-- The controller ensures the user can only change their own wishlist (self-only enforcement).
-
-Where the backend is wired:
-- app mounts routes here:
-	- app.use("/api/V1/users", userRoutes)
+Goal
+----
+- Store the last N viewed product IDs in localStorage.
+- Update the list whenever a user opens a ProductDetails page.
+- Show a small “Recently Viewed” section on Home and on ProductDetails.
 
 
-B) Frontend (Shop app: React/Vite)
+1) Storage design (localStorage)
+-------------------------------
 
-Core idea:
-- Always update localStorage so the UI works instantly.
-- If user is logged in, also sync to backend endpoints so wishlist persists across devices.
+File:
+- frontend/src/utils/recentlyViewedStorage.js
 
-Key pieces:
-- A localStorage helper module stores an array of product IDs for guests.
-- Product cards and ProductDetails include a “Save / Saved” (heart) toggle.
-- Added a dedicated Wishlist page ("/wishlist").
-- Added a Wishlist tab in MyAccount to show the same panel.
+Storage key:
+- recently_viewed_product_ids
 
-API calls:
-- Frontend uses axios with:
-	- baseURL = http://localhost:8000/api/V1/
-	- withCredentials = true
-- Wishlist calls look like:
-	- POST   /users/:userId/wishlist/:productId
-	- DELETE /users/:userId/wishlist/:productId
-	- GET    /users/:userId/wishlist
+Behavior:
+- addRecentlyViewedId(productId, maxItems=10)
+	- Converts productId to string
+	- Deduplicates (if you view the same product again, it moves to the front)
+	- Keeps most-recent-first ordering
+	- Caps the list to maxItems
 
-
-2) Why you were seeing 404 on wishlist
--------------------------------------
-
-Symptom:
-- Browser console showed 404 for URLs like:
-	/api/V1/users/<userId>/wishlist/<productId>
-
-Key finding:
-- The wishlist routes DID exist in the codebase.
-- But the process actually running on port 8000 was not serving that updated route set at runtime.
-
-How we proved it:
-- Curling the endpoint returned:
-	- 404 Not Found (meaning Express didn’t match the route and fell into the global notFound handler).
-
-Root cause (runtime, not code):
-- The backend server on port 8000 was running a stale/incorrect instance or wasn’t restarted after code changes.
+Why this approach:
+- Works for guests and logged-in users with no backend changes.
+- Super fast UX (no server calls required to “remember” views).
 
 
-3) What we did to fix it (and how to validate)
----------------------------------------------
+2) UI component that renders Recently Viewed
+-------------------------------------------
 
-Fix steps:
-- Stop the old backend node process that was listening on port 8000.
-- Restart backend using nodemon from the Backend folder so it reloads the latest routes:
-	- cd Backend
-	- npm run dev
+File:
+- frontend/src/components/RecentlyViewedSection.jsx
 
-Validation test (critical):
-- After restart, calling:
-	GET http://localhost:8000/api/V1/users/123/wishlist
-	returns 401 "Not authorized, no token" (instead of 404).
+Inputs:
+- limit (default 8)
+- excludeId (optional) – used on ProductDetails to avoid showing the same product you’re currently viewing.
 
-Why 401 is GOOD here:
-- The route is found and executed, but blocked by auth (because protect middleware requires a login token/cookie).
-- This confirms the server is running the updated routes correctly.
+How it loads:
+- Reads the IDs from localStorage using getRecentlyViewedIds().
+- Fetches each product by ID using the existing backend endpoint:
+	- GET /api/V1/products/find/:id
+- Renders the result as a product grid using the existing Product card component.
 
-What you should see in the real app:
-- If logged in: wishlist add/remove returns 200 and persists.
-- If not logged in: wishlist UI still works (localStorage), but backend calls will fail (401).
+Note:
+- If there are no IDs in localStorage, the component returns null (shows nothing).
 
 
-4) Quick checklist if issues return
-----------------------------------
+3) Where we update the Recently Viewed list
+------------------------------------------
 
-- If you see 404 again:
-	- Backend is not running, wrong port, or wrong process running.
-	- Check port 8000 listener, then restart backend from Backend folder.
+File:
+- frontend/src/pages/ProductDetails.jsx
 
-- If you see 401:
-	- You are not logged in (cookie missing), or withCredentials/cors is misconfigured.
-	- Login again and ensure frontend is calling withCredentials.
+When it runs:
+- After the product is successfully fetched, we call:
+	addRecentlyViewedId(productId)
+
+This means:
+- Visiting ProductDetails is what records the “view.”
+
+
+4) Where we display the Recently Viewed section
+----------------------------------------------
+
+A) ProductDetails page
+- frontend/src/pages/ProductDetails.jsx
+- Adds:
+	<RecentlyViewedSection excludeId={productId} limit={8} />
+
+B) Home page
+- frontend/src/pages/Home.jsx
+- Adds:
+	<RecentlyViewedSection limit={8} />
+
+
+5) How to test quickly
+----------------------
+
+1) Start backend + frontend.
+2) Open a few products (ProductDetails) one after another.
+3) Go back to Home:
+	 - You should see the “Recently Viewed” grid appear.
+4) Open any product:
+	 - The ProductDetails page should show “Recently Viewed” below and it should exclude the current product.
+
+
+6) Notes / constraints
+----------------------
+
+- This is localStorage-only (no DB sync). It works for all users instantly.
+- Clearing browser storage clears recently viewed history.
 
