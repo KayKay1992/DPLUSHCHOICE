@@ -1,97 +1,89 @@
 
-RECENTLY VIEWED PRODUCTS (IMPLEMENTATION NOTES)
-==============================================
+PRODUCT RECOMMENDATIONS: “YOU MAY ALSO LIKE” (IMPLEMENTATION NOTES)
+==================================================================
 
 Goal
 ----
-- Store the last N viewed product IDs in localStorage.
-- Update the list whenever a user opens a ProductDetails page.
-- Show a small “Recently Viewed” section on Home and on ProductDetails.
+- On ProductDetails, show recommended products.
+- Recommendation logic: same category + closest price.
+- Keep it lightweight: use existing endpoints (no new backend route required).
 
 
-1) Storage design (localStorage)
+1) Backend support used (no new endpoint added)
+----------------------------------------------
+
+We reused the existing products list endpoint which already supports category filtering:
+- GET /api/V1/products?category=<category>
+
+Backend code path:
+- Backend/routes/product.route.js
+	- router.get("/", getAllProducts)
+- Backend/controller/product.controller.js
+	- getAllProducts checks req.query.category and runs:
+		Product.find({ categories: { $in: [qCategory] } })
+
+So we can request products in the same category as the current product.
+
+
+2) Frontend component created
+-----------------------------
+
+File:
+- frontend/src/components/RecommendedProductsSection.jsx
+
+Props:
+- currentProduct: the product currently being viewed
+- excludeId: the productId to exclude from results (prevents recommending itself)
+- limit: max number of items to show (default 8)
+
+What it does:
+- Reads current product categories (currentProduct.categories).
+- Fetches products for the first category using:
+	userRequest.get(`/products?category=${category}`)
+- Filters out:
+	- the current product (excludeId)
+	- any product that does not share at least one category
+- Computes a “price difference score”:
+	diff = abs((candidatePrice) - (currentPrice))
+	where price = discountPrice || originalPrice
+- Sorts by smallest diff first (closest price first).
+- Renders a product grid using the existing Product card component.
+
+
+3) Where it was added in the UI
 -------------------------------
 
 File:
-- frontend/src/utils/recentlyViewedStorage.js
-
-Storage key:
-- recently_viewed_product_ids
-
-Behavior:
-- addRecentlyViewedId(productId, maxItems=10)
-	- Converts productId to string
-	- Deduplicates (if you view the same product again, it moves to the front)
-	- Keeps most-recent-first ordering
-	- Caps the list to maxItems
-
-Why this approach:
-- Works for guests and logged-in users with no backend changes.
-- Super fast UX (no server calls required to “remember” views).
-
-
-2) UI component that renders Recently Viewed
--------------------------------------------
-
-File:
-- frontend/src/components/RecentlyViewedSection.jsx
-
-Inputs:
-- limit (default 8)
-- excludeId (optional) – used on ProductDetails to avoid showing the same product you’re currently viewing.
-
-How it loads:
-- Reads the IDs from localStorage using getRecentlyViewedIds().
-- Fetches each product by ID using the existing backend endpoint:
-	- GET /api/V1/products/find/:id
-- Renders the result as a product grid using the existing Product card component.
-
-Note:
-- If there are no IDs in localStorage, the component returns null (shows nothing).
-
-
-3) Where we update the Recently Viewed list
-------------------------------------------
-
-File:
 - frontend/src/pages/ProductDetails.jsx
 
-When it runs:
-- After the product is successfully fetched, we call:
-	addRecentlyViewedId(productId)
+Integration:
+- Imported RecommendedProductsSection.
+- Rendered it at the bottom of the ProductDetails page:
+	<RecommendedProductsSection
+		currentProduct={product}
+		excludeId={productId}
+		limit={8}
+	/>
 
-This means:
-- Visiting ProductDetails is what records the “view.”
-
-
-4) Where we display the Recently Viewed section
-----------------------------------------------
-
-A) ProductDetails page
-- frontend/src/pages/ProductDetails.jsx
-- Adds:
-	<RecentlyViewedSection excludeId={productId} limit={8} />
-
-B) Home page
-- frontend/src/pages/Home.jsx
-- Adds:
-	<RecentlyViewedSection limit={8} />
+This makes recommendations visible right on the product page where users decide what to buy.
 
 
-5) How to test quickly
-----------------------
+4) Behavior notes
+-----------------
+
+- If currentProduct has no categories, the section shows nothing (returns null).
+- If the category call returns few products, it will show fewer recommendations.
+- This is intentionally simple and safe: no new database fields or schema changes needed.
+
+
+5) How to test
+--------------
 
 1) Start backend + frontend.
-2) Open a few products (ProductDetails) one after another.
-3) Go back to Home:
-	 - You should see the “Recently Viewed” grid appear.
-4) Open any product:
-	 - The ProductDetails page should show “Recently Viewed” below and it should exclude the current product.
-
-
-6) Notes / constraints
-----------------------
-
-- This is localStorage-only (no DB sync). It works for all users instantly.
-- Clearing browser storage clears recently viewed history.
+2) Open a product detail page for a product that has categories.
+3) Scroll down and confirm “You may also like” appears.
+4) Verify:
+	 - it does not include the same product you’re currently viewing
+	 - products are from same category
+	 - prices are reasonably close (since we sort by price difference)
 

@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { getWishlistIds, toggleWishlistId } from "../utils/wishlistStorage";
 import { addRecentlyViewedId } from "../utils/recentlyViewedStorage";
 import RecentlyViewedSection from "../components/RecentlyViewedSection";
+import RecommendedProductsSection from "../components/RecommendedProductsSection";
 
 const ProductDetails = () => {
   const { productId } = useParams();
@@ -499,6 +500,12 @@ const ProductDetails = () => {
           </div>
         </div>
       </div>
+
+      <RecommendedProductsSection
+        currentProduct={product}
+        excludeId={productId}
+        limit={8}
+      />
 
       <RecentlyViewedSection excludeId={productId} limit={8} />
     </div>
