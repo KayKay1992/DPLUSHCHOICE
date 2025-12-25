@@ -73,6 +73,36 @@ const Order = () => {
     });
   };
 
+  const getShippingStatus = (o) => {
+    const raw = o?.shippingStatus;
+    if (raw !== undefined && raw !== null && raw !== "") return Number(raw);
+    return Number(o?.status) === 1 ? 3 : 0;
+  };
+
+  const shippingStatusLabel = (s) => {
+    switch (Number(s)) {
+      case 0:
+        return "Pending";
+      case 1:
+        return "Processing";
+      case 2:
+        return "Shipped";
+      case 3:
+        return "Delivered";
+      default:
+        return "Pending";
+    }
+  };
+
+  const formatMaybeDate = (d) => {
+    if (!d) return "—";
+    try {
+      return formatDate(d);
+    } catch {
+      return "—";
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-linear-to-br from-pink-50 via-white to-purple-50 flex items-center justify-center">
@@ -220,12 +250,16 @@ const Order = () => {
                   <span className="text-gray-500">Status:</span>{" "}
                   <span
                     className={`px-2 py-1 rounded-full text-sm font-medium ${
-                      order.status === 1
+                      getShippingStatus(order) === 3
                         ? "bg-green-100 text-green-800"
-                        : "bg-yellow-100 text-yellow-800"
+                        : getShippingStatus(order) === 2
+                        ? "bg-blue-100 text-blue-800"
+                        : getShippingStatus(order) === 1
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-red-100 text-red-800"
                     }`}
                   >
-                    {order.status === 1 ? "Completed" : "Pending"}
+                    {shippingStatusLabel(getShippingStatus(order))}
                   </span>
                 </p>
                 <p className="text-gray-700 font-medium text-lg">
@@ -233,6 +267,90 @@ const Order = () => {
                   {formatPrice(order.total)}
                 </p>
               </div>
+            </div>
+
+            {/* Order Tracking */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/30">
+              <h3 className="text-2xl font-bold bg-linear-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mb-4">
+                Order Tracking
+              </h3>
+
+              <div className="space-y-4">
+                {(() => {
+                  const current = getShippingStatus(order);
+                  const steps = [
+                    { key: 0, label: "Pending", date: order.createdAt },
+                    { key: 1, label: "Processing", date: order.processingAt },
+                    { key: 2, label: "Shipped", date: order.shippedAt },
+                    {
+                      key: 3,
+                      label: "Delivered",
+                      date:
+                        order.deliveredAt ||
+                        (current === 3 ? order.updatedAt : null),
+                    },
+                  ];
+
+                  return steps.map((s) => {
+                    const done = current >= s.key;
+                    const isCurrent = current === s.key;
+                    return (
+                      <div
+                        key={s.key}
+                        className="flex items-start justify-between gap-4"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center border shadow-sm ${
+                              done
+                                ? "bg-green-100 border-green-200 text-green-700"
+                                : isCurrent
+                                ? "bg-yellow-100 border-yellow-200 text-yellow-700"
+                                : "bg-gray-100 border-gray-200 text-gray-500"
+                            }`}
+                          >
+                            {done ? (
+                              <FaCheckCircle className="text-lg" />
+                            ) : (
+                              <span className="text-sm font-bold">
+                                {s.key + 1}
+                              </span>
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-gray-800 font-semibold">
+                              {s.label}
+                            </p>
+                            <p className="text-gray-500 text-sm">
+                              {done ? formatMaybeDate(s.date) : "—"}
+                            </p>
+                          </div>
+                        </div>
+
+                        {isCurrent && current !== 3 && (
+                          <div className="text-gray-500 text-sm flex items-center gap-2">
+                            <FaSpinner className="animate-spin" />
+                            <span>In progress</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+
+              {(order.trackingCarrier || order.trackingNumber) && (
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <p className="text-gray-700 font-medium">
+                    <span className="text-gray-500">Courier:</span>{" "}
+                    {order.trackingCarrier || "—"}
+                  </p>
+                  <p className="text-gray-700 font-medium">
+                    <span className="text-gray-500">Tracking #:</span>{" "}
+                    {order.trackingNumber || "—"}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Order Total */}

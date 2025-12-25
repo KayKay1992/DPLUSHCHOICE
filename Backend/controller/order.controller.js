@@ -2,6 +2,35 @@ import Order from "../models/order.model.js";
 import Product from "../models/product.model.js";
 import asyncHandler from "express-async-handler";
 
+const isAdminUser = (user) => {
+  const role = String(user?.role || "").toLowerCase();
+  return role === "admin" || role === "superadmin" || role === "super-admin";
+};
+
+const clampShippingStatus = (value) => {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  if (n < 0) return 0;
+  if (n > 3) return 3;
+  return Math.trunc(n);
+};
+
+const resolveShippingStatus = (body) => {
+  // Prefer new field
+  if (body?.shippingStatus !== undefined) {
+    return clampShippingStatus(body.shippingStatus);
+  }
+
+  // Backward compatibility: old admin UI toggled `status: 0/1`.
+  if (body?.status !== undefined) {
+    const s = Number(body.status);
+    if (s === 1) return 3; // delivered
+    if (s === 0) return 0; // pending
+  }
+
+  return null;
+};
+
 //Create Order
 export const createOrder = asyncHandler(async (req, res) => {
   const { products, userId } = req.body;
@@ -54,9 +83,41 @@ export const createOrder = asyncHandler(async (req, res) => {
 
 //Update Order
 export const updateOrder = asyncHandler(async (req, res) => {
+  // Only admins should update orders (status/tracking etc).
+  if (!isAdminUser(req.user)) {
+    res.status(403);
+    throw new Error("Not authorized");
+  }
+
+  const existingOrder = await Order.findById(req.params.id);
+  if (!existingOrder) {
+    res.status(404);
+    throw new Error("Order not found");
+  }
+
+  const shippingStatus = resolveShippingStatus(req.body);
+  const updateData = { ...req.body };
+
+  if (shippingStatus !== null) {
+    updateData.shippingStatus = shippingStatus;
+    // Keep legacy `status` in sync so existing UI keeps working.
+    updateData.status = shippingStatus === 3 ? 1 : 0;
+
+    const now = new Date();
+    if (shippingStatus >= 1 && !existingOrder.processingAt) {
+      updateData.processingAt = now;
+    }
+    if (shippingStatus >= 2 && !existingOrder.shippedAt) {
+      updateData.shippedAt = now;
+    }
+    if (shippingStatus >= 3 && !existingOrder.deliveredAt) {
+      updateData.deliveredAt = now;
+    }
+  }
+
   const updatedOrder = await Order.findByIdAndUpdate(
     req.params.id,
-    { $set: req.body },
+    { $set: updateData },
     { new: true }
   );
   if (updatedOrder) {

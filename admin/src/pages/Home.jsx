@@ -225,7 +225,15 @@ const Home = () => {
                   </thead>
                   <tbody className="divide-y divide-white/20">
                     {latestOrders.map((o) => {
-                      const statusNum = Number(o?.status);
+                      const shippingStatusRaw = o?.shippingStatus;
+                      const shippingStatus =
+                        shippingStatusRaw !== undefined &&
+                        shippingStatusRaw !== null &&
+                        shippingStatusRaw !== ""
+                          ? Number(shippingStatusRaw)
+                          : Number(o?.status) === 1
+                          ? 3
+                          : 0;
                       return (
                         <tr
                           key={o?._id}
@@ -245,12 +253,12 @@ const Home = () => {
                           <td className="py-5 px-6">
                             <span
                               className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                                statusNum === 1
+                                shippingStatus === 3
                                   ? "bg-green-500/20 text-green-200 border border-green-500/30"
                                   : "bg-yellow-500/20 text-yellow-200 border border-yellow-500/30"
                               }`}
                             >
-                              {statusNum === 1 ? "Completed" : "Pending"}
+                              {shippingStatus === 3 ? "Completed" : "Pending"}
                             </span>
                           </td>
                           <td className="py-5 px-6 text-gray-100/80 text-sm font-medium">

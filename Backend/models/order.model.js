@@ -32,6 +32,32 @@ const OrderSchema = new mongoose.Schema(
       default: 0,
     },
 
+    // Shipping timeline (do not break legacy `status`)
+    // shippingStatus: 0=Pending, 1=Processing, 2=Shipped, 3=Delivered
+    shippingStatus: {
+      type: Number,
+      default: 0,
+    },
+    processingAt: {
+      type: Date,
+    },
+    shippedAt: {
+      type: Date,
+    },
+    deliveredAt: {
+      type: Date,
+    },
+
+    // Tracking
+    trackingCarrier: {
+      type: String,
+      default: "",
+    },
+    trackingNumber: {
+      type: String,
+      default: "",
+    },
+
     // Stripe idempotency / tracing
     stripeSessionId: {
       type: String,

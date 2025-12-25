@@ -731,15 +731,40 @@ const MyAccount = () => {
                               </p>
                             </div>
                             <div className="mt-2 lg:mt-0">
-                              <span
-                                className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                                  order.status === 1
+                              {(() => {
+                                const raw = order?.shippingStatus;
+                                const shippingStatus =
+                                  raw !== undefined &&
+                                  raw !== null &&
+                                  raw !== ""
+                                    ? Number(raw)
+                                    : Number(order?.status) === 1
+                                    ? 3
+                                    : 0;
+                                const label =
+                                  shippingStatus === 3
+                                    ? "Delivered"
+                                    : shippingStatus === 2
+                                    ? "Shipped"
+                                    : shippingStatus === 1
+                                    ? "Processing"
+                                    : "Pending";
+                                const cls =
+                                  shippingStatus === 3
                                     ? "bg-green-100 text-green-800"
-                                    : "bg-yellow-100 text-yellow-800"
-                                }`}
-                              >
-                                {order.status === 1 ? "Completed" : "Pending"}
-                              </span>
+                                    : shippingStatus === 2
+                                    ? "bg-blue-100 text-blue-800"
+                                    : shippingStatus === 1
+                                    ? "bg-yellow-100 text-yellow-800"
+                                    : "bg-red-100 text-red-800";
+                                return (
+                                  <span
+                                    className={`px-3 py-1 rounded-full text-sm font-semibold ${cls}`}
+                                  >
+                                    {label}
+                                  </span>
+                                );
+                              })()}
                             </div>
                           </div>
 

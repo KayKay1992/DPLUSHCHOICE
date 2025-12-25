@@ -1,89 +1,153 @@
 
-PRODUCT RECOMMENDATIONS: “YOU MAY ALSO LIKE” (IMPLEMENTATION NOTES)
-==================================================================
+ORDER TRACKING (TIMELINE) + TRACKING NUMBER (IMPLEMENTATION NOTES)
+=================================================================
 
 Goal
 ----
-- On ProductDetails, show recommended products.
-- Recommendation logic: same category + closest price.
-- Keep it lightweight: use existing endpoints (no new backend route required).
+- Show a clear order tracking timeline:
+	Pending → Processing → Shipped → Delivered
+- Each step should show a date/time when it happened.
+- Admin can update:
+	- the shipping step (timeline status)
+	- courier name
+	- tracking number
+- Users can see the timeline + tracking info on the Order page.
 
 
-1) Backend support used (no new endpoint added)
-----------------------------------------------
-
-We reused the existing products list endpoint which already supports category filtering:
-- GET /api/V1/products?category=<category>
-
-Backend code path:
-- Backend/routes/product.route.js
-	- router.get("/", getAllProducts)
-- Backend/controller/product.controller.js
-	- getAllProducts checks req.query.category and runs:
-		Product.find({ categories: { $in: [qCategory] } })
-
-So we can request products in the same category as the current product.
-
-
-2) Frontend component created
------------------------------
+1) Data model changes (Backend)
+------------------------------
 
 File:
-- frontend/src/components/RecommendedProductsSection.jsx
+- Backend/models/order.model.js
 
-Props:
-- currentProduct: the product currently being viewed
-- excludeId: the productId to exclude from results (prevents recommending itself)
-- limit: max number of items to show (default 8)
+We kept the existing `status` field for backward compatibility, but added a richer shipping timeline:
 
-What it does:
-- Reads current product categories (currentProduct.categories).
-- Fetches products for the first category using:
-	userRequest.get(`/products?category=${category}`)
-- Filters out:
-	- the current product (excludeId)
-	- any product that does not share at least one category
-- Computes a “price difference score”:
-	diff = abs((candidatePrice) - (currentPrice))
-	where price = discountPrice || originalPrice
-- Sorts by smallest diff first (closest price first).
-- Renders a product grid using the existing Product card component.
+New fields:
+- shippingStatus (Number)
+	- 0 = Pending
+	- 1 = Processing
+	- 2 = Shipped
+	- 3 = Delivered
+
+- processingAt (Date)
+- shippedAt (Date)
+- deliveredAt (Date)
+
+- trackingCarrier (String)
+- trackingNumber (String)
+
+Why we kept the old `status`:
+- Existing code was using `status === 1` as “Completed/Delivered” and `status === 0` as “Pending”.
+- Keeping it prevents breaking existing pages while we introduce the timeline.
 
 
-3) Where it was added in the UI
--------------------------------
+2) Backend update logic (Admin-only)
+-----------------------------------
 
 File:
-- frontend/src/pages/ProductDetails.jsx
+- Backend/controller/order.controller.js
 
-Integration:
-- Imported RecommendedProductsSection.
-- Rendered it at the bottom of the ProductDetails page:
-	<RecommendedProductsSection
-		currentProduct={product}
-		excludeId={productId}
-		limit={8}
-	/>
+Key behavior added to updateOrder:
 
-This makes recommendations visible right on the product page where users decide what to buy.
+A) Admin-only updates
+- Updating an order (status/tracking) is now restricted to admin users.
+- We check `req.user.role` and allow only roles like:
+	admin / superadmin (also accepts super-admin).
+
+B) Backward compatibility mapping
+- If the old admin UI sends `status: 0/1`, we map it to the new shippingStatus:
+	- status=0 → shippingStatus=0 (Pending)
+	- status=1 → shippingStatus=3 (Delivered)
+
+C) Keep legacy `status` in sync
+- When shippingStatus changes:
+	- if shippingStatus == 3 (Delivered) → status = 1
+	- otherwise → status = 0
+
+D) Automatic timeline dates
+- When shippingStatus moves forward, the backend sets milestone timestamps:
+	- shippingStatus >= 1 sets processingAt (if missing)
+	- shippingStatus >= 2 sets shippedAt (if missing)
+	- shippingStatus >= 3 sets deliveredAt (if missing)
+
+Important:
+- We load the existing order first and only set these dates if they are not already set.
+- This prevents overwriting real historical timestamps when admin updates again.
 
 
-4) Behavior notes
------------------
+3) Admin UI (Update status + tracking)
+-------------------------------------
 
-- If currentProduct has no categories, the section shows nothing (returns null).
-- If the category call returns few products, it will show fewer recommendations.
-- This is intentionally simple and safe: no new database fields or schema changes needed.
+File:
+- admin/src/pages/Orders.jsx
+
+What was added:
+- A 4-step shipping status dropdown per order:
+	Pending / Processing / Shipped / Delivered
+
+- Two new editable columns:
+	- Courier (trackingCarrier)
+	- Tracking # (trackingNumber)
+
+- A “Save tracking” button per row that calls:
+	PUT /api/V1/orders/:id
+	with { trackingCarrier, trackingNumber }
+
+Status display:
+- Admin table now uses shippingStatus if it exists.
+- If shippingStatus is missing (older orders), it falls back to legacy status:
+	status=1 → Delivered (shippingStatus=3)
+	otherwise → Pending (shippingStatus=0)
 
 
-5) How to test
+4) User UI (Timeline on Order page)
+----------------------------------
+
+File:
+- frontend/src/pages/Order.jsx
+
+What was added:
+- A timeline component section that renders 4 steps with:
+	- label (Pending/Processing/Shipped/Delivered)
+	- date/time (if completed)
+
+Which dates are shown:
+- Pending uses order.createdAt
+- Processing uses order.processingAt
+- Shipped uses order.shippedAt
+- Delivered uses order.deliveredAt (or order.updatedAt as a fallback if delivered)
+
+Tracking details:
+- If trackingCarrier or trackingNumber exists, we show them under the timeline.
+
+Backward compatibility:
+- If shippingStatus doesn’t exist on an order, we fall back to:
+	status=1 → shippingStatus=3
+	otherwise → shippingStatus=0
+
+
+5) User Account “Order History” status badge
+--------------------------------------------
+
+File:
+- frontend/src/pages/MyAccount.jsx
+
+Change:
+- The status badge now displays the shipping step:
+	Pending / Processing / Shipped / Delivered
+- Same fallback behavior for older orders (status → shippingStatus mapping).
+
+
+6) How to test
 --------------
 
-1) Start backend + frontend.
-2) Open a product detail page for a product that has categories.
-3) Scroll down and confirm “You may also like” appears.
-4) Verify:
-	 - it does not include the same product you’re currently viewing
-	 - products are from same category
-	 - prices are reasonably close (since we sort by price difference)
+1) Place an order (it will start as Pending).
+2) In Admin → Orders:
+	 - Change shipping status to Processing, then Shipped, then Delivered.
+	 - Fill Courier + Tracking # and click Save tracking.
+3) On the user side:
+	 - Open the Order page and confirm:
+		 - timeline updates correctly
+		 - dates appear when steps are completed
+		 - courier + tracking number appear
 

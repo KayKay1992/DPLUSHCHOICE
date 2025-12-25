@@ -18,6 +18,7 @@ const Orders = () => {
   const [orderIdQuery, setOrderIdQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [searchResultOrder, setSearchResultOrder] = useState(null);
+  const [trackingDraft, setTrackingDraft] = useState({});
 
   const fetchOrders = async () => {
     try {
@@ -105,28 +106,87 @@ const Orders = () => {
     return products.reduce((sum, p) => sum + (Number(p?.quantity) || 0), 0);
   };
 
-  const handleSetStatus = async (orderId, nextStatus) => {
+  const getShippingStatus = (order) => {
+    const s = order?.shippingStatus;
+    if (s !== undefined && s !== null && s !== "") return Number(s);
+    return Number(order?.status) === 1 ? 3 : 0;
+  };
+
+  const shippingStatusLabel = (s) => {
+    switch (Number(s)) {
+      case 0:
+        return "Pending";
+      case 1:
+        return "Processing";
+      case 2:
+        return "Shipped";
+      case 3:
+        return "Delivered";
+      default:
+        return "Pending";
+    }
+  };
+
+  const shippingStatusPillClass = (s) => {
+    const n = Number(s);
+    if (n === 3) return "bg-green-500/40 text-green-100 border-green-400/60";
+    if (n === 2) return "bg-cyan-500/25 text-cyan-100 border-cyan-400/50";
+    if (n === 1) return "bg-yellow-500/25 text-yellow-100 border-yellow-400/50";
+    return "bg-red-500/40 text-red-100 border-red-400/60";
+  };
+
+  const handleSetShippingStatus = async (orderId, nextShippingStatus) => {
     setUpdatingOrderId(orderId);
     try {
       const res = await userRequest.put(`/orders/${orderId}`, {
-        status: nextStatus,
+        shippingStatus: Number(nextShippingStatus),
       });
 
       const updatedOrder = res.data?.updatedOrder;
       setOrders((prev) =>
-        prev.map((o) =>
-          o._id === orderId ? updatedOrder || { ...o, status: nextStatus } : o
-        )
+        prev.map((o) => (o._id === orderId ? updatedOrder || o : o))
       );
 
       toast.success(
-        nextStatus === 1
-          ? "Order marked as delivered"
-          : "Order marked as pending"
+        `Order marked as ${shippingStatusLabel(nextShippingStatus)}`
       );
     } catch (error) {
       console.log(error);
       toast.error("Failed to update order status");
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
+  const handleDraftChange = (orderId, field, value) => {
+    setTrackingDraft((prev) => ({
+      ...prev,
+      [orderId]: {
+        trackingCarrier: String(prev?.[orderId]?.trackingCarrier ?? ""),
+        trackingNumber: String(prev?.[orderId]?.trackingNumber ?? ""),
+        ...prev?.[orderId],
+        [field]: value,
+      },
+    }));
+  };
+
+  const handleSaveTracking = async (orderId) => {
+    const draft = trackingDraft?.[orderId] || {};
+    setUpdatingOrderId(orderId);
+    try {
+      const res = await userRequest.put(`/orders/${orderId}`, {
+        trackingCarrier: draft.trackingCarrier || "",
+        trackingNumber: draft.trackingNumber || "",
+      });
+
+      const updatedOrder = res.data?.updatedOrder;
+      setOrders((prev) =>
+        prev.map((o) => (o._id === orderId ? updatedOrder || o : o))
+      );
+      toast.success("Tracking updated");
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to update tracking");
     } finally {
       setUpdatingOrderId(null);
     }
@@ -193,6 +253,58 @@ const Orders = () => {
         ),
       },
       {
+        field: "trackingCarrier",
+        headerName: "Courier",
+        width: 160,
+        headerAlign: "center",
+        sortable: false,
+        renderCell: (params) => {
+          const id = params.row._id;
+          const draft = trackingDraft?.[id];
+          const value =
+            draft?.trackingCarrier !== undefined
+              ? draft.trackingCarrier
+              : params.row.trackingCarrier || "";
+          return (
+            <input
+              value={value}
+              onChange={(e) =>
+                handleDraftChange(id, "trackingCarrier", e.target.value)
+              }
+              onClick={(e) => e.stopPropagation()}
+              placeholder="e.g. DHL"
+              className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-100 outline-none focus:border-cyan-400/50"
+            />
+          );
+        },
+      },
+      {
+        field: "trackingNumber",
+        headerName: "Tracking #",
+        width: 200,
+        headerAlign: "center",
+        sortable: false,
+        renderCell: (params) => {
+          const id = params.row._id;
+          const draft = trackingDraft?.[id];
+          const value =
+            draft?.trackingNumber !== undefined
+              ? draft.trackingNumber
+              : params.row.trackingNumber || "";
+          return (
+            <input
+              value={value}
+              onChange={(e) =>
+                handleDraftChange(id, "trackingNumber", e.target.value)
+              }
+              onClick={(e) => e.stopPropagation()}
+              placeholder="Tracking"
+              className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-100 outline-none focus:border-cyan-400/50"
+            />
+          );
+        },
+      },
+      {
         field: "items",
         headerName: "Items",
         width: 110,
@@ -232,56 +344,60 @@ const Orders = () => {
         width: 150,
         headerAlign: "center",
         renderCell: (params) => {
-          const normalized = Number(params.row.status);
+          const normalized = getShippingStatus(params.row);
           return (
             <span
-              className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${
-                normalized === 1
-                  ? "bg-green-500/40 text-green-100 border-green-400/60"
-                  : "bg-red-500/40 text-red-100 border-red-400/60"
-              }`}
+              className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${shippingStatusPillClass(
+                normalized
+              )}`}
             >
-              {normalized === 1 ? "Delivered" : "Pending"}
+              {shippingStatusLabel(normalized)}
             </span>
           );
         },
       },
       {
         field: "actions",
-        headerName: "Actions",
-        width: 150,
+        headerName: "Update",
+        width: 260,
         headerAlign: "center",
         sortable: false,
         filterable: false,
         renderCell: (params) => {
-          const normalized = Number(params.row.status);
           const disabled = updatingOrderId === params.row._id;
+          const normalized = getShippingStatus(params.row);
 
           return (
-            <div className="flex items-center justify-center">
-              {normalized === 0 ? (
-                <button
-                  onClick={() => handleSetStatus(params.row._id, 1)}
-                  disabled={disabled}
-                  className={`bg-green-500/40 hover:bg-green-500/50 text-green-100 hover:text-white p-2 rounded-lg transition-all duration-200 border-2 border-green-400/50 hover:border-green-300 ${
-                    disabled ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                  title="Mark delivered"
-                >
-                  <FaCheck className="text-sm" />
-                </button>
-              ) : (
-                <button
-                  onClick={() => handleSetStatus(params.row._id, 0)}
-                  disabled={disabled}
-                  className={`bg-yellow-500/40 hover:bg-yellow-500/50 text-yellow-100 hover:text-white p-2 rounded-lg transition-all duration-200 border-2 border-yellow-400/50 hover:border-yellow-300 ${
-                    disabled ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                  title="Mark pending"
-                >
-                  <FaUndo className="text-sm" />
-                </button>
-              )}
+            <div className="flex items-center justify-center gap-2">
+              <select
+                value={normalized}
+                onChange={(e) =>
+                  handleSetShippingStatus(params.row._id, e.target.value)
+                }
+                onClick={(e) => e.stopPropagation()}
+                disabled={disabled}
+                className="bg-black/20 border border-white/10 rounded-lg px-2 py-2 text-sm text-gray-100 outline-none focus:border-cyan-400/50 disabled:opacity-60"
+                title="Update shipping status"
+              >
+                <option value={0}>Pending</option>
+                <option value={1}>Processing</option>
+                <option value={2}>Shipped</option>
+                <option value={3}>Delivered</option>
+              </select>
+
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSaveTracking(params.row._id);
+                }}
+                disabled={disabled}
+                className={`bg-green-500/25 hover:bg-green-500/35 text-green-100 hover:text-white px-3 py-2 rounded-lg transition-all duration-200 border border-green-400/40 ${
+                  disabled ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                title="Save tracking"
+              >
+                <FaCheck className="text-sm" />
+              </button>
             </div>
           );
         },
@@ -291,10 +407,10 @@ const Orders = () => {
   );
 
   const deliveredCount = displayedOrders.filter(
-    (o) => Number(o.status) === 1
+    (o) => getShippingStatus(o) === 3
   ).length;
   const pendingCount = displayedOrders.filter(
-    (o) => Number(o.status) !== 1
+    (o) => getShippingStatus(o) !== 3
   ).length;
 
   return (
