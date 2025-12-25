@@ -28,6 +28,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "user",
     },
+    wishlist: {
+      type: [mongoose.Schema.Types.ObjectId],
+      ref: "Product",
+      default: [],
+    },
     status: {
       type: Number,
       default: 0,

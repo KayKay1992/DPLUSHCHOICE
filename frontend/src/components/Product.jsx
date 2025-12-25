@@ -2,10 +2,13 @@ import StarRating from "./StarRating";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { FaMinus, FaPlus } from "react-icons/fa";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { addProduct } from "../redux/cartRedux";
 import { selectCurrentCart } from "../redux/cartRedux";
 import { toast } from "react-toastify";
+import { getWishlistIds, toggleWishlistId } from "../utils/wishlistStorage";
+import { userRequest } from "../requestMethods";
 
 const Product = ({
   img,
@@ -22,10 +25,16 @@ const Product = ({
 }) => {
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
   const dispatch = useDispatch();
   const { currentUser } = useSelector((state) => state.user);
   const cart = useSelector(selectCurrentCart);
   const navigate = useNavigate();
+
+  const initialWish = productId
+    ? getWishlistIds().includes(String(productId))
+    : false;
+  const [inWishlist, setInWishlist] = useState(initialWish);
 
   const isOutOfStock = product ? (product.stock || 0) <= 0 : false;
 
@@ -178,6 +187,51 @@ const Product = ({
           <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-gray-800 px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
             {getCategoryDisplayName(category)}
           </div>
+
+          {/* Wishlist Button */}
+          <button
+            type="button"
+            onClick={async (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!productId || isTogglingWishlist) return;
+
+              setIsTogglingWishlist(true);
+              const next = !inWishlist;
+              setInWishlist(next);
+              toggleWishlistId(productId);
+
+              try {
+                if (currentUser?._id) {
+                  if (next) {
+                    await userRequest.post(
+                      `/users/${currentUser._id}/wishlist/${productId}`
+                    );
+                  } else {
+                    await userRequest.delete(
+                      `/users/${currentUser._id}/wishlist/${productId}`
+                    );
+                  }
+                }
+                toast.success(
+                  next ? "Added to wishlist" : "Removed from wishlist"
+                );
+              } catch (err) {
+                console.log(err);
+                // rollback UI/localStorage on failure
+                setInWishlist(!next);
+                toggleWishlistId(productId);
+                toast.error("Failed to update wishlist");
+              } finally {
+                setIsTogglingWishlist(false);
+              }
+            }}
+            className="absolute bottom-4 right-4 w-11 h-11 rounded-full bg-white/95 hover:bg-white text-pink-600 flex items-center justify-center shadow-lg transition disabled:opacity-60"
+            disabled={isTogglingWishlist}
+            title={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            {inWishlist ? <FaHeart /> : <FaRegHeart />}
+          </button>
         </div>
 
         {/* Content */}

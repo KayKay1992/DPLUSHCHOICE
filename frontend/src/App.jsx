@@ -11,6 +11,7 @@ import Register from "./pages/Register";
 import ProductList from "./pages/ProductList";
 import Order from "./pages/Order";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Wishlist from "./pages/Wishlist";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setCurrentUser } from "./redux/cartRedux";
@@ -88,6 +89,10 @@ function App() {
         {
           path: "/products/:searchTerm",
           element: <ProductList />,
+        },
+        {
+          path: "/wishlist",
+          element: <Wishlist />,
         },
         {
           path: "/myorders",

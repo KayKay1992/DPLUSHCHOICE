@@ -4,9 +4,17 @@ import {
   getUserById,
   updateUser,
   deleteUser,
+  getWishlist,
+  addToWishlist,
+  removeFromWishlist,
 } from "../controller/user.controller.js";
 import protect from "../middleware/auth.middleware.js";
 const router = express.Router();
+
+// WISHLIST (self)
+router.get("/:userId/wishlist", protect, getWishlist);
+router.post("/:userId/wishlist/:productId", protect, addToWishlist);
+router.delete("/:userId/wishlist/:productId", protect, removeFromWishlist);
 
 //GET ALL USERS ROUTE
 router.get("/", protect, getAllUsers);

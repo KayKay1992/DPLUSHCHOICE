@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { FaMinus, FaPlus } from "react-icons/fa";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 import StarRating from "../components/StarRating";
 import { userRequest } from "../requestMethods";
 import { toast, ToastContainer } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
 import { addProduct, selectCurrentCart } from "../redux/cartRedux";
 import { useNavigate } from "react-router-dom";
+import { getWishlistIds, toggleWishlistId } from "../utils/wishlistStorage";
 
 const ProductDetails = () => {
   const { productId } = useParams();
@@ -18,10 +20,15 @@ const ProductDetails = () => {
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
   const dispatch = useDispatch();
   const cart = useSelector(selectCurrentCart);
   const { currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
+
+  const [inWishlist, setInWishlist] = useState(() =>
+    getWishlistIds().includes(String(productId))
+  );
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -383,21 +390,62 @@ const ProductDetails = () => {
                   <FaPlus />
                 </button>
               </div>
-              <button
-                className={`w-full lg:w-3/4 font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 mb-8 ${
-                  isOutOfStock || isAddingToCart
-                    ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-                    : "bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white"
-                }`}
-                onClick={handleAddToCart}
-                disabled={isOutOfStock || isAddingToCart}
-              >
-                {isOutOfStock
-                  ? "Out of Stock"
-                  : isAddingToCart
-                  ? "Adding..."
-                  : "Add to Cart"}
-              </button>
+              <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                <button
+                  className={`w-full sm:flex-1 font-bold py-4 px-8 rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 ${
+                    isOutOfStock || isAddingToCart
+                      ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                      : "bg-linear-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white"
+                  }`}
+                  onClick={handleAddToCart}
+                  disabled={isOutOfStock || isAddingToCart}
+                >
+                  {isOutOfStock
+                    ? "Out of Stock"
+                    : isAddingToCart
+                    ? "Adding..."
+                    : "Add to Cart"}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isTogglingWishlist}
+                  onClick={async () => {
+                    if (isTogglingWishlist) return;
+                    setIsTogglingWishlist(true);
+                    const next = !inWishlist;
+                    setInWishlist(next);
+                    toggleWishlistId(productId);
+                    try {
+                      if (currentUser?._id) {
+                        if (next) {
+                          await userRequest.post(
+                            `/users/${currentUser._id}/wishlist/${productId}`
+                          );
+                        } else {
+                          await userRequest.delete(
+                            `/users/${currentUser._id}/wishlist/${productId}`
+                          );
+                        }
+                      }
+                      toast.success(
+                        next ? "Added to wishlist" : "Removed from wishlist"
+                      );
+                    } catch (e) {
+                      console.log(e);
+                      setInWishlist(!next);
+                      toggleWishlistId(productId);
+                      toast.error("Failed to update wishlist");
+                    } finally {
+                      setIsTogglingWishlist(false);
+                    }
+                  }}
+                  className="w-full sm:w-auto px-7 py-4 rounded-full border border-pink-200 text-pink-700 hover:bg-pink-50 font-bold shadow-sm flex items-center justify-center gap-3"
+                >
+                  {inWishlist ? <FaHeart /> : <FaRegHeart />}
+                  <span>{inWishlist ? "Saved" : "Save"}</span>
+                </button>
+              </div>
             </div>
 
             <div>

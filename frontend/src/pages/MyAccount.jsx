@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import {
   FaUser,
   FaShoppingBag,
+  FaHeart,
   FaMapMarkerAlt,
   FaPhone,
   FaEnvelope,
@@ -18,10 +19,13 @@ import { logout, loginSuccess } from "../redux/userRedux";
 import { clearUserCart, setCurrentUser } from "../redux/cartRedux";
 import { userRequest } from "../requestMethods";
 import { toast } from "react-toastify";
+import WishlistPanel from "../components/WishlistPanel";
+import { setWishlistIds } from "../utils/wishlistStorage";
 
 const MyAccount = () => {
   const [activeTab, setActiveTab] = useState("profile");
   const [orders, setOrders] = useState([]);
+  const [wishlistCount, setWishlistCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [userReviews, setUserReviews] = useState([]);
@@ -53,6 +57,7 @@ const MyAccount = () => {
 
   useEffect(() => {
     fetchOrders();
+    fetchWishlistCount();
 
     // Initialize form data with current user info
     setFormData({
@@ -65,6 +70,19 @@ const MyAccount = () => {
       confirmPassword: "",
     });
   }, [currentUser]);
+
+  const fetchWishlistCount = async () => {
+    try {
+      const res = await userRequest.get(`/users/${currentUser._id}/wishlist`);
+      const wishlist = Array.isArray(res.data?.wishlist)
+        ? res.data.wishlist
+        : [];
+      setWishlistCount(wishlist.length);
+      setWishlistIds(wishlist.map((p) => p?._id).filter(Boolean));
+    } catch (e) {
+      setWishlistCount(0);
+    }
+  };
 
   const fetchOrders = async () => {
     console.log("Fetching orders for user:", currentUser._id);
@@ -396,6 +414,23 @@ const MyAccount = () => {
                 </button>
 
                 <button
+                  onClick={() => setActiveTab("wishlist")}
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                    activeTab === "wishlist"
+                      ? "bg-pink-100 text-pink-700 shadow-md"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <FaHeart className="text-lg" />
+                  <span className="font-medium">Wishlist</span>
+                  {wishlistCount > 0 && (
+                    <span className="bg-pink-500 text-white text-xs px-2 py-1 rounded-full ml-auto">
+                      {wishlistCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
                   onClick={handleLogout}
                   className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200"
                 >
@@ -637,6 +672,17 @@ const MyAccount = () => {
                     </div>
                   </>
                 )}
+              </div>
+            )}
+
+            {activeTab === "wishlist" && (
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-xl border border-white/30">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-3xl font-bold bg-linear-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                    My Wishlist
+                  </h2>
+                </div>
+                <WishlistPanel embedded />
               </div>
             )}
 

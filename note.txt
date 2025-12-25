@@ -1,141 +1,107 @@
 
-ADMIN ACCESS LOCK (ADMIN APP @ http://localhost:5175)
+WISHLIST FEATURE + 404 FIX (IMPLEMENTATION NOTES)
+===============================================
 
-Goal
-- Only admin users can access the admin app (localhost:5175).
-- If a guest (not logged in) or a normal user tries to visit any admin URL, they must be redirected to the user homepage (localhost:5173).
+1) What was implemented (end-to-end)
+-----------------------------------
 
-How it was implemented (3 layers for reliability)
+A) Backend (Node/Express/Mongoose)
 
-1) Server-side gate at the Vite dev server (strongest)
-File: admin/vite.config.js
+Goal:
+- Guests can “wishlist” using localStorage only.
+- Logged-in users can wishlist permanently in MongoDB.
 
-Why this layer exists
-- Client-side guards can show a “flash” of admin UI or be bypassed if the HTML/JS bundle loads.
-- This middleware blocks the admin app BEFORE the HTML is even served.
+Data model:
+- Added a wishlist field to the user schema:
+	- User.wishlist: [ObjectId] referencing Product
+	- This stores product IDs the user has saved.
 
-What it does
-- A custom Vite plugin named "admin-auth-gate" is registered in the Vite plugins list.
-- It adds a dev-server middleware (server.middlewares.use(...)).
-- For every GET request that looks like a real page navigation (Accept header contains "text/html"), it:
-	1) reads the browser cookies from req.headers.cookie
-	2) calls the backend endpoint: GET {apiBase}/auth/me
-		 - apiBase defaults to http://localhost:8000/api/V1
-		 - it forwards cookies in the request so the backend can read the jwt cookie
-	3) checks the returned user role
-	4) if NOT logged in (401) OR role is not admin/staff/super-admin:
-		 - responds with HTTP 302 redirect to clientUrl (frontend homepage)
+Routes (mounted under /api/V1/users):
+- GET    /api/V1/users/:userId/wishlist
+- POST   /api/V1/users/:userId/wishlist/:productId
+- DELETE /api/V1/users/:userId/wishlist/:productId
 
-Admin role check used
-- Allowed roles: "admin", "staff", "super-admin" (also accepts "superadmin").
+Important details:
+- These wishlist routes are protected by the auth middleware (protect), so they require a valid auth cookie/JWT.
+- The controller ensures the user can only change their own wishlist (self-only enforcement).
 
-Environment variables used by this layer
-- VITE_CLIENT_URL (defaults to http://localhost:5173)
-- VITE_API_BASE_URL (optional, defaults to http://localhost:8000/api/V1)
-
-Result
-- Even if someone types http://localhost:5175/orders directly, the admin dev server will redirect them to http://localhost:5173 BEFORE any admin UI is delivered.
+Where the backend is wired:
+- app mounts routes here:
+	- app.use("/api/V1/users", userRoutes)
 
 
-2) Client bootstrap gate before mounting React
-File: admin/src/main.jsx
+B) Frontend (Shop app: React/Vite)
 
-Why this layer exists
-- Extra safety: even if the dev server serves the bundle (or in production build scenarios), we still prevent the React app from mounting for non-admins.
+Core idea:
+- Always update localStorage so the UI works instantly.
+- If user is logged in, also sync to backend endpoints so wishlist persists across devices.
 
-What it does
-- Before calling createRoot(...).render(...), it calls:
-	userRequest.get("/auth/me")
-	where userRequest baseURL is http://localhost:8000/api/V1/ and withCredentials=true.
-- If it fails (guest) or role is not admin/staff/super-admin:
-	window.location.replace(clientUrl)
-	and React is never mounted.
+Key pieces:
+- A localStorage helper module stores an array of product IDs for guests.
+- Product cards and ProductDetails include a “Save / Saved” (heart) toggle.
+- Added a dedicated Wishlist page ("/wishlist").
+- Added a Wishlist tab in MyAccount to show the same panel.
 
-
-3) Router-level guard inside the admin React app
-File: admin/src/App.jsx
-
-Why this layer exists
-- It protects route navigation inside the admin app.
-- It ensures that all admin routes are behind the same check.
-
-What it does
-- Uses React Router v7 data router loader:
-	loader: requireAdminLoader
-- requireAdminLoader calls /auth/me.
-- If role is not allowed (or request fails), it redirects to an internal route /__redirect.
-- /__redirect renders a tiny component that performs a hard external navigation.
-
-Files involved
-- admin/src/App.jsx
-	- loader: requireAdminLoader
-	- route: /__redirect
-- admin/src/pages/ExternalRedirect.jsx
-	- window.location.replace(to)
+API calls:
+- Frontend uses axios with:
+	- baseURL = http://localhost:8000/api/V1/
+	- withCredentials = true
+- Wishlist calls look like:
+	- POST   /users/:userId/wishlist/:productId
+	- DELETE /users/:userId/wishlist/:productId
+	- GET    /users/:userId/wishlist
 
 
-BACKEND ENDPOINTS USED
+2) Why you were seeing 404 on wishlist
+-------------------------------------
 
-1) Get current user (used by all gates)
-Files:
-- Backend/routes/auth.route.js
-- Backend/controller/auth.controller.js
+Symptom:
+- Browser console showed 404 for URLs like:
+	/api/V1/users/<userId>/wishlist/<productId>
 
-Endpoint
-- GET /api/V1/auth/me
+Key finding:
+- The wishlist routes DID exist in the codebase.
+- But the process actually running on port 8000 was not serving that updated route set at runtime.
 
-How it works
-- It is protected by the "protect" middleware which reads the jwt cookie.
-- If the cookie is missing/invalid, it returns 401.
-- If valid, it returns the user object including role.
+How we proved it:
+- Curling the endpoint returned:
+	- 404 Not Found (meaning Express didn’t match the route and fell into the global notFound handler).
 
-
-2) Logout endpoint (used by admin logout button)
-Files:
-- Backend/routes/auth.route.js
-- Backend/controller/auth.controller.js
-
-Endpoint
-- GET /api/V1/auth/logout
-
-How it works
-- It clears the jwt cookie by setting it to an empty value with an expired date.
+Root cause (runtime, not code):
+- The backend server on port 8000 was running a stale/incorrect instance or wasn’t restarted after code changes.
 
 
-ADMIN LOGOUT BUTTON
+3) What we did to fix it (and how to validate)
+---------------------------------------------
 
-File: admin/src/components/Menu.jsx
+Fix steps:
+- Stop the old backend node process that was listening on port 8000.
+- Restart backend using nodemon from the Backend folder so it reloads the latest routes:
+	- cd Backend
+	- npm run dev
 
-What was changed
-- The “Logout” footer item is now a real button.
-- On click it calls: userRequest.get("/auth/logout")
-	(this clears the backend jwt cookie)
-- Then it redirects to the user homepage:
-	window.location.replace(VITE_CLIENT_URL or http://localhost:5173)
-- It also disables the button while the logout request is in progress and changes the label to "Logging out...".
+Validation test (critical):
+- After restart, calling:
+	GET http://localhost:8000/api/V1/users/123/wishlist
+	returns 401 "Not authorized, no token" (instead of 404).
+
+Why 401 is GOOD here:
+- The route is found and executed, but blocked by auth (because protect middleware requires a login token/cookie).
+- This confirms the server is running the updated routes correctly.
+
+What you should see in the real app:
+- If logged in: wishlist add/remove returns 200 and persists.
+- If not logged in: wishlist UI still works (localStorage), but backend calls will fail (401).
 
 
-HOW TO TEST (recommended)
+4) Quick checklist if issues return
+----------------------------------
 
-1) Start backend
-- cd Backend
-- npm run dev
+- If you see 404 again:
+	- Backend is not running, wrong port, or wrong process running.
+	- Check port 8000 listener, then restart backend from Backend folder.
 
-2) Start admin
-- cd admin
-- npm run dev
-
-3) Test as guest
-- Open an Incognito/Private window (no cookies)
-- Go to http://localhost:5175
-- Expected: immediate redirect to http://localhost:5173
-
-4) Test as admin
-- Login as an admin user so the jwt cookie exists and role is admin/staff/super-admin
-- Go to http://localhost:5175
-- Expected: admin loads normally
-
-5) Test logout
-- Click Logout in the admin sidebar
-- Expected: cookie is cleared and browser redirects to http://localhost:5173
+- If you see 401:
+	- You are not logged in (cookie missing), or withCredentials/cors is misconfigured.
+	- Login again and ensure frontend is calling withCredentials.
 
