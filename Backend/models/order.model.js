@@ -57,14 +57,6 @@ const OrderSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-
-    // Stripe idempotency / tracing
-    stripeSessionId: {
-      type: String,
-      index: true,
-      unique: true,
-      sparse: true,
-    },
   },
   { timestamps: true }
 );

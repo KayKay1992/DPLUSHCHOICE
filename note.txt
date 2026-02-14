@@ -1,146 +1,75 @@
 
-AI Product Helper (Gemini) — Implementation Notes (Feb 2026)
+Stripe Removal Notes (Feb 14, 2026)
 
-What you implemented
-- A frontend “Ask AI” quick chat on the Product Details page.
-- Backend AI endpoints under /api/V1/ai:
-	1) POST /description → generates a product description from title + (optional) image
-	2) POST /chat → answers product/shopping questions using product context
+Goal
+- Remove Stripe completely (including webhook implementation) so the project can later adopt Paystack.
 
 
-Frontend flow (UI → API)
-1) UI entry point
-- The chat widget is implemented as frontend/src/components/AiQuickChat.jsx.
-- It’s mounted inside frontend/src/pages/ProductDetails.jsx.
+What I removed/changed
 
-2) ProductDetails builds the AI context
-- ProductDetails creates an object called aiContext via useMemo.
-- Context includes:
-	- type: "product"
-	- product: {_id, title, desc, img/images, categories, prices, stock, currency}
-	- selection: {quantity, isWholesaleActive, unitPrice}
+1) Backend: removed Stripe webhook + routes wiring
+- File: Backend/app.js
+	- Removed the “Stripe webhook must come first (raw body)” middleware:
+		app.use("/api/V1/stripe/webhook", express.raw({ type: "application/json" }))
+	- Removed the Stripe routes import/mount:
+		- import stripeRoutes from "./routes/stripe.js"
+		- app.use("/api/V1/stripe", stripeRoutes)
 
-3) AiQuickChat sends chat requests
-- AiQuickChat uses the Axios instance userRequest (frontend/src/requestMethods.js), which targets:
-	BASE_URL = http://localhost:8000/api/V1/
-- On Send, it POSTs:
-	POST http://localhost:8000/api/V1/ai/chat
-	body: { message: "...", context: aiContext }
-- The component appends user + assistant messages to its local state.
-- Error handling: if backend returns {message,hint,details}, it shows them in the chat.
+Why this matters
+- Stripe webhooks often require raw request body; since Stripe is gone, we no longer need the special raw-body ordering.
 
 
-Backend routing
-1) Routes registration
-- Backend/app.js mounts the AI router at:
-	app.use("/api/V1/ai", aiRoutes)
-
-2) AI router
-- Backend/routes/ai.route.js defines:
-	- POST /description (multipart) using multer memory storage upload.single("image")
-	- POST /chat (JSON)
+2) Backend: deleted Stripe implementation files
+- Deleted: Backend/routes/stripe.js
+	- This file contained:
+		- POST /stripe/create-checkout-session
+		- POST /stripe/webhook
+- Deleted: Backend/models/stripeSession.model.js
+	- This model was used as an idempotency lock for webhook processing.
 
 
-Backend AI controller: how replies are generated
-All logic is in Backend/controller/ai.controller.js.
+3) Backend: removed Stripe-specific data from the Order schema
+- File: Backend/models/order.model.js
+	- Removed the field:
+		stripeSessionId
+	- Reason: it only existed to trace Stripe checkout sessions and enforce idempotency.
 
-High-level design
-- Gemini is called via the Gemini REST API using an API key.
-- The controller is defensive:
-	- validates the prompt is product-related
-	- blocks obviously disallowed prompts (basic keyword check)
-	- supports “fallback mode” when Gemini quota is 0 / key is expired
-	- optionally attaches a product image when the user asks for visual/quality details
-	- optionally fetches and summarizes other-seller pages, but only from allowlisted domains
-
-Core pieces
-1) callGemini({ message, context, mediaParts })
-- Builds a strict system prompt (shopping-only, evidence-based, no guessing).
-- Uses GEMINI_API_KEY from environment.
-- Chooses a model:
-	- lists available models from the API and caches them ~10 minutes
-	- uses GEMINI_MODEL if set + available; otherwise picks a preferred “flash/pro” model
-- Sends POST to:
-	https://generativelanguage.googleapis.com/v1/<model>:generateContent
-- Returns { reply, modelUsed }.
-
-2) POST /description (generateDescription)
-Request inputs
-- Required: title (req.body.title)
-- Optional image input:
-	- either a file upload “image” (multipart/form-data)
-	- or a URL (req.body.imageUrl)
-
-Behavior
-- Builds a prompt that asks for:
-	- 1 short description
-	- 1 detailed description
-	- 5 bullet highlights
-- If Gemini is not configured (missing GEMINI_API_KEY) → returns 500.
-- If Gemini is temporarily blocked (quota/key issues detected) → returns a safe generic fallback description.
-- If an image is available, it is added as inline_data (base64) for Gemini.
-
-3) POST /chat (productHelperChat)
-Request inputs
-- Required: message (string)
-- Optional: context (object), sources (links)
-
-Validations / safety
-- message must exist, and must be <= 800 chars
-- blocks some disallowed keywords (hack/steal/otp/etc)
-- if the question is not likely product/shopping related, it returns a 400 with a “shopping only” message
-
-Image attachment (for better product answers)
-- If the message looks like it needs visual info (e.g., “describe”, “color”, “material”, etc.) OR description is too thin:
-	- controller tries to pull product images from context.product.img / context.product.images
-	- fetches the image (only from allowed origins) and passes it as inline_data to Gemini
-- It also normalizes “/uploads/…” URLs to a public URL using PUBLIC_SERVER_URL or localhost fallback.
-
-Optional “other sellers” summary
-- If the user asks for “other sellers / from the internet / compare”:
-	- it can use either:
-		(a) user-provided source URLs
-		(b) title-based search via SerpAPI (if enabled)
-- It fetches seller pages ONLY if allowlisted using:
-	- AI_SELLER_ALLOW_DOMAINS or AI_SELLER_ALLOW_ORIGINS
-- It extracts:
-	- <title>
-	- meta description
-	- a short plain-text snippet
-- These extracts are added to context as externalSellerExtracts and Gemini is instructed to paraphrase (avoid copying).
-
-Fallback mode (circuit breaker)
-- The controller detects common Gemini failures like:
-	- 429 with “limit: 0” or quota text
-	- 400 “API key expired”
-- When detected, it temporarily “blocks” Gemini calls for a few minutes and returns:
-	- a fallback description (for /description)
-	- a fallback chat reply (for /chat) based on the product context + user question
+Important note
+- If you already have existing orders in MongoDB with stripeSessionId saved, removing the schema field won’t delete the data in Mongo; it simply won’t be part of the schema going forward.
 
 
-Configuration you need (Backend/.env)
-Required
-- GEMINI_API_KEY=...  (used by Backend/controller/ai.controller.js)
-
-Optional
-- GEMINI_MODEL=gemini-2.5-flash (or another available model name)
-- PUBLIC_SERVER_URL=http://localhost:8000  (helps resolve /uploads/... image URLs)
-- AI_IMAGE_ALLOW_ORIGINS=https://your-cdn-origin.com (comma-separated allowlist)
-
-Optional web search + seller summaries
-- AI_SEARCH_PROVIDER=serpapi
-- SERPAPI_API_KEY=...
-- AI_SELLER_ALLOW_DOMAINS=jumia.com,konga.com,amazon.com (example; comma-separated)
-	(or use AI_SELLER_ALLOW_ORIGINS with full origins)
+4) Backend: removed Stripe dependency
+- File: Backend/package.json
+	- Removed dependency: "stripe"
+- Then ran:
+	- cd Backend
+	- npm install
+	This updated the lockfile + removed the Stripe package from node_modules.
 
 
-Important note about “Backend/utils/gemini.js”
-- There is also a file Backend/utils/gemini.js using @google/generative-ai and reading gemini-credentials.json.
-- The current AI endpoints (/ai/chat and /ai/description) do NOT import or use this file; they use the REST API + GEMINI_API_KEY instead.
-- So gemini-credentials.json currently looks like a local credential artifact and should stay untracked/not committed.
+5) Frontend: disabled Stripe checkout call
+- File: frontend/src/pages/Cart.jsx
+	- Removed the Axios call to Stripe checkout session:
+		userRequest.post("/stripe/create-checkout-session", ...)
+	- Replaced the checkout action with a simple toast:
+		“Checkout is temporarily unavailable. Paystack is coming soon.”
+
+Why
+- Once the backend Stripe routes were removed, the old frontend checkout call would fail.
+- This keeps the UI working while you postpone payment integration.
 
 
-Unwired middleware
-- Backend/middleware/optionalAuth.middleware.js and Backend/middleware/rateLimit.middleware.js exist, but they are not currently applied to the /api/V1/ai routes.
-- If you want them active, they must be mounted in Backend/app.js or applied in Backend/routes/ai.route.js.
+Verification performed
+- Confirmed Stripe files were gone from Backend/routes and Backend/models.
+- Reinstalled backend dependencies after removing Stripe.
+- Checked for editor diagnostics on key changed files (no errors reported).
+
+
+What’s next (when you start Paystack)
+- Decide whether you want:
+	- server-generated Paystack transaction initialization (recommended), OR
+	- client-only Paystack (less control).
+- Add a new backend route like:
+	POST /api/V1/payments/paystack/initialize
+	and update Cart checkout to call it.
 

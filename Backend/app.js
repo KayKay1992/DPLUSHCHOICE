@@ -13,15 +13,9 @@ import bannerRoutes from "./routes/banner.route.js";
 import userRoutes from "./routes/user.route.js";
 import orderRoutes from "./routes/order.route.js";
 import aiRoutes from "./routes/ai.route.js";
-import stripeRoutes from "./routes/stripe.js";
 import reviewRoutes from "./routes/review.route.js";
 
 const app = express();
-
-/**
- * 🔥 STRIPE WEBHOOK MUST COME FIRST (RAW BODY)
- */
-app.use("/api/V1/stripe/webhook", express.raw({ type: "application/json" }));
 
 /**
  * CORS
@@ -77,7 +71,6 @@ app.use("/api/V1/users", userRoutes);
 app.use("/api/V1/orders", orderRoutes);
 app.use("/api/V1/reviews", reviewRoutes);
 app.use("/api/V1/ai", aiRoutes);
-app.use("/api/V1/stripe", stripeRoutes);
 
 /**
  * ERRORS
