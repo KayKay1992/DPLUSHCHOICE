@@ -25,3 +25,7 @@ dist-ssr
 
 # environment files
 .env
+
+# Gemini service account / credentials (DO NOT COMMIT)
+Backend/gemini-credentials.json
+**/gemini-credentials.json

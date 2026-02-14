@@ -1,153 +1,146 @@
 
-ORDER TRACKING (TIMELINE) + TRACKING NUMBER (IMPLEMENTATION NOTES)
-=================================================================
+AI Product Helper (Gemini) — Implementation Notes (Feb 2026)
 
-Goal
-----
-- Show a clear order tracking timeline:
-	Pending → Processing → Shipped → Delivered
-- Each step should show a date/time when it happened.
-- Admin can update:
-	- the shipping step (timeline status)
-	- courier name
-	- tracking number
-- Users can see the timeline + tracking info on the Order page.
+What you implemented
+- A frontend “Ask AI” quick chat on the Product Details page.
+- Backend AI endpoints under /api/V1/ai:
+	1) POST /description → generates a product description from title + (optional) image
+	2) POST /chat → answers product/shopping questions using product context
 
 
-1) Data model changes (Backend)
-------------------------------
+Frontend flow (UI → API)
+1) UI entry point
+- The chat widget is implemented as frontend/src/components/AiQuickChat.jsx.
+- It’s mounted inside frontend/src/pages/ProductDetails.jsx.
 
-File:
-- Backend/models/order.model.js
+2) ProductDetails builds the AI context
+- ProductDetails creates an object called aiContext via useMemo.
+- Context includes:
+	- type: "product"
+	- product: {_id, title, desc, img/images, categories, prices, stock, currency}
+	- selection: {quantity, isWholesaleActive, unitPrice}
 
-We kept the existing `status` field for backward compatibility, but added a richer shipping timeline:
-
-New fields:
-- shippingStatus (Number)
-	- 0 = Pending
-	- 1 = Processing
-	- 2 = Shipped
-	- 3 = Delivered
-
-- processingAt (Date)
-- shippedAt (Date)
-- deliveredAt (Date)
-
-- trackingCarrier (String)
-- trackingNumber (String)
-
-Why we kept the old `status`:
-- Existing code was using `status === 1` as “Completed/Delivered” and `status === 0` as “Pending”.
-- Keeping it prevents breaking existing pages while we introduce the timeline.
+3) AiQuickChat sends chat requests
+- AiQuickChat uses the Axios instance userRequest (frontend/src/requestMethods.js), which targets:
+	BASE_URL = http://localhost:8000/api/V1/
+- On Send, it POSTs:
+	POST http://localhost:8000/api/V1/ai/chat
+	body: { message: "...", context: aiContext }
+- The component appends user + assistant messages to its local state.
+- Error handling: if backend returns {message,hint,details}, it shows them in the chat.
 
 
-2) Backend update logic (Admin-only)
------------------------------------
+Backend routing
+1) Routes registration
+- Backend/app.js mounts the AI router at:
+	app.use("/api/V1/ai", aiRoutes)
 
-File:
-- Backend/controller/order.controller.js
-
-Key behavior added to updateOrder:
-
-A) Admin-only updates
-- Updating an order (status/tracking) is now restricted to admin users.
-- We check `req.user.role` and allow only roles like:
-	admin / superadmin (also accepts super-admin).
-
-B) Backward compatibility mapping
-- If the old admin UI sends `status: 0/1`, we map it to the new shippingStatus:
-	- status=0 → shippingStatus=0 (Pending)
-	- status=1 → shippingStatus=3 (Delivered)
-
-C) Keep legacy `status` in sync
-- When shippingStatus changes:
-	- if shippingStatus == 3 (Delivered) → status = 1
-	- otherwise → status = 0
-
-D) Automatic timeline dates
-- When shippingStatus moves forward, the backend sets milestone timestamps:
-	- shippingStatus >= 1 sets processingAt (if missing)
-	- shippingStatus >= 2 sets shippedAt (if missing)
-	- shippingStatus >= 3 sets deliveredAt (if missing)
-
-Important:
-- We load the existing order first and only set these dates if they are not already set.
-- This prevents overwriting real historical timestamps when admin updates again.
+2) AI router
+- Backend/routes/ai.route.js defines:
+	- POST /description (multipart) using multer memory storage upload.single("image")
+	- POST /chat (JSON)
 
 
-3) Admin UI (Update status + tracking)
--------------------------------------
+Backend AI controller: how replies are generated
+All logic is in Backend/controller/ai.controller.js.
 
-File:
-- admin/src/pages/Orders.jsx
+High-level design
+- Gemini is called via the Gemini REST API using an API key.
+- The controller is defensive:
+	- validates the prompt is product-related
+	- blocks obviously disallowed prompts (basic keyword check)
+	- supports “fallback mode” when Gemini quota is 0 / key is expired
+	- optionally attaches a product image when the user asks for visual/quality details
+	- optionally fetches and summarizes other-seller pages, but only from allowlisted domains
 
-What was added:
-- A 4-step shipping status dropdown per order:
-	Pending / Processing / Shipped / Delivered
+Core pieces
+1) callGemini({ message, context, mediaParts })
+- Builds a strict system prompt (shopping-only, evidence-based, no guessing).
+- Uses GEMINI_API_KEY from environment.
+- Chooses a model:
+	- lists available models from the API and caches them ~10 minutes
+	- uses GEMINI_MODEL if set + available; otherwise picks a preferred “flash/pro” model
+- Sends POST to:
+	https://generativelanguage.googleapis.com/v1/<model>:generateContent
+- Returns { reply, modelUsed }.
 
-- Two new editable columns:
-	- Courier (trackingCarrier)
-	- Tracking # (trackingNumber)
+2) POST /description (generateDescription)
+Request inputs
+- Required: title (req.body.title)
+- Optional image input:
+	- either a file upload “image” (multipart/form-data)
+	- or a URL (req.body.imageUrl)
 
-- A “Save tracking” button per row that calls:
-	PUT /api/V1/orders/:id
-	with { trackingCarrier, trackingNumber }
+Behavior
+- Builds a prompt that asks for:
+	- 1 short description
+	- 1 detailed description
+	- 5 bullet highlights
+- If Gemini is not configured (missing GEMINI_API_KEY) → returns 500.
+- If Gemini is temporarily blocked (quota/key issues detected) → returns a safe generic fallback description.
+- If an image is available, it is added as inline_data (base64) for Gemini.
 
-Status display:
-- Admin table now uses shippingStatus if it exists.
-- If shippingStatus is missing (older orders), it falls back to legacy status:
-	status=1 → Delivered (shippingStatus=3)
-	otherwise → Pending (shippingStatus=0)
+3) POST /chat (productHelperChat)
+Request inputs
+- Required: message (string)
+- Optional: context (object), sources (links)
 
+Validations / safety
+- message must exist, and must be <= 800 chars
+- blocks some disallowed keywords (hack/steal/otp/etc)
+- if the question is not likely product/shopping related, it returns a 400 with a “shopping only” message
 
-4) User UI (Timeline on Order page)
-----------------------------------
+Image attachment (for better product answers)
+- If the message looks like it needs visual info (e.g., “describe”, “color”, “material”, etc.) OR description is too thin:
+	- controller tries to pull product images from context.product.img / context.product.images
+	- fetches the image (only from allowed origins) and passes it as inline_data to Gemini
+- It also normalizes “/uploads/…” URLs to a public URL using PUBLIC_SERVER_URL or localhost fallback.
 
-File:
-- frontend/src/pages/Order.jsx
+Optional “other sellers” summary
+- If the user asks for “other sellers / from the internet / compare”:
+	- it can use either:
+		(a) user-provided source URLs
+		(b) title-based search via SerpAPI (if enabled)
+- It fetches seller pages ONLY if allowlisted using:
+	- AI_SELLER_ALLOW_DOMAINS or AI_SELLER_ALLOW_ORIGINS
+- It extracts:
+	- <title>
+	- meta description
+	- a short plain-text snippet
+- These extracts are added to context as externalSellerExtracts and Gemini is instructed to paraphrase (avoid copying).
 
-What was added:
-- A timeline component section that renders 4 steps with:
-	- label (Pending/Processing/Shipped/Delivered)
-	- date/time (if completed)
-
-Which dates are shown:
-- Pending uses order.createdAt
-- Processing uses order.processingAt
-- Shipped uses order.shippedAt
-- Delivered uses order.deliveredAt (or order.updatedAt as a fallback if delivered)
-
-Tracking details:
-- If trackingCarrier or trackingNumber exists, we show them under the timeline.
-
-Backward compatibility:
-- If shippingStatus doesn’t exist on an order, we fall back to:
-	status=1 → shippingStatus=3
-	otherwise → shippingStatus=0
-
-
-5) User Account “Order History” status badge
---------------------------------------------
-
-File:
-- frontend/src/pages/MyAccount.jsx
-
-Change:
-- The status badge now displays the shipping step:
-	Pending / Processing / Shipped / Delivered
-- Same fallback behavior for older orders (status → shippingStatus mapping).
+Fallback mode (circuit breaker)
+- The controller detects common Gemini failures like:
+	- 429 with “limit: 0” or quota text
+	- 400 “API key expired”
+- When detected, it temporarily “blocks” Gemini calls for a few minutes and returns:
+	- a fallback description (for /description)
+	- a fallback chat reply (for /chat) based on the product context + user question
 
 
-6) How to test
---------------
+Configuration you need (Backend/.env)
+Required
+- GEMINI_API_KEY=...  (used by Backend/controller/ai.controller.js)
 
-1) Place an order (it will start as Pending).
-2) In Admin → Orders:
-	 - Change shipping status to Processing, then Shipped, then Delivered.
-	 - Fill Courier + Tracking # and click Save tracking.
-3) On the user side:
-	 - Open the Order page and confirm:
-		 - timeline updates correctly
-		 - dates appear when steps are completed
-		 - courier + tracking number appear
+Optional
+- GEMINI_MODEL=gemini-2.5-flash (or another available model name)
+- PUBLIC_SERVER_URL=http://localhost:8000  (helps resolve /uploads/... image URLs)
+- AI_IMAGE_ALLOW_ORIGINS=https://your-cdn-origin.com (comma-separated allowlist)
+
+Optional web search + seller summaries
+- AI_SEARCH_PROVIDER=serpapi
+- SERPAPI_API_KEY=...
+- AI_SELLER_ALLOW_DOMAINS=jumia.com,konga.com,amazon.com (example; comma-separated)
+	(or use AI_SELLER_ALLOW_ORIGINS with full origins)
+
+
+Important note about “Backend/utils/gemini.js”
+- There is also a file Backend/utils/gemini.js using @google/generative-ai and reading gemini-credentials.json.
+- The current AI endpoints (/ai/chat and /ai/description) do NOT import or use this file; they use the REST API + GEMINI_API_KEY instead.
+- So gemini-credentials.json currently looks like a local credential artifact and should stay untracked/not committed.
+
+
+Unwired middleware
+- Backend/middleware/optionalAuth.middleware.js and Backend/middleware/rateLimit.middleware.js exist, but they are not currently applied to the /api/V1/ai routes.
+- If you want them active, they must be mounted in Backend/app.js or applied in Backend/routes/ai.route.js.
 

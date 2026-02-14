@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { FaMinus, FaPlus } from "react-icons/fa";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
@@ -12,6 +12,7 @@ import { getWishlistIds, toggleWishlistId } from "../utils/wishlistStorage";
 import { addRecentlyViewedId } from "../utils/recentlyViewedStorage";
 import RecentlyViewedSection from "../components/RecentlyViewedSection";
 import RecommendedProductsSection from "../components/RecommendedProductsSection";
+import AiQuickChat from "../components/AiQuickChat";
 
 const ProductDetails = () => {
   const { productId } = useParams();
@@ -60,6 +61,45 @@ const ProductDetails = () => {
     fetchProduct();
     fetchReviews();
   }, [productId]);
+
+  const aiContext = useMemo(() => {
+    const safeProduct = product && typeof product === "object" ? product : null;
+    const wholesaleActive =
+      Boolean(
+        safeProduct?.wholesalePrice &&
+          safeProduct?.wholesaleMinimumQuantity &&
+          quantity >= safeProduct.wholesaleMinimumQuantity
+      ) || false;
+
+    const unitPrice = safeProduct
+      ? wholesaleActive
+        ? safeProduct.wholesalePrice
+        : safeProduct.discountPrice || safeProduct.originalPrice
+      : undefined;
+
+    return {
+      type: "product",
+      product: {
+        _id: safeProduct?._id || productId,
+        title: safeProduct?.title,
+        desc: safeProduct?.desc,
+        img: safeProduct?.img,
+        images: safeProduct?.img ? [safeProduct.img] : [],
+        categories: safeProduct?.categories,
+        originalPrice: safeProduct?.originalPrice,
+        discountPrice: safeProduct?.discountPrice,
+        wholesalePrice: safeProduct?.wholesalePrice,
+        wholesaleMinimumQuantity: safeProduct?.wholesaleMinimumQuantity,
+        stock: safeProduct?.stock,
+        currency: "NGN",
+      },
+      selection: {
+        quantity,
+        isWholesaleActive: wholesaleActive,
+        unitPrice,
+      },
+    };
+  }, [product, productId, quantity]);
 
   if (loading) {
     return (
@@ -449,6 +489,10 @@ const ProductDetails = () => {
                   {inWishlist ? <FaHeart /> : <FaRegHeart />}
                   <span>{inWishlist ? "Saved" : "Save"}</span>
                 </button>
+              </div>
+
+              <div className="mb-8">
+                <AiQuickChat buttonLabel="Ask AI" context={aiContext} />
               </div>
             </div>
 
