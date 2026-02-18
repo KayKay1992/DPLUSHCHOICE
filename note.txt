@@ -1,75 +1,195 @@
 
-Stripe Removal Notes (Feb 14, 2026)
+Paystack Integration Notes (Step-by-step)
+Date: Feb 2026
 
 Goal
-- Remove Stripe completely (including webhook implementation) so the project can later adopt Paystack.
+- Replace Stripe checkout/webhook with Paystack.
+- Make payment flow work end-to-end:
+	Cart → Initialize Paystack → Paystack checkout → Redirect back → Verify → Create Order + Reduce Stock
+- Prevent double-order creation and double stock reduction (idempotency).
 
 
-What I removed/changed
+1) Backend: Added Paystack routes + raw webhook body
 
-1) Backend: removed Stripe webhook + routes wiring
+1.1 Create a Paystack router
+- File: Backend/routes/paystack.route.js
+- Routes added:
+	- POST /api/V1/paystack/initialize (protected)
+	- GET  /api/V1/paystack/verify/:reference (protected)
+	- POST /api/V1/paystack/webhook (public; signature verified)
+
+1.2 Mount the Paystack routes
 - File: Backend/app.js
-	- Removed the “Stripe webhook must come first (raw body)” middleware:
-		app.use("/api/V1/stripe/webhook", express.raw({ type: "application/json" }))
-	- Removed the Stripe routes import/mount:
-		- import stripeRoutes from "./routes/stripe.js"
-		- app.use("/api/V1/stripe", stripeRoutes)
+- Added:
+	- app.use("/api/V1/paystack", paystackRoutes)
 
-Why this matters
-- Stripe webhooks often require raw request body; since Stripe is gone, we no longer need the special raw-body ordering.
+1.3 Add raw-body parsing ONLY for Paystack webhook
+- File: Backend/app.js
+- Added:
+	- app.use("/api/V1/paystack/webhook", express.raw({ type: "application/json" }))
 
-
-2) Backend: deleted Stripe implementation files
-- Deleted: Backend/routes/stripe.js
-	- This file contained:
-		- POST /stripe/create-checkout-session
-		- POST /stripe/webhook
-- Deleted: Backend/models/stripeSession.model.js
-	- This model was used as an idempotency lock for webhook processing.
+Why raw-body matters
+- Paystack webhook signature validation requires hashing the exact raw request body.
+- If we used express.json() before the webhook route, the raw payload would be lost.
 
 
-3) Backend: removed Stripe-specific data from the Order schema
+2) Backend: Implemented Paystack controller logic
+
+2.1 Created the Paystack controller
+- File: Backend/controller/paystack.controller.js
+- Uses Paystack REST API:
+	- POST https://api.paystack.co/transaction/initialize
+	- GET  https://api.paystack.co/transaction/verify/:reference
+
+2.2 Configuration required
+- Env var: PAYSTACK_SECRET_KEY (test or live secret key)
+	- Controller reads PAYSTACK_SECRET_KEY (or PAYSTACK_SECRET as fallback)
+- Env var: CLIENT_URL (frontend base URL) for callback redirect
+
+2.3 Initialize payment: POST /paystack/initialize
+What happens
+- Frontend sends cart summary: { cart: { products, quantity, total } }
+- Backend DOES NOT trust frontend prices.
+- Backend recomputes the cart using the Product database:
+	- Loads each product by id
+	- Calculates unit price (discount/wholesale rules)
+	- Builds a normalized products list
+	- Computes total
+- Converts total to kobo (NGN * 100).
+- Creates a unique reference like: DPLUSH_<timestamp>_<random>
+- Calls Paystack initialize API with:
+	- email
+	- amount
+	- reference
+	- callback_url = <CLIENT_URL>/paystack/callback
+	- metadata = userId, cart snapshot, address/phone/name/email
+- Returns authorization_url to the frontend.
+
+Why metadata is used
+- After successful payment, we need enough info to create the order.
+- We put cart + user info into metadata so verify/webhook can create the order safely.
+
+2.4 Verify payment: GET /paystack/verify/:reference
+What happens
+- Called by the frontend callback page after Paystack redirect.
+- Backend calls Paystack verify API.
+- If payment status is success:
+	- Creates the order (if it does not already exist)
+	- Reduces stock
+	- Returns { status: processed, order }
+- If payment is not success:
+	- Returns { status: not_success }
+
+
+3) Backend: Added idempotency (no double orders)
+
+3.1 Added a PaystackTransaction lock model
+- File: Backend/models/paystackTransaction.model.js
+- Stores:
+	- reference (unique)
+	- status: processing / processed / failed
+
+3.2 Added payment fields to Order
 - File: Backend/models/order.model.js
-	- Removed the field:
-		stripeSessionId
-	- Reason: it only existed to trace Stripe checkout sessions and enforce idempotency.
+- Added:
+	- paymentProvider
+	- paymentReference (unique)
+	- paymentStatus
+	- paidAt
 
-Important note
-- If you already have existing orders in MongoDB with stripeSessionId saved, removing the schema field won’t delete the data in Mongo; it simply won’t be part of the schema going forward.
+How idempotency works
+- Order creation is guarded by:
+	1) Order.paymentReference being unique
+	2) PaystackTransaction lock per reference
+- This prevents:
+	- duplicate order records
+	- stock being reduced twice
+	(important because verify endpoint and webhook can both run)
 
 
-4) Backend: removed Stripe dependency
-- File: Backend/package.json
-	- Removed dependency: "stripe"
-- Then ran:
-	- cd Backend
-	- npm install
-	This updated the lockfile + removed the Stripe package from node_modules.
+4) Backend: Webhook handling (production-safe)
+
+4.1 Webhook endpoint
+- Route: POST /api/V1/paystack/webhook
+
+4.2 Signature validation
+- The controller reads header:
+	x-paystack-signature
+- It computes HMAC-SHA512(secret, rawBody) and compares.
+- If mismatch: returns 401.
+
+4.3 Event processing
+- Only processes event "charge.success".
+- Uses the reference and metadata to create an order exactly once.
+- Returns 200 OK so Paystack stops retrying.
+- On failure: returns 500 so Paystack retries.
 
 
-5) Frontend: disabled Stripe checkout call
+5) Frontend: Wire Cart checkout to Paystack
+
+5.1 Cart calls initialize
 - File: frontend/src/pages/Cart.jsx
-	- Removed the Axios call to Stripe checkout session:
-		userRequest.post("/stripe/create-checkout-session", ...)
-	- Replaced the checkout action with a simple toast:
-		“Checkout is temporarily unavailable. Paystack is coming soon.”
+- On “Proceed to Checkout”:
+	- POST /api/V1/paystack/initialize (Axios baseURL already includes /api/V1)
+	- Receives authorization_url
+	- Redirects browser to Paystack checkout
 
-Why
-- Once the backend Stripe routes were removed, the old frontend checkout call would fail.
-- This keeps the UI working while you postpone payment integration.
-
-
-Verification performed
-- Confirmed Stripe files were gone from Backend/routes and Backend/models.
-- Reinstalled backend dependencies after removing Stripe.
-- Checked for editor diagnostics on key changed files (no errors reported).
+Note
+- This route is protected; user must be logged in.
 
 
-What’s next (when you start Paystack)
-- Decide whether you want:
-	- server-generated Paystack transaction initialization (recommended), OR
-	- client-only Paystack (less control).
-- Add a new backend route like:
-	POST /api/V1/payments/paystack/initialize
-	and update Cart checkout to call it.
+6) Frontend: Paystack callback page
+
+6.1 Created callback page
+- File: frontend/src/pages/PaystackCallback.jsx
+- On load:
+	- reads URL query param: ?reference=...
+	- calls GET /api/V1/paystack/verify/:reference
+	- if processed/already_processed:
+		- clears cart
+		- navigates to /myorders
+	- if not_success:
+		- navigates back to /cart
+
+6.2 Added route for callback
+- File: frontend/src/App.jsx
+- Added route:
+	/paystack/callback (ProtectedRoute)
+
+
+7) Auth fix required for localhost
+
+Problem encountered
+- Paystack initialize returned 401 because auth cookie wasn’t being set/sent on http://localhost.
+- Cause: cookie was configured as secure in non-development environments.
+
+Fix
+- File: Backend/utils/generateToken.js
+	- secure: true only in production
+	- sameSite: "lax" in dev, "none" in production
+- File: Backend/controller/auth.controller.js
+	- logout clears cookie using matching secure/sameSite options
+
+
+8) Environment variables (minimum)
+
+Backend/.env
+- PAYSTACK_SECRET_KEY=sk_test_...   (use test key for local testing)
+- CLIENT_URL=http://localhost:5173
+
+
+How to test (local)
+1) Login on frontend.
+2) Add items to cart.
+3) Click “Proceed to Checkout”.
+4) On Paystack test checkout, choose “Card” and click “Success”.
+5) Verify it redirects to /paystack/callback and then to /myorders.
+
+
+What to do before going live
+- Set CLIENT_URL to your real deployed frontend URL.
+- Use PAYSTACK_SECRET_KEY=sk_live_...
+- Add Paystack Dashboard webhook URL:
+	https://<your-backend-domain>/api/V1/paystack/webhook
+- Update Backend/app.js CORS origins to include your real frontend domain.
 

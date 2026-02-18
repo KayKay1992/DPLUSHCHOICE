@@ -57,6 +57,27 @@ const OrderSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    // Payment tracking (Paystack for now; keep generic for future providers)
+    paymentProvider: {
+      type: String,
+      default: "",
+      index: true,
+    },
+    paymentReference: {
+      type: String,
+      index: true,
+      unique: true,
+      sparse: true,
+    },
+    paymentStatus: {
+      type: String,
+      default: "",
+      index: true,
+    },
+    paidAt: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );

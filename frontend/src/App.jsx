@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ProductList from "./pages/ProductList";
 import Order from "./pages/Order";
+import PaystackCallback from "./pages/PaystackCallback";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Wishlist from "./pages/Wishlist";
 import { useEffect } from "react";
@@ -107,6 +108,14 @@ function App() {
           element: (
             <ProtectedRoute>
               <Order />
+            </ProtectedRoute>
+          ),
+        },
+        {
+          path: "/paystack/callback",
+          element: (
+            <ProtectedRoute>
+              <PaystackCallback />
             </ProtectedRoute>
           ),
         },

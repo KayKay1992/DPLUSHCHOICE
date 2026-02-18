@@ -14,8 +14,14 @@ import userRoutes from "./routes/user.route.js";
 import orderRoutes from "./routes/order.route.js";
 import aiRoutes from "./routes/ai.route.js";
 import reviewRoutes from "./routes/review.route.js";
+import paystackRoutes from "./routes/paystack.route.js";
 
 const app = express();
+
+/**
+ * Paystack webhook needs raw body to validate x-paystack-signature
+ */
+app.use("/api/V1/paystack/webhook", express.raw({ type: "application/json" }));
 
 /**
  * CORS
@@ -71,6 +77,7 @@ app.use("/api/V1/users", userRoutes);
 app.use("/api/V1/orders", orderRoutes);
 app.use("/api/V1/reviews", reviewRoutes);
 app.use("/api/V1/ai", aiRoutes);
+app.use("/api/V1/paystack", paystackRoutes);
 
 /**
  * ERRORS

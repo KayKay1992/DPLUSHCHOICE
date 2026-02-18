@@ -9,6 +9,7 @@ import {
   updateProductQuantity,
 } from "../redux/cartRedux";
 import { toast, ToastContainer } from "react-toastify";
+import { userRequest } from "../requestMethods";
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -25,13 +26,39 @@ const Cart = () => {
   };
 
   const handleCheckout = async () => {
-    toast.info(
-      "Checkout is temporarily unavailable. Paystack is coming soon.",
-      {
-        position: "top-right",
-        autoClose: 3000,
+    try {
+      if (!currentUser?._id) {
+        toast.info("Please login to checkout", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+        navigate("/login");
+        return;
       }
-    );
+
+      const res = await userRequest.post("/paystack/initialize", {
+        cart: { products, quantity, total },
+      });
+
+      const url = res?.data?.authorization_url;
+      if (!url) {
+        toast.error("Payment initialization failed. Please try again.", {
+          position: "top-right",
+          autoClose: 3000,
+        });
+        return;
+      }
+
+      window.location.href = url;
+    } catch (e) {
+      const data = e?.response?.data;
+      const msg =
+        data?.message || data?.error || e?.message || "Checkout failed";
+      toast.error(msg, {
+        position: "top-right",
+        autoClose: 3500,
+      });
+    }
   };
 
   const handleRemoveProduct = (productId) => {
