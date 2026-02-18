@@ -1,11 +1,13 @@
 import { useEffect } from "react";
 import { useState } from "react";
 import { userRequest } from "../requestMethods";
+import { useNavigate } from "react-router-dom";
 
 const Banner = () => {
   const [banner, setBanner] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Fetch banner data from backend API if needed
@@ -52,11 +54,14 @@ const Banner = () => {
             products, designed to enhance your natural glow and confidence.
           </h1>
           <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto justify-center">
-            <button className="bg-linear-to-r from-fuchsia-500 via-pink-400 to-pink-500 px-8 py-3 rounded-full text-white font-bold shadow-lg hover:scale-105 hover:from-fuchsia-600 hover:to-pink-600 transition-all duration-300">
+            <button
+              onClick={() => navigate("/products")}
+              className="bg-linear-to-r from-fuchsia-500 via-pink-400 to-pink-500 px-8 py-3 rounded-full text-white font-bold shadow-lg hover:scale-105 hover:from-fuchsia-600 hover:to-pink-600 transition-all duration-300"
+            >
               Shop Now
             </button>
             <button className="bg-white px-8 py-3 rounded-full text-fuchsia-600 font-bold shadow-lg border-2 border-fuchsia-200 hover:bg-gray-100 hover:text-fuchsia-700 transition-all duration-300">
-              Call Us: +2348123456789
+              Call Us: +2347040334276
             </button>
           </div>
         </div>
@@ -82,11 +87,14 @@ const Banner = () => {
             "Elevate your beauty routine with our curated selection of top-tier products, designed to enhance your natural glow and confidence."}
         </h1>
         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto justify-center">
-          <button className="bg-linear-to-r from-fuchsia-500 via-pink-400 to-pink-500 px-8 py-3 rounded-full text-white font-bold shadow-lg hover:scale-105 hover:from-fuchsia-600 hover:to-pink-600 transition-all duration-300">
+          <button
+            onClick={() => navigate("/products")}
+            className="bg-linear-to-r from-fuchsia-500 via-pink-400 to-pink-500 px-8 py-3 rounded-full text-white font-bold shadow-lg hover:scale-105 hover:from-fuchsia-600 hover:to-pink-600 transition-all duration-300"
+          >
             Shop Now
           </button>
           <button className="bg-white px-8 py-3 rounded-full text-fuchsia-600 font-bold shadow-lg border-2 border-fuchsia-200 hover:bg-gray-100 hover:text-fuchsia-700 transition-all duration-300">
-            Call Us: +2348123456789
+            Call Us: +2347040334276
           </button>
         </div>
       </div>

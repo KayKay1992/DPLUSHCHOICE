@@ -13,6 +13,8 @@ import Order from "./pages/Order";
 import PaystackCallback from "./pages/PaystackCallback";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Wishlist from "./pages/Wishlist";
+import AboutUs from "./pages/AboutUs";
+import ContactUs from "./pages/ContactUs";
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setCurrentUser } from "./redux/cartRedux";
@@ -94,6 +96,14 @@ function App() {
         {
           path: "/wishlist",
           element: <Wishlist />,
+        },
+        {
+          path: "/about",
+          element: <AboutUs />,
+        },
+        {
+          path: "/contact",
+          element: <ContactUs />,
         },
         {
           path: "/myorders",

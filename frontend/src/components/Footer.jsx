@@ -1,5 +1,14 @@
 import React from "react";
 import { FaInstagram, FaTiktok, FaWhatsapp, FaFacebook } from "react-icons/fa";
+import { Link } from "react-router-dom";
+
+const QUICK_LINKS = [
+  { label: "Home", to: "/" },
+  { label: "About Us", to: "/about" },
+  { label: "Contact Us", to: "/contact" },
+  { label: "Products", to: "/products" },
+  { label: "Categories", to: "/products" },
+];
 
 const Footer = () => {
   return (
@@ -26,18 +35,16 @@ const Footer = () => {
               Quick Links
             </h3>
             <ul className="space-y-3">
-              {["Home", "About Us", "Contact Us", "Products", "Categories"].map(
-                (link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
-                      className="text-gray-300 hover:text-pink-400 transition-colors duration-300 transform hover:translate-x-2 inline-block"
-                    >
-                      {link}
-                    </a>
-                  </li>
-                )
-              )}
+              {QUICK_LINKS.map((link) => (
+                <li key={link.label}>
+                  <Link
+                    to={link.to}
+                    className="text-gray-300 hover:text-pink-400 transition-colors duration-300 transform hover:translate-x-2 inline-block"
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -53,7 +60,7 @@ const Footer = () => {
               </p>
               <p>
                 <span className="font-semibold text-pink-400">Email:</span>{" "}
-                1xH0A@example.com
+                dplushchoice@gmail.com
               </p>
               <p>
                 <span className="font-semibold text-pink-400">Phone:</span>{" "}

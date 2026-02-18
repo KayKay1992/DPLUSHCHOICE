@@ -1,105 +1,99 @@
 
-Cloudinary Migration Notes (Client Account)
+Frontend UI Updates (Banner + Footer + About/Contact)
 Date: Feb 2026
 
 Goal
-- Move admin image uploads from the old Cloudinary account (hard-coded cloud name) to the client’s new Cloudinary account.
-- Keep uploads working without exposing Cloudinary API secrets in the frontend.
-- Add basic protection against large/non-image uploads (2MB max) because Cloudinary-side restrictions were not available in the dashboard UI.
-- Store uploads inside a specific folder: dplushchoice/products
+1) Banner section
+- When "Shop Now" is clicked, navigate to the Products page.
+- Update the displayed phone number to: +2347040334276
+
+2) Footer section
+- Create an About Us page and navigate to it from the footer.
+- Create a Contact Us page and navigate to it from the footer.
+- Navigate to Products page when clicking Products in the footer.
+- Update footer email to: dplushchoice@gmail.com
+
+3) Contact Us page
+- Add the social media links (Instagram, TikTok, WhatsApp, Facebook).
 
 
-1) What we found (before)
-Cloudinary was hard-coded in the admin UI.
+1) Banner: Shop Now → /products and phone update
+File updated
+- frontend/src/components/Banner.jsx
 
-Where
-- admin/src/pages/NewProduct.jsx
-- admin/src/pages/Product.jsx
-- admin/src/pages/Banners.jsx
-
-What was hard-coded
-- Upload URL (old cloud name):
-	https://api.cloudinary.com/v1_1/<cloud_name>/image/upload
-- Upload preset:
-	upload_preset = "uploads"
-
-
-2) What we changed (account migration)
-We replaced the hard-coded Cloudinary URL with an env-based URL.
-
-How it works now
-- Upload URL is built like:
-	https://api.cloudinary.com/v1_1/<cloud_name>/image/upload
-- cloud_name comes from Vite env var:
-	VITE_CLOUDINARY_CLOUD_NAME
-- upload preset comes from Vite env var:
-	VITE_CLOUDINARY_UPLOAD_PRESET
-
-Client cloud name
-- dwzdlml8c
-
-Why we do NOT use API key/secret in admin
-- The admin app is frontend code, so anything in it is visible to users.
-- With unsigned uploads, the frontend only needs cloud_name + preset name.
-- Cloudinary API secret must never be placed in frontend code.
-
-
-3) Force uploads into a project folder
-We added a Cloudinary "folder" value into the upload FormData.
-
-How it works now
-- Each upload sends:
-	folder = VITE_CLOUDINARY_FOLDER
-- Default folder:
-	dplushchoice/products
+What changed
+- Imported useNavigate from react-router-dom.
+- Created navigate = useNavigate() inside the Banner component.
+- Added an onClick handler to both "Shop Now" buttons (fallback banner + API banner) so they do:
+	navigate("/products")
+- Updated "Call Us" text to show the new phone number:
+	+2347040334276
 
 Why
-- Keeps the client Cloudinary account organized specifically for this project.
+- This keeps navigation inside React Router (no page reload) and ensures the CTA always takes the user to the product listing.
 
 
-4) Added client-side validation (2MB)
-Since preset restrictions were not visible in the Cloudinary UI, we enforced minimum checks in the admin UI before uploading.
+2) Created About Us page
+File added
+- frontend/src/pages/AboutUs.jsx
 
-Validation rules
-- Max size: 2MB
-- Allowed types: JPG/JPEG, PNG, WEBP, AVIF
-	(MIME types: image/jpeg, image/png, image/webp, image/avif)
-
-Behavior
-- If invalid: show a toast error, clear the selected file, and stop the upload.
+What it contains
+- A simple About Us page with project styling and a short description.
 
 
-5) Env + config files
-Added
-- admin/.env.example
-	VITE_CLOUDINARY_CLOUD_NAME=
-	VITE_CLOUDINARY_UPLOAD_PRESET=
-	VITE_CLOUDINARY_FOLDER=
+3) Created Contact Us page
+File added
+- frontend/src/pages/ContactUs.jsx
 
-Updated
-- admin/.gitignore
-	- ignores .env and .env.*
-
-
-6) Files updated (admin)
-- admin/src/pages/NewProduct.jsx
-	- Uses env vars for cloud name/preset
-	- Adds folder to uploads
-	- Adds 2MB + image-type validation
-- admin/src/pages/Product.jsx
-	- Uses env vars for cloud name/preset
-	- Adds folder to uploads
-	- Adds 2MB + image-type validation
-- admin/src/pages/Banners.jsx
-	- Uses env vars for cloud name/preset
-	- Adds folder to uploads
-	- Adds 2MB + image-type validation
+What it contains
+- Business address
+- Email link:
+	mailto:dplushchoice@gmail.com
+- Phone link:
+	tel:+2347040334276
+- Social media icons/links (same links as the footer):
+	- Instagram
+	- TikTok
+	- WhatsApp
+	- Facebook
 
 
-How to configure (admin)
-1) In Cloudinary (client account): create an UNSIGNED upload preset named "uploads".
-2) Create admin/.env from admin/.env.example (do not commit it).
-3) Run admin:
-	cd admin
-	npm install
-	npm run dev
+4) Wired routes for About/Contact
+File updated
+- frontend/src/App.jsx
+
+Routes added
+- /about → AboutUs
+- /contact → ContactUs
+
+
+5) Footer: make links navigate correctly + update email
+File updated
+- frontend/src/components/Footer.jsx
+
+What changed
+- Replaced the old Quick Links anchor tags (href="#") with React Router <Link>.
+- Mapped Quick Links to routes:
+	Home → /
+	About Us → /about
+	Contact Us → /contact
+	Products → /products
+	Categories → /products
+- Updated footer email display to:
+	dplushchoice@gmail.com
+
+Why
+- href="#" does not navigate anywhere.
+- Using React Router <Link> gives correct navigation without reload.
+
+
+How to verify
+1) Open the homepage and click Banner "Shop Now" → it should go to /products.
+2) Scroll to the footer:
+	- Click About Us → /about
+	- Click Contact Us → /contact
+	- Click Products → /products
+3) On Contact Us page, confirm:
+	- Email is dplushchoice@gmail.com
+	- Phone is +2347040334276
+	- Social icons open the correct links.
