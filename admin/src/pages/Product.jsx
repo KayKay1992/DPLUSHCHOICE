@@ -7,6 +7,27 @@ import { userRequest } from "../requestMethods";
 import { toast } from "react-toastify";
 import axios from "axios";
 
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+];
+
+const validateImageFile = (file) => {
+  if (!file) return false;
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    toast.error("Only JPG, PNG, WEBP or AVIF images are allowed.");
+    return false;
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    toast.error("Image must be 2MB or less.");
+    return false;
+  }
+  return true;
+};
+
 const Product = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -70,7 +91,14 @@ const Product = () => {
   };
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    if (!validateImageFile(selected)) {
+      e.target.value = "";
+      setFile(null);
+      return;
+    }
+    setFile(selected);
   };
 
   const handleSubmit = async (e) => {
@@ -81,14 +109,28 @@ const Product = () => {
 
       // Upload new image to Cloudinary if selected
       if (file) {
+        if (!validateImageFile(file)) {
+          setFile(null);
+          return;
+        }
+
         setUploading("uploading ...");
 
         const data = new FormData();
         data.append("file", file);
-        data.append("upload_preset", "uploads");
+        data.append(
+          "folder",
+          import.meta.env.VITE_CLOUDINARY_FOLDER || "dplushchoice/products"
+        );
+        data.append(
+          "upload_preset",
+          import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "uploads"
+        );
 
         const uploadRes = await axios.post(
-          "https://api.cloudinary.com/v1_1/dyrteayr3/image/upload",
+          `https://api.cloudinary.com/v1_1/${
+            import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dwzdlml8c"
+          }/image/upload`,
           data
         );
         imageUrl = uploadRes.data.url;

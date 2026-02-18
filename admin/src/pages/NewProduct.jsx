@@ -5,6 +5,27 @@ import { userRequest } from "../requestMethods";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+];
+
+const validateImageFile = (file) => {
+  if (!file) return false;
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    toast.error("Only JPG, PNG, WEBP or AVIF images are allowed.");
+    return false;
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    toast.error("Image must be 2MB or less.");
+    return false;
+  }
+  return true;
+};
+
 const NewProduct = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [input, setInput] = useState({});
@@ -18,9 +39,14 @@ const NewProduct = () => {
   });
 
   const imageChangeHandler = (e) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedImage(e.target.files[0]);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!validateImageFile(file)) {
+      e.target.value = "";
+      setSelectedImage(null);
+      return;
     }
+    setSelectedImage(file);
   };
   const handleSelectChange = (e) => {
     const { name, value } = e.target;
@@ -52,14 +78,27 @@ const NewProduct = () => {
       return;
     }
 
+    if (!validateImageFile(selectedImage)) {
+      return;
+    }
+
     const data = new FormData();
     data.append("file", selectedImage);
-    data.append("upload_preset", "uploads");
+    data.append(
+      "folder",
+      import.meta.env.VITE_CLOUDINARY_FOLDER || "dplushchoice/products"
+    );
+    data.append(
+      "upload_preset",
+      import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "uploads"
+    );
 
     setUploading("uploading ...");
     try {
       const uploadRes = await axios.post(
-        "https://api.cloudinary.com/v1_1/dyrteayr3/image/upload",
+        `https://api.cloudinary.com/v1_1/${
+          import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || "dwzdlml8c"
+        }/image/upload`,
         data
       );
       const { url } = uploadRes.data;
