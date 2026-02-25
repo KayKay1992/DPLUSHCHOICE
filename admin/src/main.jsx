@@ -18,13 +18,15 @@ const isAdminRole = (role) => {
 const bootstrap = async () => {
   try {
     const res = await userRequest.get("/auth/me");
-    if (!isAdminRole(res.data?.role)) {
+    // Only redirect if we got a response and it's clearly not an admin
+    if (res.data && !isAdminRole(res.data?.role)) {
       window.location.replace(clientUrl);
       return;
     }
   } catch (e) {
-    window.location.replace(clientUrl);
-    return;
+    // Network error or not logged in — let the app load and
+    // the route loader will handle auth checking per page
+    console.warn("Auth bootstrap check failed, continuing to app:", e?.message);
   }
 
   createRoot(document.getElementById("root")).render(

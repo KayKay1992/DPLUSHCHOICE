@@ -54,7 +54,11 @@ const Products = () => {
         return (
           <div className="flex items-center justify-center py-2">
             <img
-              src={`${getImgUrl(params.row.img)}${params.row.img && !params.row.img.startsWith("http") ? "" : "?t=" + Date.now()}`}
+              src={`${getImgUrl(params.row.img)}${
+                params.row.img && !params.row.img.startsWith("http")
+                  ? ""
+                  : "?t=" + Date.now()
+              }`}
               alt=""
               className="h-12 w-12 rounded-xl object-cover mr-3 border-2 border-white/40"
             />
