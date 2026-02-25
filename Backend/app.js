@@ -70,6 +70,9 @@ app.use(cookieParser());
 /**
  * ROUTES
  */
+app.get("/", (req, res) => {
+  res.json({ message: "D' Plush Choice API is running ✅", status: "ok" });
+});
 app.use("/api/V1/auth", authRoutes);
 app.use("/api/V1/products", productRoutes);
 app.use("/api/V1/banners", bannerRoutes);
