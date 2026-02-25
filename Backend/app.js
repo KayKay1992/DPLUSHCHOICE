@@ -2,6 +2,8 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import dotenv from "dotenv";
+dotenv.config();
 import {
   notFound,
   errorHandler,
@@ -18,39 +20,37 @@ import paystackRoutes from "./routes/paystack.route.js";
 
 const app = express();
 
+// Trust Render's proxy so secure cookies work correctly
+app.set("trust proxy", 1);
+
 /**
- * Paystack webhook needs raw body to validate x-paystack-signature
+ * CORS – reads allowed origins from CORS_ORIGINS env var (comma-separated).
+ * Falls back to localhost for local development.
+ */
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(",").map((o) => o.trim())
+  : [
+      "http://localhost:5173",
+      "http://localhost:5174",
+      "http://localhost:5175",
+      "http://localhost:3000",
+    ];
+
+const corsOptions = {
+  origin: allowedOrigins,
+  credentials: true,
+};
+
+/**
+ * Paystack webhook needs raw body BEFORE express.json() to validate x-paystack-signature
  */
 app.use("/api/V1/paystack/webhook", express.raw({ type: "application/json" }));
 
 /**
- * CORS
+ * Apply CORS to all routes + handle preflight OPTIONS
  */
-app.use(
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "http://localhost:5175",
-      "http://localhost:3000",
-    ],
-    credentials: true,
-  })
-);
-
-// Handle CORS preflight for all routes (Express 5 doesn't accept '*' here)
-app.options(
-  /.*/,
-  cors({
-    origin: [
-      "http://localhost:5173",
-      "http://localhost:5174",
-      "http://localhost:5175",
-      "http://localhost:3000",
-    ],
-    credentials: true,
-  })
-);
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
 /**
  * NORMAL BODY PARSER (AFTER WEBHOOK)

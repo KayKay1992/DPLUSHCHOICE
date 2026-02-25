@@ -1,99 +1,232 @@
+========================================================
+  D' PLUSH CHOICE — DEPLOYMENT NOTES
+  Last Updated: February 24, 2026
+========================================================
 
-Frontend UI Updates (Banner + Footer + About/Contact)
-Date: Feb 2026
+SERVICES OVERVIEW
+-----------------
+  1. Backend          → Deploy to RENDER  (Node.js / Express API)
+  2. Frontend         → Deploy to VERCEL  (React / Vite)
+  3. Admin            → Deploy to VERCEL  (React / Vite)
+  4. BackgroundServices → Deploy to VERCEL (Serverless Cron Jobs)
 
-Goal
-1) Banner section
-- When "Shop Now" is clicked, navigate to the Products page.
-- Update the displayed phone number to: +2347040334276
-
-2) Footer section
-- Create an About Us page and navigate to it from the footer.
-- Create a Contact Us page and navigate to it from the footer.
-- Navigate to Products page when clicking Products in the footer.
-- Update footer email to: dplushchoice@gmail.com
-
-3) Contact Us page
-- Add the social media links (Instagram, TikTok, WhatsApp, Facebook).
+All 4 folders must be inside a single GitHub repository before deploying.
 
 
-1) Banner: Shop Now → /products and phone update
-File updated
-- frontend/src/components/Banner.jsx
+========================================================
+STEP 1 — PUSH TO GITHUB
+========================================================
 
-What changed
-- Imported useNavigate from react-router-dom.
-- Created navigate = useNavigate() inside the Banner component.
-- Added an onClick handler to both "Shop Now" buttons (fallback banner + API banner) so they do:
-	navigate("/products")
-- Updated "Call Us" text to show the new phone number:
-	+2347040334276
+If not yet done, from the root project folder run:
 
-Why
-- This keeps navigation inside React Router (no page reload) and ensures the CTA always takes the user to the product listing.
+  git init
+  git add .
+  git commit -m "ready for deployment"
+  git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
+  git push -u origin main
 
-
-2) Created About Us page
-File added
-- frontend/src/pages/AboutUs.jsx
-
-What it contains
-- A simple About Us page with project styling and a short description.
+NOTE: Make sure .env files are in .gitignore (never push secrets to GitHub).
 
 
-3) Created Contact Us page
-File added
-- frontend/src/pages/ContactUs.jsx
+========================================================
+STEP 2 — DEPLOY BACKEND TO RENDER
+========================================================
 
-What it contains
-- Business address
-- Email link:
-	mailto:dplushchoice@gmail.com
-- Phone link:
-	tel:+2347040334276
-- Social media icons/links (same links as the footer):
-	- Instagram
-	- TikTok
-	- WhatsApp
-	- Facebook
+URL: https://render.com → New → Web Service → Connect GitHub repo
 
+Settings:
+  Root Directory : Backend
+  Build Command  : npm install
+  Start Command  : npm start
+  Environment    : Node
 
-4) Wired routes for About/Contact
-File updated
-- frontend/src/App.jsx
+ENVIRONMENT VARIABLES TO ADD IN RENDER:
+┌─────────────────────────┬──────────────────────────────────────────────────────┐
+│ Key                     │ Value                                                │
+├─────────────────────────┼──────────────────────────────────────────────────────┤
+│ NODE_ENV                │ production                                           │
+│ PORT                    │ 8000                                                 │
+│ DB                      │ mongodb+srv://user:pass@cluster.mongodb.net/dbname   │
+│ JWT_SECRET              │ your-long-random-secret-key                          │
+│ PAYSTACK_SECRET_KEY     │ sk_test_xxxxxxxxxxxxxxxxxxxx  (use sk_live for prod) │
+│ CLIENT_URL              │ https://your-frontend.vercel.app                     │
+│ CORS_ORIGINS            │ https://your-frontend.vercel.app,https://your-admin.vercel.app │
+│ GEMINI_API_KEY          │ your-gemini-api-key                                  │
+│ PUBLIC_SERVER_URL       │ https://your-render-app.onrender.com (fill after deploy) │
+└─────────────────────────┴──────────────────────────────────────────────────────┘
 
-Routes added
-- /about → AboutUs
-- /contact → ContactUs
+After deploy, copy the Render URL (e.g. https://dplushchoice-api.onrender.com)
+→ Come back and update CLIENT_URL, CORS_ORIGINS, PUBLIC_SERVER_URL with real URLs.
 
-
-5) Footer: make links navigate correctly + update email
-File updated
-- frontend/src/components/Footer.jsx
-
-What changed
-- Replaced the old Quick Links anchor tags (href="#") with React Router <Link>.
-- Mapped Quick Links to routes:
-	Home → /
-	About Us → /about
-	Contact Us → /contact
-	Products → /products
-	Categories → /products
-- Updated footer email display to:
-	dplushchoice@gmail.com
-
-Why
-- href="#" does not navigate anywhere.
-- Using React Router <Link> gives correct navigation without reload.
+IMPORTANT NOTES:
+  - Free tier Render services sleep after 15 min of inactivity (takes ~30s to wake).
+  - Cookies work because generateToken.js already sets SameSite=None; Secure in production.
+  - CORS_ORIGINS must exactly match your Vercel URLs (no trailing slash).
 
 
-How to verify
-1) Open the homepage and click Banner "Shop Now" → it should go to /products.
-2) Scroll to the footer:
-	- Click About Us → /about
-	- Click Contact Us → /contact
-	- Click Products → /products
-3) On Contact Us page, confirm:
-	- Email is dplushchoice@gmail.com
-	- Phone is +2347040334276
-	- Social icons open the correct links.
+========================================================
+STEP 3 — DEPLOY FRONTEND TO VERCEL
+========================================================
+
+URL: https://vercel.com → New Project → Import GitHub repo
+
+Settings:
+  Root Directory  : frontend
+  Framework       : Vite
+  Build Command   : npm run build
+  Output Directory: dist
+
+ENVIRONMENT VARIABLES TO ADD IN VERCEL:
+┌──────────────────────┬──────────────────────────────────────────────────────────┐
+│ Key                  │ Value                                                    │
+├──────────────────────┼──────────────────────────────────────────────────────────┤
+│ VITE_API_BASE_URL    │ https://dplushchoice-api.onrender.com/api/V1/            │
+└──────────────────────┴──────────────────────────────────────────────────────────┘
+
+After deploy, copy the Vercel URL (e.g. https://dplushchoice.vercel.app).
+
+NOTES:
+  - vercel.json is already created in /frontend — it rewrites all routes to index.html
+    so React Router pages don't 404 on refresh.
+  - VITE_ prefix is required for Vite to expose env vars to the browser.
+
+
+========================================================
+STEP 4 — DEPLOY ADMIN TO VERCEL
+========================================================
+
+URL: https://vercel.com → New Project → Import same GitHub repo (different root)
+
+Settings:
+  Root Directory  : admin
+  Framework       : Vite
+  Build Command   : npm run build
+  Output Directory: dist
+
+ENVIRONMENT VARIABLES TO ADD IN VERCEL:
+┌────────────────────────────────┬────────────────────────────────────────────────┐
+│ Key                            │ Value                                          │
+├────────────────────────────────┼────────────────────────────────────────────────┤
+│ VITE_API_BASE_URL              │ https://dplushchoice-api.onrender.com/api/V1/  │
+│ VITE_CLOUDINARY_CLOUD_NAME     │ dwzdlml8c                                      │
+│ VITE_CLOUDINARY_UPLOAD_PRESET  │ uploads                                        │
+│ VITE_CLOUDINARY_FOLDER         │ dplushchoice/products                          │
+└────────────────────────────────┴────────────────────────────────────────────────┘
+
+After deploy, copy the admin Vercel URL (e.g. https://dplushchoice-admin.vercel.app).
+
+NOTES:
+  - vercel.json is already created in /admin — same SPA rewrite.
+  - Admin image uploads go directly to Cloudinary (no backend needed for uploads).
+  - 2MB file size limit + jpg/png/webp/avif validation is enforced in the UI.
+
+
+========================================================
+STEP 5 — DEPLOY BACKGROUNDSERVICES TO VERCEL
+========================================================
+
+URL: https://vercel.com → New Project → Import same GitHub repo (different root)
+
+Settings:
+  Root Directory  : BackgroundServices
+  Framework       : Other (NOT Vite/Next.js)
+  Build Command   : npm install
+  Output Directory: (leave blank)
+
+ENVIRONMENT VARIABLES TO ADD IN VERCEL:
+┌──────────────────┬────────────────────────────────────────────────────────────┐
+│ Key              │ Value                                                      │
+├──────────────────┼────────────────────────────────────────────────────────────┤
+│ DB               │ mongodb+srv://user:pass@cluster.mongodb.net/dbname         │
+│ EMAIL            │ your-gmail@gmail.com                                       │
+│ PASSWORD         │ your-gmail-app-password (NOT your Gmail login password)    │
+│ CRON_SECRET      │ any-long-random-string (e.g. openssl rand -hex 32)         │
+└──────────────────┴────────────────────────────────────────────────────────────┘
+
+HOW IT WORKS ON VERCEL (Important — Read This):
+  - BackgroundServices does NOT run as a long-running process on Vercel.
+  - Instead it uses Vercel Cron Jobs which call serverless API endpoints:
+      /api/cron       → runs every 5 minutes (welcome + pending + delivered emails)
+      /api/promotion  → runs every Friday at 5:30am (promotion emails to all users)
+  - vercel.json in /BackgroundServices defines these schedules automatically.
+  - Vercel sends Authorization: Bearer <CRON_SECRET> to each endpoint for security.
+
+GMAIL APP PASSWORD SETUP (Required for nodemailer):
+  1. Go to https://myaccount.google.com/security
+  2. Enable 2-Step Verification
+  3. Search "App Passwords" → create one for "Mail"
+  4. Use that 16-character password as the PASSWORD env var
+  (Regular Gmail password will NOT work — Google blocks it)
+
+NOTES:
+  - The cron schedule "*/5 * * * *" = every 5 minutes.
+  - The cron schedule "30 5 * * 5" = 5:30am every Friday (UTC time).
+  - All 4 email service files were fixed: __dirname now works in ESM, ejs.renderFile
+    now uses absolute paths, callbacks converted to async/await so emails fully send
+    before the function returns.
+
+
+========================================================
+STEP 6 — FINAL UPDATES AFTER ALL DEPLOYS
+========================================================
+
+Once you have all 4 deployment URLs, go back to Render and update:
+
+  CORS_ORIGINS     → https://dplushchoice.vercel.app,https://dplushchoice-admin.vercel.app
+  CLIENT_URL       → https://dplushchoice.vercel.app
+  PUBLIC_SERVER_URL → https://dplushchoice-api.onrender.com
+
+Then trigger a Manual Redeploy on Render to apply the changes.
+
+Also update Paystack Dashboard:
+  → Webhook URL: https://dplushchoice-api.onrender.com/api/V1/paystack/webhook
+  → Callback URL: https://dplushchoice.vercel.app/paystack/callback
+
+
+========================================================
+CODE CHANGES MADE FOR DEPLOYMENT
+========================================================
+
+Backend/
+  app.js           - Added trust proxy; CORS now reads CORS_ORIGINS env var
+                     (comma-separated). Paystack webhook raw body preserved.
+  package.json     - Added "start": "node index.js" (required by Render)
+
+frontend/
+  src/requestMethods.js - baseURL now uses VITE_API_BASE_URL env (no more localhost)
+  vercel.json           - SPA rewrite so React Router pages don't 404 on refresh
+
+admin/
+  src/requestMethods.js - baseURL now uses VITE_API_BASE_URL env (no more localhost)
+  vercel.json           - SPA rewrite
+
+BackgroundServices/
+  package.json                      - Added "start": "node index.js"
+  vercel.json                       - Cron schedules for /api/cron and /api/promotion
+  api/cron.js                       - Serverless handler (welcome + pending + delivered)
+  api/promotion.js                  - Serverless handler (promotion emails)
+  EmailServices/sendWelcomeEmail.js    - Fixed __dirname (ESM), async ejs, absolute paths
+  EmailServices/sendPendingOrderEmail.js - Fixed __dirname (ESM), async ejs, absolute paths
+  EmailServices/sendDeliveredOrderEmail.js - Fixed __dirname (ESM), async ejs, absolute paths
+  EmailServices/sendPromotionEmail.js    - Fixed __dirname (ESM), async ejs, absolute paths
+
+
+========================================================
+ENVIRONMENT VARIABLES SUMMARY (Quick Reference)
+========================================================
+
+RENDER (Backend):
+  NODE_ENV, PORT, DB, JWT_SECRET, PAYSTACK_SECRET_KEY,
+  CLIENT_URL, CORS_ORIGINS, GEMINI_API_KEY, PUBLIC_SERVER_URL
+
+VERCEL (Frontend):
+  VITE_API_BASE_URL
+
+VERCEL (Admin):
+  VITE_API_BASE_URL, VITE_CLOUDINARY_CLOUD_NAME,
+  VITE_CLOUDINARY_UPLOAD_PRESET, VITE_CLOUDINARY_FOLDER
+
+VERCEL (BackgroundServices):
+  DB, EMAIL, PASSWORD, CRON_SECRET
+
+========================================================
