@@ -1,6 +1,7 @@
 import { FaMinus, FaPlus, FaTrashAlt, FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
+import getImgUrl from "../utils/getImgUrl";
 import {
   removeProduct,
   clearCart,
@@ -172,12 +173,7 @@ const Cart = () => {
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center space-x-3 sm:space-x-4 flex-1">
                       <img
-                        src={
-                          product.img?.startsWith("http")
-                            ? product.img
-                            : `http://localhost:8000/${product.img}` ||
-                              "/placeholder.jpg"
-                        }
+                        src={getImgUrl(product.img)}
                         alt={product.title || product.name}
                         className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg shadow-md"
                       />

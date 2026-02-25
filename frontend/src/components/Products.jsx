@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Product from "./Product";
 import { userRequest } from "../requestMethods";
+import getImgUrl from "../utils/getImgUrl";
 
 const Products = ({
   filters,
@@ -205,13 +206,7 @@ const Products = ({
                   productId={product._id}
                   product={product}
                   imageFit={isHome ? "cover" : "contain"}
-                  img={
-                    product.img
-                      ? product.img.startsWith("http")
-                        ? product.img
-                        : `http://localhost:8000/${product.img}`
-                      : "/placeholder.jpg"
-                  }
+                  img={getImgUrl(product.img)}
                   name={product.title}
                   price={product.discountPrice || product.originalPrice}
                   originalPrice={product.originalPrice}

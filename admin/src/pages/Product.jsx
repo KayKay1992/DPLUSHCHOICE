@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { userRequest } from "../requestMethods";
 import { toast } from "react-toastify";
 import axios from "axios";
+import getImgUrl from "../utils/getImgUrl";
 
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = [
@@ -197,13 +198,7 @@ const Product = () => {
             <div className="flex items-center gap-6 mb-6">
               <img
                 className="w-24 h-24 object-cover rounded-2xl shadow-lg"
-                src={
-                  product.img
-                    ? product.img.startsWith("http")
-                      ? `${product.img}?t=${Date.now()}`
-                      : `http://localhost:8000/${product.img}?t=${Date.now()}`
-                    : "/placeholder.jpg"
-                }
+                src={`${getImgUrl(product.img)}?t=${Date.now()}`}
                 alt="product"
               />
               <div>
@@ -446,13 +441,7 @@ const Product = () => {
                     src={
                       file
                         ? URL.createObjectURL(file)
-                        : product.img
-                        ? product.img.startsWith("http")
-                          ? `${product.img}?t=${Date.now()}`
-                          : `http://localhost:8000/${
-                              product.img
-                            }?t=${Date.now()}`
-                        : "/placeholder.jpg"
+                        : `${getImgUrl(product.img)}?t=${Date.now()}`
                     }
                     alt="product"
                   />

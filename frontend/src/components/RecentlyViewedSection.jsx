@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { userRequest } from "../requestMethods";
 import Product from "./Product";
 import { getRecentlyViewedIds } from "../utils/recentlyViewedStorage";
+import getImgUrl from "../utils/getImgUrl";
 
 const RecentlyViewedSection = ({ excludeId, limit = 8 }) => {
   const [items, setItems] = useState([]);
@@ -70,13 +71,7 @@ const RecentlyViewedSection = ({ excludeId, limit = 8 }) => {
                 productId={product._id}
                 product={product}
                 imageFit="cover"
-                img={
-                  product.img
-                    ? product.img.startsWith("http")
-                      ? product.img
-                      : `http://localhost:8000/${product.img}`
-                    : "/placeholder.jpg"
-                }
+                img={getImgUrl(product.img)}
                 name={product.title}
                 price={product.discountPrice || product.originalPrice}
                 category={

@@ -6,6 +6,7 @@ import StarRating from "../components/StarRating";
 import { userRequest } from "../requestMethods";
 import { toast, ToastContainer } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
+import getImgUrl from "../utils/getImgUrl";
 import { addProduct, selectCurrentCart } from "../redux/cartRedux";
 import { useNavigate } from "react-router-dom";
 import { getWishlistIds, toggleWishlistId } from "../utils/wishlistStorage";
@@ -291,13 +292,7 @@ const ProductDetails = () => {
           <div className="lg:w-1/2 p-8">
             <div className="relative">
               <img
-                src={
-                  product.img
-                    ? product.img.startsWith("http")
-                      ? product.img
-                      : `http://localhost:8000/${product.img}`
-                    : "/placeholder.jpg"
-                }
+                src={getImgUrl(product.img)}
                 alt={product.title}
                 className="w-full h-96 lg:h-[500px] object-cover rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
               />

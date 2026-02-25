@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { userRequest } from "../requestMethods";
 import Product from "./Product";
+import getImgUrl from "../utils/getImgUrl";
 
 function getProductPrice(p) {
   const v = p?.discountPrice ?? p?.originalPrice;
@@ -104,13 +105,7 @@ const RecommendedProductsSection = ({
                 productId={p._id}
                 product={p}
                 imageFit="cover"
-                img={
-                  p.img
-                    ? p.img.startsWith("http")
-                      ? p.img
-                      : `http://localhost:8000/${p.img}`
-                    : "/placeholder.jpg"
-                }
+                img={getImgUrl(p.img)}
                 name={p.title}
                 price={p.discountPrice || p.originalPrice}
                 category={p.categories ? p.categories[0] : "general"}

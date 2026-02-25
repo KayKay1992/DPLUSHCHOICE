@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { userRequest } from "../requestMethods";
 import { toast } from "react-toastify";
+import getImgUrl from "../utils/getImgUrl";
 
 const Products = () => {
   const [products, setProducts] = useState([]);
@@ -53,13 +54,7 @@ const Products = () => {
         return (
           <div className="flex items-center justify-center py-2">
             <img
-              src={
-                params.row.img
-                  ? params.row.img.startsWith("http")
-                    ? `${params.row.img}?t=${Date.now()}`
-                    : `http://localhost:8000/${params.row.img}?t=${Date.now()}`
-                  : "/placeholder.jpg"
-              }
+              src={`${getImgUrl(params.row.img)}${params.row.img && !params.row.img.startsWith("http") ? "" : "?t=" + Date.now()}`}
               alt=""
               className="h-12 w-12 rounded-xl object-cover mr-3 border-2 border-white/40"
             />

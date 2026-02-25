@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { FaHeart, FaRegHeart } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { userRequest } from "../requestMethods";
+import getImgUrl from "../utils/getImgUrl";
 import {
   getWishlistIds,
   removeWishlistId,
@@ -139,11 +140,7 @@ const WishlistPanel = ({ embedded = false }) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {items.map((p) => {
                 const id = p?._id;
-                const img = p?.img
-                  ? p.img.startsWith("http")
-                    ? p.img
-                    : `http://localhost:8000/${p.img}`
-                  : "/placeholder.jpg";
+                const img = getImgUrl(p?.img);
                 const price =
                   p?.discountPrice || p?.originalPrice || p?.price || 0;
 
