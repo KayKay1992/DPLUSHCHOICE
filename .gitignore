@@ -29,3 +29,6 @@ dist-ssr
 # Gemini service account / credentials (DO NOT COMMIT)
 Backend/gemini-credentials.json
 **/gemini-credentials.json
+
+# Notes file may contain secrets
+note.txt
