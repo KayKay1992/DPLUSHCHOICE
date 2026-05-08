@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import asyncHandler from "express-async-handler";
 import generateToken from "../utils/generateToken.js";
+import sendWelcomeEmail from "../utils/sendWelcomeEmail.js";
 
 //Register User
 //ROUTE POST /api/V1/auth/register
@@ -19,6 +20,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   });
   if (user) {
     generateToken(res, user._id);
+    sendWelcomeEmail(user); // fire-and-forget, does not block the response
     res.status(201).json({
       _id: user._id,
       name: user.name,

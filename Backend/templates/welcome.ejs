@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welcome to Beauty Bliss</title>
+    <style type="text/css">
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        min-width: 100%;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.5;
+        color: #222222;
+        background: linear-gradient(135deg, #a800ff, #ff00c8);
+      }
+
+      a {
+        color: #fff;
+        text-decoration: none;
+      }
+
+      h1 {
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.25;
+        margin-top: 0;
+        margin-bottom: 15px;
+        text-align: center;
+      }
+
+      .status {
+        color: #fff;
+        width: 100px;
+        padding: 10px;
+        animation: blink 2s infinite;
+        text-align: center;
+        margin: 0 auto;
+      }
+
+      @keyframes blink {
+        from {
+          opacity: 0;
+        }
+
+        to {
+          opacity: 1;
+        }
+      }
+
+      p {
+        margin-top: 0;
+        margin-bottom: 24px;
+      }
+
+      .divider {
+        border-top: 1px solid #ccc;
+        margin: 20px 0;
+      }
+
+      .email-wrapper {
+        max-width: 700px;
+        margin: 0 auto;
+        background-color: #fff;
+        padding: 20px;
+      }
+
+      .email-header {
+        background-color: #1e1e1e;
+        padding: 30px;
+        color: #f086d9;
+        text-align: center;
+      }
+
+      .email-body {
+        padding: 14px;
+        background-color: #f4f3f3;
+        height: 70vh;
+      }
+
+      .email-footer {
+        background-color: #1e1e1e;
+        padding: 14px;
+        color: #d55fbb;
+        text-align: center;
+      }
+
+      img {
+        padding: 24px;
+        max-width: 100%;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-wrapper">
+      <div class="email-header">
+        <img
+          src="cid:logo"
+          height="120"
+          width="120"
+          alt="D' Plush Choice Logo"
+          style="
+            display: block;
+            margin: 0 auto;
+            border-radius: 50%;
+            box-shadow: 0 4px 16px rgba(168, 0, 255, 0.15);
+            background: #fff;
+          "
+        />
+        <h1 style="color: #a800ff; margin-top: 10px">
+          Welcome to D' Plush Choice!
+        </h1>
+      </div>
+      <div
+        class="email-body"
+        style="
+          border-radius: 16px;
+          box-shadow: 0 2px 12px rgba(255, 0, 200, 0.08);
+          margin-top: -30px;
+        "
+      >
+        <p style="font-size: 18px; color: #a800ff; font-weight: 600">
+          Hello <%= name %>,
+        </p>
+        <p style="color: #222; font-size: 16px">
+          We are
+          <span style="color: #ff00c8; font-weight: 600">thrilled</span> to
+          welcome you to <b>D' Plush Choice</b>, your new go-to destination for
+          all things beauty. We're here to help you discover products that match
+          your style and elevate your beauty routine.
+        </p>
+        <p style="color: #222; font-size: 16px">
+          Stay tuned for
+          <span style="color: #a800ff; font-weight: 600">exclusive offers</span
+          >, beauty tips, and the latest trends directly in your inbox.
+        </p>
+        <p style="color: #222; font-size: 16px">
+          If you have any questions or need assistance, feel free to
+          <a
+            href="mailto:support@dplushchoice.com"
+            style="color: #ff00c8; text-decoration: underline"
+            >contact us</a
+          >.
+        </p>
+        <p style="font-size: 17px; color: #a800ff; font-weight: 600">
+          Thank you for joining us. Let's make beauty blissful!
+        </p>
+      </div>
+      <div class="email-footer">
+        <p>&copy;2025 D' Plush Choice. All rights reserved.</p>
+      </div>
+    </div>
+  </body>
+</html>
