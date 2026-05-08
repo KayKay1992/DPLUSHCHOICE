@@ -138,17 +138,10 @@ export const forgotPassword = asyncHandler(async (req, res) => {
       { name: user.name, resetUrl },
     );
     await sendMail({
-      from: process.env.EMAIL,
+      from: "D' Plush Choice <onboarding@resend.dev>",
       to: user.email,
       subject: "Password Reset Request – D' Plush Choice",
       html,
-      attachments: [
-        {
-          filename: "logo.jpg",
-          path: path.resolve(__dirname, "../assets/logo.jpg"),
-          cid: "logo",
-        },
-      ],
     });
     res.status(200).json({ message: "Password reset email sent" });
   } catch (error) {

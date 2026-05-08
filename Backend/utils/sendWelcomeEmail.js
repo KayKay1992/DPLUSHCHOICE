@@ -14,17 +14,10 @@ const sendWelcomeEmail = async (user) => {
       { name: user.name },
     );
     const messageOptions = {
-      from: process.env.EMAIL,
+      from: "D' Plush Choice <onboarding@resend.dev>",
       to: user.email,
       subject: "Welcome to D' Plush Choice",
       html,
-      attachments: [
-        {
-          filename: "logo.jpg",
-          path: path.resolve(__dirname, "../assets/logo.jpg"),
-          cid: "logo",
-        },
-      ],
     };
     await sendMail(messageOptions);
     await User.findByIdAndUpdate(user._id, { $set: { status: 1 } }); // mark as welcomed so cron skips them
