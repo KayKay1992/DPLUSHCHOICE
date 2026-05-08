@@ -8,6 +8,8 @@ import Announcement from "./components/Announcement";
 import ProductDetails from "./pages/ProductDetails";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import ProductList from "./pages/ProductList";
 import Order from "./pages/Order";
 import PaystackCallback from "./pages/PaystackCallback";
@@ -128,6 +130,14 @@ function App() {
               <PaystackCallback />
             </ProtectedRoute>
           ),
+        },
+        {
+          path: "/forgot-password",
+          element: <ForgotPassword />,
+        },
+        {
+          path: "/reset-password/:token",
+          element: <ResetPassword />,
         },
       ],
     },

@@ -2,6 +2,14 @@ import User from "../models/user.model.js";
 import asyncHandler from "express-async-handler";
 import generateToken from "../utils/generateToken.js";
 import sendWelcomeEmail from "../utils/sendWelcomeEmail.js";
+import crypto from "crypto";
+import ejs from "ejs";
+import path from "path";
+import { fileURLToPath } from "url";
+import sendMail from "../utils/sendMail.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 //Register User
 //ROUTE POST /api/V1/auth/register
@@ -97,4 +105,82 @@ export const getMe = asyncHandler(async (req, res) => {
     createdAt: req.user.createdAt,
     updatedAt: req.user.updatedAt,
   });
+});
+
+// FORGOT PASSWORD
+// ROUTE POST /api/V1/auth/forgot-password
+// PUBLIC
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    res.status(404);
+    throw new Error("No account found with that email");
+  }
+
+  // Generate a random token and hash it before storing
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+  user.resetPasswordToken = hashedToken;
+  user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
+  await user.save();
+
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:5174";
+  const resetUrl = `${clientUrl}/reset-password/${rawToken}`;
+
+  try {
+    const html = await ejs.renderFile(
+      path.resolve(__dirname, "../templates/resetPassword.ejs"),
+      { name: user.name, resetUrl }
+    );
+    await sendMail({
+      from: process.env.EMAIL,
+      to: user.email,
+      subject: "Password Reset Request – D' Plush Choice",
+      html,
+      attachments: [
+        {
+          filename: "logo.jpg",
+          path: path.resolve(__dirname, "../assets/logo.jpg"),
+          cid: "logo",
+        },
+      ],
+    });
+    res.status(200).json({ message: "Password reset email sent" });
+  } catch (error) {
+    // Roll back token if email fails
+    user.resetPasswordToken = null;
+    user.resetPasswordExpire = null;
+    await user.save();
+    res.status(500);
+    throw new Error("Email could not be sent. Please try again.");
+  }
+});
+
+// RESET PASSWORD
+// ROUTE PUT /api/V1/auth/reset-password/:token
+// PUBLIC
+export const resetPassword = asyncHandler(async (req, res) => {
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpire: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    res.status(400);
+    throw new Error("Invalid or expired reset token");
+  }
+
+  user.password = req.body.password;
+  user.resetPasswordToken = null;
+  user.resetPasswordExpire = null;
+  await user.save();
+
+  res.status(200).json({ message: "Password reset successful" });
 });
