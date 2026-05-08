@@ -120,7 +120,10 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
   // Generate a random token and hash it before storing
   const rawToken = crypto.randomBytes(32).toString("hex");
-  const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex");
 
   user.resetPasswordToken = hashedToken;
   user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
@@ -132,7 +135,7 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   try {
     const html = await ejs.renderFile(
       path.resolve(__dirname, "../templates/resetPassword.ejs"),
-      { name: user.name, resetUrl }
+      { name: user.name, resetUrl },
     );
     await sendMail({
       from: process.env.EMAIL,

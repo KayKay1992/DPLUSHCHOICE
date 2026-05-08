@@ -30,7 +30,7 @@ const ResetPassword = () => {
       setTimeout(() => navigate("/login"), 2000);
     } catch (error) {
       toast.error(
-        error?.response?.data?.message || "Invalid or expired link. Try again."
+        error?.response?.data?.message || "Invalid or expired link. Try again.",
       );
     } finally {
       setLoading(false);
