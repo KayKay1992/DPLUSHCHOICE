@@ -13,7 +13,11 @@ const ForgotPassword = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await userRequest.post("auth/forgot-password", { email });
+      await userRequest.post(
+        "auth/forgot-password",
+        { email },
+        { timeout: 20000 },
+      );
       setSent(true);
       toast.success("Reset link sent! Check your email.");
     } catch (error) {
