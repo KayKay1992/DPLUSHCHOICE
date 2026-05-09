@@ -37,7 +37,10 @@ const Login = () => {
       if (isAdminRole(currentUser?.role)) {
         const adminUrl =
           import.meta.env.VITE_ADMIN_URL || "http://localhost:5175";
-        window.location.replace(adminUrl);
+        // setTimeout makes iOS Safari treat this as a new navigation event
+        setTimeout(() => {
+          window.location.href = adminUrl;
+        }, 0);
         return;
       }
 
